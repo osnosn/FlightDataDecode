@@ -11,3 +11,6 @@ FOQA (Flight Operations Quality Asurance) http://en.wikipedia.org/wiki/Flight_op
 
 有兴趣的，可以参考一下，继续研究。
 
+这些程序都在 [wgl 目录中](https://github.com/osnosn/FlightDataDecode/tree/main/wgl)。.
+
+
