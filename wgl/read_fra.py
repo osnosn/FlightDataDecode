@@ -3,6 +3,7 @@
 
 """
 读解码库，参数配置文件 vec 中 xx.fra 文件。比如 010412.fra
+仅支持 ARINC 573 PCM 格式
    author:南方航空,LLGZ@csair.com
 """
 import sys

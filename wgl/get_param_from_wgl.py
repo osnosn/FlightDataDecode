@@ -4,6 +4,7 @@
 """
 读取 wgl 中 raw.dat 。
 读解码一个参数。')
+仅支持 ARINC 573 PCM 格式
 
 '''
     1 Frame has 4 subframe
