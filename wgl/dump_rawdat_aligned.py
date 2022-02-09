@@ -95,6 +95,24 @@
  实际读取文件， (bitstream format, words/sec=1024, Synchro Word Length=12bits)
    * 每次读取取单个字节，定位sync1, 同步字出现顺序是 1, 2, 3, 4, 间隔为 0x400.
      文件应该是被处理，补齐。中间没有frame缺失。
+  --------------------------
+ 787, ARINC 767, 
+    每个frame的头部是 header，header包含5个内容：
+      Sync word (2bytes):  0xEB90 
+      Frame length: total size of the frame, up to 2048 bytes(include header and tailer)
+      Time Stamp: "c time" field of 32bits 
+      Frame Type/ID attributes: 8bits frame type can either be used for separate classifications or combined with the 1-byte Frame ID for identification purposes.
+     For a given Frame ID, the Parameters are recorded, 
+  and the necessary bits for each are used. If certain 
+  parameter rates result in the Frame Length to be 
+  exceeded, a second frame at the same rate is used 
+  (multiple frames are expected for the most common 
+  recording rate of 1 Hz). 
+      The Frame Trailer again contains Header Frame 
+   Type/ID fields, and is used if difficulties existed in 
+   recording the frame; if a problem transpired in 
+   recording the Frame Header, the Trailer can be used to 
+   process the parameters. 
 """
 #import struct
 #from datetime import datetime

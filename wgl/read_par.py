@@ -57,7 +57,7 @@ def main():
     pd.set_option('display.width',156)
     pd.set_option('display.min_row',33)
     pd.set_option('display.min_row',330)
-    print(PAR[[0,5,6,7,8,9,17,20]])
+    print(PAR[[0,2,5,6,7,8,9,17,20]])
     print(PAR[[0,24,25,36,37,38,39,40]])
 
     '''
@@ -72,6 +72,7 @@ def main():
     print('PAR(%d):'%len(PAR))
     print('PAR:',getsizeof(PAR))
     print('end mem:',sysmem())
+    #print(PAR.loc[:,2].unique() ) #列出所有的Type
     if TOCSV:
         csv_fname='%d.csv' % int(FNAME)
         PAR.to_csv(csv_fname)

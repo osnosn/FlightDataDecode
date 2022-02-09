@@ -5,6 +5,9 @@
 读取 wgl 中 raw.dat 。
 读解码一个参数。')
 仅支持 ARINC 573 PCM 格式
+------
+https://github.com/aeroneous/PyARINC429   #py3.5
+https://github.com/KindVador/A429Library  #C++
 
 '''
     1 Frame has 4 subframe
@@ -110,6 +113,8 @@ import config_vec as conf
 import read_air as AIR
 import read_fra as FRA
 import read_par as PAR
+#from decimal import Decimal
+#import arinc429  #没有使用# https://github.com/aeroneous/PyARINC429   #py3.5
 
 class DATA:
     '用来保存配置参数的类'
@@ -364,6 +369,15 @@ def get_param(fra,par,time_set):
 
 def arinc429_decode(word,conf):
     '''
+    par中有所有的 Type: 'CONSTANT' 'DISCRETE' 'PACKED BITS' 'BNR LINEAR (A*X)' 'COMPUTED ON GROUND' 'CHARACTER' 'BCD' 'BNR SEGMENTS (A*X+B)' 'UTC'
+    出现的 Type: 'BNR LINEAR (A*X)' 'CHARACTER' 'BCD' 'UTC'
+    '''
+    if conf['type'].find('BNR')==0:
+        return arinc429_BNR_decode(word ,conf)
+    else:
+        return arinc429_BCD_decode(word ,conf)
+def arinc429_BCD_decode(word,conf):
+    '''
     从 ARINC429格式中取出 值
         conf=[{ 'ssm'    :tmp2.iat[0,5],   #SSM Rule (0-15)0,4 
                 'signBit':tmp2.iat[0,6],   #bitLen,SignBit
@@ -388,7 +402,6 @@ def arinc429_decode(word,conf):
         if word & bits:
             sign=-1
 
-    value=0
     if len(conf['part'])>0:
         #有分步配置
         if conf['type']=='CHARACTER':
@@ -397,29 +410,51 @@ def arinc429_decode(word,conf):
             value = 0
         for vv in conf['part']:
             #根据blen，获取掩码值
-            bits=1
-            for ii in range(1,vv['blen']):
-                bits = (bits << 1) | 1
-            #根据pos，把掩码移动到对应位置
-            bits <<= vv['pos'] - vv['blen']
-            tmp = word & bits  #获取值
-            #移回来(移动到bit0)
-            tmp >>= vv['pos'] - vv['blen']
+            bits= (1 << vv['blen']) -1
+            #把值移到最右(移动到bit0)，并获取值
+            tmp = ( word >> (vv['pos'] - vv['blen']) ) & bits
             if conf['type']=='CHARACTER':
                 value +=  chr(tmp)
             else:   # BCD
                 value = value * 10 + tmp
     else:
         #根据blen，获取掩码值
-        bits=1
-        for ii in range(1,conf['blen']):
-            bits = (bits << 1) | 1
-        #根据pos，把掩码移动到对应位置
-        bits <<= conf['pos'] - conf['blen']
-        value = word & bits  #获取值
-        #移回来(移动到bit0)
-        value >>= conf['pos'] - conf['blen']
+        bits= (1 << conf['blen']) -1
+        #把值移到最右(移动到bit0)，并获取值
+        value = ( word >> (conf['pos'] - conf['blen']) ) & bits
     return value * sign
+def arinc429_BNR_decode(word,conf):
+    '''
+    从 ARINC429格式中取出 值
+        conf=[{ 'ssm'    :tmp2.iat[0,5],   #SSM Rule (0-15)0,4 
+                'signBit':tmp2.iat[0,6],   #bitLen,SignBit
+                'pos'   :tmp2.iat[0,7],   #MSB
+                'blen'  :tmp2.iat[0,8],   #bitLen,DataBits
+                'part': [{
+                    'id'     :tmp2.iat[0,36],  #Digit
+                    'pos'    :tmp2.iat[0,37],  #MSB
+                    'blen'   :tmp2.iat[0,38],  #bitLen,DataBits
+                'type'    :tmp2.iat[0,2],     #Type(BCD,CHARACTER)
+                'format'  :tmp2.iat[0,17],    #Display Format Mode (DECIMAL,ASCII)
+                'Resol'   :tmp2.iat[0,12],    #Computation:Value=Constant Value or Resol=Coef A(Resolution) or ()
+                'format'  :tmp2.iat[0,25],    #Internal Format (Float ,Unsigned or Signed)
+                    }]
+   author:南方航空,LLGZ@csair.com
+    '''
+    #根据blen，获取掩码值
+    bits= (1 << conf['blen']) -1
+    #把值移到最右(移动到bit0)，并获取值
+    value = ( word >> (conf['pos'] - conf['blen']) ) & bits
+
+    #符号位
+    if conf['signBit'] is not None and conf['signBit']>0:
+        bits = 1 << (conf['signBit']-1)
+        if word & bits:
+            value -= 1 << conf['blen']
+    #Resolution
+    if conf['Resol'].find('Resol=')==0:
+        value *= float(conf['Resol'][6:])
+    return value 
 def get_arinc429(buf, frame_pos, param_set, word_sec):
     '''
     根据 fra的配置，获取arinc429格式的32bit word
