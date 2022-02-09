@@ -92,11 +92,13 @@
   --------------------------
 '''
 
+ 原始的BitStream格式数据,下载到Teledyne的WGBS,用Teledyne的WFDI解压成WGL文件夹,然后压缩为zip文件。
+  
  实际读取文件， (bitstream format, words/sec=1024, Synchro Word Length=12bits)
    * 每次读取取单个字节，定位sync1, 同步字出现顺序是 1, 2, 3, 4, 间隔为 0x400.
      文件应该是被处理，补齐。中间没有frame缺失。
   --------------------------
- 787, ARINC 767, 
+ Boeing787, ARINC 767, 
     每个frame的头部是 header，header包含5个内容：
       Sync word (2bytes):  0xEB90 
       Frame length: total size of the frame, up to 2048 bytes(include header and tailer)

@@ -57,8 +57,19 @@ def main():
     pd.set_option('display.width',156)
     pd.set_option('display.min_row',33)
     pd.set_option('display.min_row',330)
-    print(PAR[[0,2,5,6,7,8,9,17,20]])
-    print(PAR[[0,24,25,36,37,38,39,40]])
+    tmp=PAR[[0,2,3,4,5,6,7,8,9,17,20]]
+    tmp.iat[0,2]='1-Equip/Label/SDI'  # Source1 (Equip/Label/SDI)
+    tmp.iat[0,3]='2-Equip/Label/SDI'  # Source2 (Equip/Label/SDI)
+    tmp.iat[0,5]='S_Bit' # Sign Bit
+    tmp.iat[0,7]='D_Bits'  # Data Bits
+    tmp.iat[0,9]='FormatMode'   # Display Format Mode
+    tmp.iat[0,10]='字段长.分数部分'   # Field Length.Fractional Part
+    print(tmp)
+    #print(tmp.iat[0,9])
+    #print(tmp.iat[0,10])
+    tmp=PAR[[0,24,25,36,37,38,39,40]]
+    tmp.iat[0,2]='InternalFormat' # Internal Format (Float ,Unsigned or Signed)
+    print(tmp)
 
     '''
     ii=0
@@ -73,6 +84,7 @@ def main():
     print('PAR:',getsizeof(PAR))
     print('end mem:',sysmem())
     #print(PAR.loc[:,2].unique() ) #列出所有的Type
+    #print(PAR.loc[0] ) #列出所有的column
     if TOCSV:
         csv_fname='%d.csv' % int(FNAME)
         PAR.to_csv(csv_fname)

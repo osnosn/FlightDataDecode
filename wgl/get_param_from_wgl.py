@@ -4,7 +4,7 @@
 """
 读取 wgl 中 raw.dat 。
 读解码一个参数。')
-仅支持 ARINC 573 PCM 格式
+仅支持 ARINC 573/717 PCM 格式
 ------
 https://github.com/aeroneous/PyARINC429   #py3.5
 https://github.com/KindVador/A429Library  #C++
@@ -638,10 +638,10 @@ def usage():
     print(sys.argv[0]+' [-h|--help] [-f|--file]  ')
     print('   -h, --help     print usage.')
     print(' * -f, --file=    "....wgl.zip" filename')
-    print(' * -p, --param alt_std   show "alt_std" param.')
+    print(' * -p, --param alt_std   show "ALT_STD" param. 自动转全大写。')
     print('   --paramlist      list all param name.')
-    print('   -w xxx.dat            写入文件"xxx.dat"')
-    print(u'               author:南方航空,LLGZ@csair.com')
+    #print('   -w xxx.dat            写入文件"xxx.dat"')
+    print(u'\n               author:南方航空,LLGZ@csair.com')
     print()
     return
 if __name__=='__main__':
