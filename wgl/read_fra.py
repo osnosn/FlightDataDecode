@@ -76,6 +76,7 @@ def main():
             'Recorded Resolution',
             'Occurence No']
             )
+    #print(FRA['2'].iloc[:,12].unique() )  #显示 Occurence No
 
     print_fra(FRA, '3', [
             'Superframe No',

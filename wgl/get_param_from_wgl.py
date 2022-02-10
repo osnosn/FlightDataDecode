@@ -296,12 +296,13 @@ def get_param(fra,par,time_set):
     for vv in fra['2']:
         param_set.append({
             'part':int(vv[0]),
-            'rate':int(vv[1]), # 10412(1=1/4HZ, 2=1/2HZ, 4=1HZ, 8=2HZ, 16=4HZ)
+            'rate':int(vv[1]), # 10412(1=1/4HZ(一个frame一个记录), 2=1/2HZ, 4=1HZ(每个subframe一个记录), 8=2HZ, 16=4HZ)
             'sub' :int(vv[2]),
             'word':int(vv[3]),
             'bout':int(vv[4]),
             'blen':int(vv[5]),
             'bin' :int(vv[6]),
+            'occur' :int(vv[7]) if len(vv[7])>0 else -1,
             })
     print('Frame定义: Word/SEC:%d, syncLen(word):%d, sync1234: %X,%X,%X,%X'%(word_sec,sync_word,sync1,sync2,sync3,sync4) )
     print('   SuperFrame Counter:',superframe_counter_set)
@@ -337,6 +338,7 @@ def get_param(fra,par,time_set):
     ii=0    #计数
     pm_list=[] #参数列表
     while frame_pos<ttl_len -2:
+        subframe=1
         '''
         if getWord(buf,frame_pos+word_sec*2,sync_word) != sync2:
             print('==>notFound sync2.%X,x%X'%(sync2,frame_pos))
@@ -392,7 +394,7 @@ def arinc429_BCD_decode(word,conf):
     '''
     #符号位
     sign=1
-    if conf['signBit'] is not None and conf['signBit']>0:
+    if conf['signBit']>0:
         bits=1
         bits <<= conf['signBit']-1
         if word & bits:
@@ -443,7 +445,7 @@ def arinc429_BNR_decode(word,conf):
     value = ( word >> (conf['pos'] - conf['blen']) ) & bits
 
     #符号位
-    if conf['signBit'] is not None and conf['signBit']>0:
+    if conf['signBit']>0:
         bits = 1 << (conf['signBit']-1)
         if word & bits:
             value -= 1 << conf['blen']
@@ -534,10 +536,10 @@ def getPAR(dataver,param):
                         'blen':int(tmp2.iat[0,38][ii]),  #bitLen,DataBits,数据长度
                         })
         return {
-                'ssm'    :int(tmp2.iat[0,5]) if len(tmp2.iat[0,5])>0 else None,   #SSM Rule , (0-15)0,4 
-                'signBit':int(tmp2.iat[0,6]) if len(tmp2.iat[0,6])>0 else None,   #bitLen,SignBit  ,符号位位置
-                'pos'   :int(tmp2.iat[0,7]) if len(tmp2.iat[0,7])>0 else None,   #MSB  ,开始位置
-                'blen'  :int(tmp2.iat[0,8]) if len(tmp2.iat[0,8])>0 else None,   #bitLen,DataBits ,数据部分的总长度
+                'ssm'    :int(tmp2.iat[0,5]) if len(tmp2.iat[0,5])>0 else -1,   #SSM Rule , (0-15)0,4 
+                'signBit':int(tmp2.iat[0,6]) if len(tmp2.iat[0,6])>0 else -1,   #bitLen,SignBit  ,符号位位置
+                'pos'   :int(tmp2.iat[0,7]) if len(tmp2.iat[0,7])>0 else -1,   #MSB  ,开始位置
+                'blen'  :int(tmp2.iat[0,8]) if len(tmp2.iat[0,8])>0 else -1,   #bitLen,DataBits ,数据部分的总长度
                 'part'    :tmp_part,
                 'type'    :tmp2.iat[0,2],    #Type(BCD,CHARACTER)
                 'format'  :tmp2.iat[0,17],    #Display Format Mode (DECIMAL,ASCII)
@@ -574,6 +576,7 @@ def getFRA(dataver,param):
                     tmp.iat[ii,5],   #bitOut
                     tmp.iat[ii,6],   #bitLen
                     tmp.iat[ii,7],   #bitIn
+                    tmp.iat[ii,12],  #Occurence No
                     tmp.iat[ii,8],   #Imposed,Computed
                     ]
                 ret2.append(tmp2)
