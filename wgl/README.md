@@ -4,16 +4,18 @@
 直接运行，会给出帮助。   
 ```
 $ ./get_param_from_wgl.py
-
 Usage:
  读取 wgl中 raw.dat 。
    读解码一个参数。
  命令行工具。
 ./get_param_from_wgl.py [-h|--help] [-f|--file]
-   -h, --help     print usage.
- * -f, --file=    "....wgl.zip" filename
- * -p, --param alt_std   show "ALT_STD" param.
-   --paramlist      list all param name.
+   * (必要参数)
+   -h, --help                 print usage.
+ * -f, --file xxx.wgl.zip     "....wgl.zip" filename
+ * -p, --param alt_std        show "ALT_STD" param. 自动全部大写。
+   --paramlist                list all param name.
+   -w xxx.csv            参数写入文件"xxx.csv"
+   -w xxx.csv.gz         参数写入文件"xxx.csv.gz"
 ```
 
 wgl 目录中有两个空文件，只是给出个例子，看看压缩包中文件名的命名规律。  

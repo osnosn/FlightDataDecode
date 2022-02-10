@@ -162,36 +162,10 @@ def main():
     else:
         #-----------获取一个参数--------------------
         time_set=[]
-        fra =getFRA(air[0],'UTC_HOUR')
-        par =getPAR(air[0],'UTC_HOUR')
-        print('fra:',fra)
-        print('par:',par)
-        time_set.append({
-            'part':int(fra['2'][0][0]),
-            'rate':int(fra['2'][0][1]),
-            'sub' :int(fra['2'][0][2]),
-            'word':int(fra['2'][0][3]),
-            'bout':int(fra['2'][0][4]),
-            'blen':int(fra['2'][0][5]),
-            'bin' :int(fra['2'][0][6]),
-            'par' : par,
-            })
+        #10576 没有 'UTC_HOUR' 这个参数
+
         fra =getFRA(air[0],'UTC_MIN')
         par =getPAR(air[0],'UTC_MIN')
-        #print('fra:',fra)
-        #print('par:',par)
-        time_set.append({
-            'part':int(fra['2'][0][0]),
-            'rate':int(fra['2'][0][1]),
-            'sub' :int(fra['2'][0][2]),
-            'word':int(fra['2'][0][3]),
-            'bout':int(fra['2'][0][4]),
-            'blen':int(fra['2'][0][5]),
-            'bin' :int(fra['2'][0][6]),
-            'par' : par,
-            })
-        fra =getFRA(air[0],'UTC_MIN_SEC')
-        par =getPAR(air[0],'UTC_MIN_SEC')
         #print('fra:',fra)
         #print('par:',par)
         time_set.append({
@@ -218,9 +192,25 @@ def main():
             'bin' :int(fra['2'][0][6]),
             'par' : par,
             })
-        print('time set:')
-        for vv in time_set: print(vv)
-        print()
+        '''
+        fra =getFRA(air[0],'UTC_MIN_SEC')
+        par =getPAR(air[0],'UTC_MIN_SEC')
+        #print('fra:',fra)
+        #print('par:',par)
+        time_set.append({
+            'part':int(fra['2'][0][0]),
+            'rate':int(fra['2'][0][1]),
+            'sub' :int(fra['2'][0][2]),
+            'word':int(fra['2'][0][3]),
+            'bout':int(fra['2'][0][4]),
+            'blen':int(fra['2'][0][5]),
+            'bin' :int(fra['2'][0][6]),
+            'par' : par,
+            })
+        '''
+        #print('time set:')
+        #for vv in time_set: print(vv)
+        #print()
 
         fra =getFRA(air[0],PARAM)
         par =getPAR(air[0],PARAM)
@@ -230,14 +220,21 @@ def main():
         if len(fra['2'])<1:
             print('Parameter not found.')
             return
-        print('fra:',fra)
-        print('par:',par)
-        print()
+        #print(PARAM,'(fra):',fra)
+        #print(PARAM,'(par):',par)
+        #print()
 
         print('PARAM:',PARAM)
         pm_list=get_param(fra,par,time_set) #获取一个参数
         #print(pm_list)
         df_pm=pd.DataFrame(pm_list)
+
+        #参数写入csv文件
+        if WFNAME is not None and len(WFNAME)>0:
+            print('Write into file "%s".' % WFNAME)
+            df_pm.to_csv(WFNAME,index=True,index_label='index')
+            #df_pm.to_csv(WFNAME,sep='\t',index=True,index_label='index')
+            return
         pd.set_option('display.min_row',200)
         '''
         print(df_pm)
@@ -262,15 +259,13 @@ def get_param(fra,par,time_set):
     '''
     获取参数，返回 ARINC 429 format
   -------------------------------------
-  bit:|32|31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|11|9|8|7|6|5|4|3|2|1| 
-       | |     |____________                                             ____|               | 
-       | |                  \               DATA field                  /                    | 
-       | |Reserved to the SSM|                                         |Reserved to the label| 
-       | 
-    /--+------------------\    
-   |Reserved to the parity|   
-  -------------------------------------
-   author:南方航空,LLGZ@csair.com
+  bit:|32|31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|9|8|7|6|5|4|3|2|1| 
+      |  | SSM |                            DATA field                  | SDI|     label     | 
+     _/  \     | MSB -->                                        <-- LSB |    |               | 
+    /     \    
+   |parity |   
+  -------------------------------------  
+   author:南方航空,LLGZ@csair.com  
     '''
     global FNAME,WFNAME,DUMPDATA
 
@@ -283,13 +278,13 @@ def get_param(fra,par,time_set):
     sync3=int(fra['1'][4],16)
     sync4=int(fra['1'][5],16)
     superframe_counter_set=[{
-            'rate':1,
+            'rate':-1,
             'sub' :int(fra['1'][6]),
             'word':int(fra['1'][7]),
             'bout':int(fra['1'][8]),
             'blen':int(fra['1'][9]),
             'v_1st':int(fra['1'][10]),
-            'bin' :12,
+            'bin' :-1,
             }]
     if sync_word>1:
         sync1=(sync1 << (12 * (sync_word-1))) +1
@@ -301,19 +296,20 @@ def get_param(fra,par,time_set):
     for vv in fra['2']:
         param_set.append({
             'part':int(vv[0]),
-            'rate':int(vv[1]),
+            'rate':int(vv[1]), # 10412(1=1/4HZ, 2=1/2HZ, 4=1HZ, 8=2HZ, 16=4HZ)
             'sub' :int(vv[2]),
             'word':int(vv[3]),
             'bout':int(vv[4]),
             'blen':int(vv[5]),
             'bin' :int(vv[6]),
             })
-    print('get_pm(fra):',word_sec,sync_word,hex(sync1),hex(sync2),hex(sync3),hex(sync4),superframe_counter_set)
+    print('Frame定义: Word/SEC:%d, syncLen(word):%d, sync1234: %X,%X,%X,%X'%(word_sec,sync_word,sync1,sync2,sync3,sync4) )
+    print('   SuperFrame Counter:',superframe_counter_set)
     print()
-    print('param_set:')
+    print('param(fra):')
     for vv in param_set:
         print(vv)
-    print('get_pm(par):',par)
+    print('param(par):',par)
     print()
 
 
@@ -331,9 +327,12 @@ def get_param(fra,par,time_set):
     while frame_pos<ttl_len - sync_word *2:  #寻找frame开始位置
         word=getWord(buf,frame_pos, sync_word)
         if word == sync1:
-            print('==>Mark,x%X'%(frame_pos,))
+            #print('==>Mark,x%X'%(frame_pos,))
             break
         frame_pos +=1
+    if frame_pos >= ttl_len - sync_word *2:
+        print('ERR,SYNC1 not found.',flush=True)
+        raise(Exception('ERR,SYNC1 not found.'))
     
     ii=0    #计数
     pm_list=[] #参数列表
@@ -346,23 +345,20 @@ def get_param(fra,par,time_set):
         if getWord(buf,frame_pos+word_sec*6,sync_word) != sync4:
             print('==>notFound sync4.%X,x%X'%(sync4,frame_pos))
         '''
-        utc_h =get_arinc429(buf, frame_pos, (time_set[0],), word_sec)  #ARINC 429 format
-        utc_h =arinc429_decode(utc_h ,time_set[0]['par'] )
+        utc_m =get_arinc429(buf, frame_pos, (time_set[0],), word_sec)  #ARINC 429 format
+        utc_m =arinc429_decode(utc_m ,time_set[0]['par'] )
 
-        utc_m =get_arinc429(buf, frame_pos, (time_set[1],), word_sec)  #ARINC 429 format
-        utc_m =arinc429_decode(utc_m ,time_set[1]['par'] )
+        utc_s =get_arinc429(buf, frame_pos, (time_set[1],), word_sec)  #ARINC 429 format
+        utc_s =arinc429_decode(utc_s ,time_set[1]['par'] )
 
         #utc_ms=get_arinc429(buf, frame_pos, (time_set[2],), word_sec)  #ARINC 429 format
         #utc_ms=arinc429_decode(utc_ms,time_set[2]['par'] )
-
-        utc_s =get_arinc429(buf, frame_pos, (time_set[3],), word_sec)  #ARINC 429 format
-        utc_s =arinc429_decode(utc_s ,time_set[3]['par'] )
 
         value=get_arinc429(buf, frame_pos, param_set, word_sec)  #ARINC 429 format
         value =arinc429_decode(value ,par )
 
         #pm_list.append({'time':'%02d:%02d:%02d:%02d'%(utc_h,utc_m,utc_ms,utc_s,),'v':value})
-        pm_list.append({'time':'%02d:%02d:%02d'%(utc_h,utc_m,utc_s,),'v':value})
+        pm_list.append({'time':'%02d:%02d'%(utc_m,utc_s,),'v':value})
         #pm_list.append({'time':0,'v':value})
         frame_pos += word_sec * 4 * 2   # 4subframe, 2bytes
     return pm_list
@@ -452,8 +448,18 @@ def arinc429_BNR_decode(word,conf):
         if word & bits:
             value -= 1 << conf['blen']
     #Resolution
-    if conf['Resol'].find('Resol=')==0:
-        value *= float(conf['Resol'][6:])
+    if conf['type'].find('BNR LINEAR (A*X)')==0:
+        if conf['Resol'].find('Resol=')==0:
+            value *= float(conf['Resol'][6:])
+    elif conf['type'].find('BNR SEGMENTS (A*X+B)')==0:
+        if len(conf['Resol'])>0:
+            #这个没处理
+            print('ERR,BNR SEGMENTS (A*X+B), not treated',flush=True)
+            raise(Exception('ERR,BNR SEGMENTS (A*X+B), not treated'))
+    else:
+        #这个没处理
+        print('ERR,other',conf['type'],flush=True)
+        raise(Exception('ERR,%s, not treated'%conf['type']))
     return value 
 def get_arinc429(buf, frame_pos, param_set, word_sec):
     '''
@@ -636,11 +642,13 @@ def usage():
     print(u' 命令行工具。')
 
     print(sys.argv[0]+' [-h|--help] [-f|--file]  ')
-    print('   -h, --help     print usage.')
-    print(' * -f, --file=    "....wgl.zip" filename')
-    print(' * -p, --param alt_std   show "ALT_STD" param. 自动转全大写。')
-    print('   --paramlist      list all param name.')
-    #print('   -w xxx.dat            写入文件"xxx.dat"')
+    print('   * (必要参数)')
+    print('   -h, --help                 print usage.')
+    print(' * -f, --file xxx.wgl.zip     "....wgl.zip" filename')
+    print(' * -p, --param alt_std        show "ALT_STD" param. 自动全部大写。')
+    print('   --paramlist                list all param name.')
+    print('   -w xxx.csv            参数写入文件"xxx.csv"')
+    print('   -w xxx.csv.gz         参数写入文件"xxx.csv.gz"')
     print(u'\n               author:南方航空,LLGZ@csair.com')
     print()
     return

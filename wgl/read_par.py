@@ -84,6 +84,14 @@ def main():
     print('PAR:',getsizeof(PAR))
     print('end mem:',sysmem())
     #print(PAR.loc[:,2].unique() ) #列出所有的Type
+    #print(PAR.loc[:,12].unique() ) #列出所有的Computation:Value=Constant Value or Resol=Coef...
+    #print(PAR.loc[:,29].dropna().tolist() ) #列出所有的 Coef A(Res) ,有数组
+    #print(PAR.loc[:,30].dropna().tolist() ) #列出所有的 Coef b,有数组
+    #print(PAR.loc[:,31].dropna().tolist() ) #列出所有的 Dot,都是None
+    #print(PAR.loc[:,32].dropna().tolist() ) #列出所有的 X,都是None
+    #print(PAR.loc[:,33].dropna().tolist() ) #列出所有的 Y,都是None
+    #print(PAR.loc[:,34].unique() ) #列出所有的 Coef A,都是None
+    #print(PAR.loc[:,35].unique() ) #列出所有的 Power,都是None
     #print(PAR.loc[0] ) #列出所有的column
     if TOCSV:
         csv_fname='%d.csv' % int(FNAME)
