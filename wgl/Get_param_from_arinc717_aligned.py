@@ -161,57 +161,6 @@ def main():
             print()
     else:
         #-----------获取一个参数--------------------
-        time_set=[]
-        #10576 没有 'UTC_HOUR' 这个参数
-
-        fra =getFRA(air[0],'UTC_MIN')
-        par =getPAR(air[0],'UTC_MIN')
-        #print('fra:',fra)
-        #print('par:',par)
-        time_set.append({
-            'part':int(fra['2'][0][0]),
-            'rate':int(fra['2'][0][1]),
-            'sub' :int(fra['2'][0][2]),
-            'word':int(fra['2'][0][3]),
-            'bout':int(fra['2'][0][4]),
-            'blen':int(fra['2'][0][5]),
-            'bin' :int(fra['2'][0][6]),
-            'par' : par,
-            })
-        fra =getFRA(air[0],'UTC_SEC')
-        par =getPAR(air[0],'UTC_SEC')
-        #print('fra:',fra)
-        #print('par:',par)
-        time_set.append({
-            'part':int(fra['2'][0][0]),
-            'rate':int(fra['2'][0][1]),
-            'sub' :int(fra['2'][0][2]),
-            'word':int(fra['2'][0][3]),
-            'bout':int(fra['2'][0][4]),
-            'blen':int(fra['2'][0][5]),
-            'bin' :int(fra['2'][0][6]),
-            'par' : par,
-            })
-        '''
-        fra =getFRA(air[0],'UTC_MIN_SEC')
-        par =getPAR(air[0],'UTC_MIN_SEC')
-        #print('fra:',fra)
-        #print('par:',par)
-        time_set.append({
-            'part':int(fra['2'][0][0]),
-            'rate':int(fra['2'][0][1]),
-            'sub' :int(fra['2'][0][2]),
-            'word':int(fra['2'][0][3]),
-            'bout':int(fra['2'][0][4]),
-            'blen':int(fra['2'][0][5]),
-            'bin' :int(fra['2'][0][6]),
-            'par' : par,
-            })
-        '''
-        #print('time set:')
-        #for vv in time_set: print(vv)
-        #print()
-
         fra =getFRA(air[0],PARAM)
         par =getPAR(air[0],PARAM)
         if len(fra)<1:
@@ -225,37 +174,25 @@ def main():
         #print()
 
         print('PARAM:',PARAM)
-        pm_list=get_param(fra,par,time_set) #获取一个参数
+        pm_list=get_param(fra,par) #获取一个参数
         #print(pm_list)
+        print(pm_list[0]) #打印第一组值
         df_pm=pd.DataFrame(pm_list)
 
-        #参数写入csv文件
+        #-----------参数写入csv文件--------------------
         if WFNAME is not None and len(WFNAME)>0:
             print('Write into file "%s".' % WFNAME)
-            df_pm.to_csv(WFNAME,index=True,index_label='index')
-            #df_pm.to_csv(WFNAME,sep='\t',index=True,index_label='index')
+            #df_pm.to_csv(WFNAME,index=False)
+            df_pm.to_csv(WFNAME,sep='\t',index=False)
             return
+
         pd.set_option('display.min_row',200)
-        '''
-        print(df_pm)
-        print( df_pm['v'].tolist() )
-        '''
         print( df_pm['v'][1000:].tolist() )
-        '''
-        ii=0
-        for vv in df_pm['time'].tolist():
-            #if vv=='00:00:00:00' or vv=='00:00:00':
-            #    continue
-            ii +=1
-            if ii%10 ==0: print()
-            print(vv,end='\t')
-        print()
-        '''
 
     print('mem:',sysmem())
     return
 
-def get_param(fra,par,time_set):
+def get_param(fra,par):
     '''
     获取参数，返回 ARINC 429 format
   -------------------------------------
@@ -265,55 +202,48 @@ def get_param(fra,par,time_set):
     /     \    
    |parity |   
   -------------------------------------  
-   author:南方航空,LLGZ@csair.com  
+    author:南方航空,LLGZ@csair.com  
     '''
     global FNAME,WFNAME,DUMPDATA
 
     #初始化变量
     word_sec=int(fra['1'][0])
-    sync_word=int(fra['1'][1])//12  #整除
-    #sync_word=2
-    sync1=int(fra['1'][2],16)
+    sync_word_len=int(fra['1'][1])//12  #整除, 同步字的字数(长度)
+    sync1=int(fra['1'][2],16)  #同步字1
     sync2=int(fra['1'][3],16)
     sync3=int(fra['1'][4],16)
     sync4=int(fra['1'][5],16)
     superframe_counter_set=[{
-            'rate':-1,
+            'part':1,
+            'rate':1,
             'sub' :int(fra['1'][6]),
             'word':int(fra['1'][7]),
             'bout':int(fra['1'][8]),
             'blen':int(fra['1'][9]),
             'v_1st':int(fra['1'][10]),
-            'bin' :-1,
+            'bin' :12,
+            'occur': -1,
             }]
-    if sync_word>1:
-        sync1=(sync1 << (12 * (sync_word-1))) +1
-        sync2=(sync2 << (12 * (sync_word-1))) +1
-        sync3=(sync3 << (12 * (sync_word-1))) +1
-        sync4=(sync4 << (12 * (sync_word-1))) +1
+    if sync_word_len>1: #如果同步字 > 1 word
+        sync1=(sync1 << (12 * (sync_word_len-1))) +1  #生成长的同步字
+        sync2=(sync2 << (12 * (sync_word_len-1))) +1
+        sync3=(sync3 << (12 * (sync_word_len-1))) +1
+        sync4=(sync4 << (12 * (sync_word_len-1))) +1
 
-    param_set=[]
-    for vv in fra['2']:
-        param_set.append({
-            'part':int(vv[0]),
-            'rate':int(vv[1]), # 10412(1=1/4HZ(一个frame一个记录), 2=1/2HZ, 4=1HZ(每个subframe一个记录), 8=2HZ, 16=4HZ)
-            'sub' :int(vv[2]),
-            'word':int(vv[3]),
-            'bout':int(vv[4]),
-            'blen':int(vv[5]),
-            'bin' :int(vv[6]),
-            'occur' :int(vv[7]) if len(vv[7])>0 else -1,
-            })
-    print('Frame定义: Word/SEC:%d, syncLen(word):%d, sync1234: %X,%X,%X,%X'%(word_sec,sync_word,sync1,sync2,sync3,sync4) )
+    param_set=getDataFrameSet(fra['2'],word_sec)  #整理参数位置记录的配置
+
+    #----------打印参数-----------
+    print('Frame定义: Word/SEC:%d, syncLen(word):%d, sync1234: %X,%X,%X,%X'%(word_sec,sync_word_len,sync1,sync2,sync3,sync4) )
     print('   SuperFrame Counter:',superframe_counter_set)
     print()
-    print('param(fra):')
+    print('param(fra):',len(param_set))
     for vv in param_set:
         print(vv)
     print('param(par):',par)
     print()
 
 
+    #----------打开zip压缩文件-----------
     try:
         fzip=zipfile.ZipFile(FNAME,'r') #打开zip文件
     except zipfile.BadZipFile as e:
@@ -323,56 +253,121 @@ def get_param(fra,par,time_set):
     buf=fzip.read(filename_zip)
     fzip.close()
 
+    #----------寻找起始位置-----------
     ttl_len=len(buf)
-    frame_pos=0  #frame开始位置
-    while frame_pos<ttl_len - sync_word *2:  #寻找frame开始位置
-        word=getWord(buf,frame_pos, sync_word)
+    frame_pos=0  #frame开始位置,字节指针
+    while frame_pos<ttl_len - sync_word_len *2:  #寻找frame开始位置
+        word=getWord(buf,frame_pos, sync_word_len)
         if word == sync1:
             #print('==>Mark,x%X'%(frame_pos,))
             break
         frame_pos +=1
-    if frame_pos >= ttl_len - sync_word *2:
+    if frame_pos >= ttl_len - sync_word_len *2:
         print('ERR,SYNC1 not found.',flush=True)
         raise(Exception('ERR,SYNC1 not found.'))
     
+    #----------读参数-----------
     ii=0    #计数
     pm_list=[] #参数列表
+    pm_sec=0.0   #参数的时间轴,秒数
     while frame_pos<ttl_len -2:
-        subframe=1
         '''
-        if getWord(buf,frame_pos+word_sec*2,sync_word) != sync2:
+        if getWord(buf,frame_pos+word_sec*2,sync_word_len) != sync2:
             print('==>notFound sync2.%X,x%X'%(sync2,frame_pos))
-        if getWord(buf,frame_pos+word_sec*4,sync_word) != sync3:
+        if getWord(buf,frame_pos+word_sec*4,sync_word_len) != sync3:
             print('==>notFound sync3.%X,x%X'%(sync3,frame_pos))
-        if getWord(buf,frame_pos+word_sec*6,sync_word) != sync4:
+        if getWord(buf,frame_pos+word_sec*6,sync_word_len) != sync4:
             print('==>notFound sync4.%X,x%X'%(sync4,frame_pos))
         '''
-        utc_m =get_arinc429(buf, frame_pos, (time_set[0],), word_sec)  #ARINC 429 format
-        utc_m =arinc429_decode(utc_m ,time_set[0]['par'] )
+        #frame_counter=get_arinc429(buf, frame_pos, superframe_counter_set, word_sec )
 
-        utc_s =get_arinc429(buf, frame_pos, (time_set[1],), word_sec)  #ARINC 429 format
-        utc_s =arinc429_decode(utc_s ,time_set[1]['par'] )
+        sec_add = 1.0 / len(param_set)
+        for pm_set in param_set:
+            value=get_arinc429(buf, frame_pos, pm_set, word_sec )  #ARINC 429 format
+            value =arinc429_decode(value ,par )
 
-        #utc_ms=get_arinc429(buf, frame_pos, (time_set[2],), word_sec)  #ARINC 429 format
-        #utc_ms=arinc429_decode(utc_ms,time_set[2]['par'] )
+            pm_list.append({'t':pm_sec,'v':value})
+            #pm_list.append({'t':pm_sec,'v':value,'c':frame_counter})
+            pm_sec += sec_add
 
-        value=get_arinc429(buf, frame_pos, param_set, word_sec)  #ARINC 429 format
-        value =arinc429_decode(value ,par )
-
-        #pm_list.append({'time':'%02d:%02d:%02d:%02d'%(utc_h,utc_m,utc_ms,utc_s,),'v':value})
-        pm_list.append({'time':'%02d:%02d'%(utc_m,utc_s,),'v':value})
-        #pm_list.append({'time':0,'v':value})
         frame_pos += word_sec * 4 * 2   # 4subframe, 2bytes
     return pm_list
 
+def getDataFrameSet(fra2,word_sec):
+    '''
+    整理参数在arinc717位置记录的配置(在12 bit word中的位置)
+    如果不是 self-distant , 会有每个位置的配置。 对所有的位置记录分组。
+    如果是 self-distant , 只有第一个位置的配置。 根据 rate, 补齐所有的位置记录，并分组。
+        author:南方航空,LLGZ@csair.com  
+    '''
+    # ---分组---
+    group_set=[]
+    p_set=[]
+    last_part=0
+    for vv in fra2:
+        vv[0]=int(vv[0]) #part
+        if vv[0]<=last_part:
+            #part=1,2,3 根据part分组
+            group_set.append(p_set)
+            p_set=[]
+        last_part=vv[0]
+        #rate: 1=1/4HZ(一个frame一个记录), 2=1/2HZ, 4=1HZ(每个subframe一个记录), 8=2HZ, 16=4HZ, 32=8HZ(每个subframe有8条记录)
+        p_set.append({
+            'part':vv[0],
+            'rate':int(vv[1]),
+            'sub' :int(vv[2]),
+            'word':int(vv[3]),
+            'bout':int(vv[4]),
+            'blen':int(vv[5]),
+            'bin' :int(vv[6]),
+            'occur' :int(vv[7]) if len(vv[7])>0 else -1,
+            })
+    if len(p_set)>0: #最后一组
+        group_set.append(p_set)
+
+    # --------打印 分组配置----------
+    for vv in group_set:
+        print(vv)
+
+    # --------根据rate补齐记录-------
+    param_set=[]
+    frame_rate=group_set[0][0]['rate']
+    if frame_rate>4:
+        frame_rate=4           #一个frame中占几个subframe
+    subf_sep=4//frame_rate  #整除
+    for subf in range(0,4,subf_sep):  #补subframe, 仅根据第一条记录的rate补
+        for group in group_set:
+            frame_rate=group[0]['rate']
+            if frame_rate>4:
+                sub_rate=frame_rate//4  #一个subframe中有几个记录 ,整除
+            else:
+                sub_rate=1
+            word_sep=word_sec//sub_rate  #整除
+            for word_rate in range(sub_rate):  #补word, 根据分组记录的第一条rate补
+                p_set=[]
+                for vv in group:
+                    p_set.append({
+                        'part':vv['part'],
+                        'rate':vv['rate'],
+                        'sub' :vv['sub']+subf,
+                        'word':vv['word']+word_rate*word_sep,
+                        'bout':vv['bout'],
+                        'blen':vv['blen'],
+                        'bin' :vv['bin'],
+                        'occur':vv['occur'],
+                        })
+                param_set.append(p_set)
+    return param_set
+
 def arinc429_decode(word,conf):
     '''
-    par中有所有的 Type: 'CONSTANT' 'DISCRETE' 'PACKED BITS' 'BNR LINEAR (A*X)' 'COMPUTED ON GROUND' 'CHARACTER' 'BCD' 'BNR SEGMENTS (A*X+B)' 'UTC'
-    出现的 Type: 'BNR LINEAR (A*X)' 'CHARACTER' 'BCD' 'UTC'
+    par可能有的 Type: 'CONSTANT' 'DISCRETE' 'PACKED BITS' 'BNR LINEAR (A*X)' 'COMPUTED ON GROUND' 'CHARACTER' 'BCD' 'BNR SEGMENTS (A*X+B)' 'UTC'
+    par实际有的 Type: 'BNR LINEAR (A*X)' 'CHARACTER' 'BCD' 'UTC'
+        author:南方航空,LLGZ@csair.com  
     '''
     if conf['type'].find('BNR')==0:
         return arinc429_BNR_decode(word ,conf)
-    else:
+    else: #BCD, CHARACTER
         return arinc429_BCD_decode(word ,conf)
 def arinc429_BCD_decode(word,conf):
     '''
@@ -390,37 +385,49 @@ def arinc429_BCD_decode(word,conf):
                 'Resol'   :tmp2.iat[0,12],    #Computation:Value=Constant Value or Resol=Coef A(Resolution) or ()
                 'format'  :tmp2.iat[0,25],    #Internal Format (Float ,Unsigned or Signed)
                     }]
-   author:南方航空,LLGZ@csair.com
+    author:南方航空,LLGZ@csair.com
     '''
-    #符号位
-    sign=1
-    if conf['signBit']>0:
-        bits=1
-        bits <<= conf['signBit']-1
-        if word & bits:
-            sign=-1
-
-    if len(conf['part'])>0:
-        #有分步配置
-        if conf['type']=='CHARACTER':
+    if conf['type']=='CHARACTER':
+        if len(conf['part'])>0:
+            #有分步配置
             value = ''
-        else:   # BCD
-            value = 0
-        for vv in conf['part']:
-            #根据blen，获取掩码值
-            bits= (1 << vv['blen']) -1
-            #把值移到最右(移动到bit0)，并获取值
-            tmp = ( word >> (vv['pos'] - vv['blen']) ) & bits
-            if conf['type']=='CHARACTER':
+            for vv in conf['part']:
+                #根据blen，获取掩码值
+                bits= (1 << vv['blen']) -1
+                #把值移到最右(移动到bit0)，并获取值
+                tmp = ( word >> (vv['pos'] - vv['blen']) ) & bits
                 value +=  chr(tmp)
-            else:   # BCD
+        else:
+            #根据blen，获取掩码值
+            bits= (1 << conf['blen']) -1
+            #把值移到最右(移动到bit0)，并获取值
+            value = ( word >> (conf['pos'] - conf['blen']) ) & bits
+            value =  chr(value)
+        return value
+    else:  #BCD
+        #符号位
+        sign=1
+        if conf['signBit']>0:
+            bits=1
+            bits <<= conf['signBit']-1  #bit位编号从1开始,所以-1
+            if word & bits:
+                sign=-1
+
+        if len(conf['part'])>0:
+            #有分步配置
+            value = 0
+            for vv in conf['part']:
+                #根据blen，获取掩码值
+                bits= (1 << vv['blen']) -1
+                #把值移到最右(移动到bit0)，并获取值
+                tmp = ( word >> (vv['pos'] - vv['blen']) ) & bits
                 value = value * 10 + tmp
-    else:
-        #根据blen，获取掩码值
-        bits= (1 << conf['blen']) -1
-        #把值移到最右(移动到bit0)，并获取值
-        value = ( word >> (conf['pos'] - conf['blen']) ) & bits
-    return value * sign
+        else:
+            #根据blen，获取掩码值
+            bits= (1 << conf['blen']) -1
+            #把值移到最右(移动到bit0)，并获取值
+            value = ( word >> (conf['pos'] - conf['blen']) ) & bits
+        return value * sign
 def arinc429_BNR_decode(word,conf):
     '''
     从 ARINC429格式中取出 值
@@ -437,7 +444,7 @@ def arinc429_BNR_decode(word,conf):
                 'Resol'   :tmp2.iat[0,12],    #Computation:Value=Constant Value or Resol=Coef A(Resolution) or ()
                 'format'  :tmp2.iat[0,25],    #Internal Format (Float ,Unsigned or Signed)
                     }]
-   author:南方航空,LLGZ@csair.com
+    author:南方航空,LLGZ@csair.com
     '''
     #根据blen，获取掩码值
     bits= (1 << conf['blen']) -1
@@ -446,7 +453,7 @@ def arinc429_BNR_decode(word,conf):
 
     #符号位
     if conf['signBit']>0:
-        bits = 1 << (conf['signBit']-1)
+        bits = 1 << (conf['signBit']-1)  #bit位编号从1开始,所以-1
         if word & bits:
             value -= 1 << conf['blen']
     #Resolution
@@ -463,25 +470,24 @@ def arinc429_BNR_decode(word,conf):
         print('ERR,other',conf['type'],flush=True)
         raise(Exception('ERR,%s, not treated'%conf['type']))
     return value 
-def get_arinc429(buf, frame_pos, param_set, word_sec):
+def get_arinc429(buf, frame_pos, param_set, word_sec ):
     '''
     根据 fra的配置，获取arinc429格式的32bit word
-      另:fra 配置中有多条不同的记录,对应多个32bit word(未实现,todo)
+      另:fra 配置中有多条不同的记录,对应多个32bit word(完成)
+    author:南方航空,LLGZ@csair.com
     '''
     value=0
     pre_id=0
     for pm_set in param_set:
-        if pm_set['part']>pre_id:  #有多组配置，只执行第一组
-            pre_id=pm_set['part']
-        else:
-            break
+        #if pm_set['part']>pre_id:  #有多组配置，只执行第一组。//配置经过整理，只剩一组了。
+        #    pre_id=pm_set['part']
+        #else:
+        #    break
         word=getWord(buf,
-                frame_pos + word_sec *2 *(pm_set['sub']-1) +(pm_set['word']+1)*2  #word+1,猜的，也许同步字占了一个word
+                frame_pos + word_sec *2 *(pm_set['sub']-1) +(pm_set['word']-1)*2  #同步字所占的位置,编号为1,所以要-1
                 )
         #根据blen，获取掩码值
-        bits=1
-        for ii in range(1,pm_set['blen']):
-            bits = (bits << 1) | 1
+        bits= (1 << pm_set['blen']) -1
         #根据bout，把掩码移动到对应位置
         bits <<= pm_set['bout'] - pm_set['blen']
         word &= bits  #获取值
@@ -497,20 +503,33 @@ def getWord(buf,pos, word_len=1):
     '''
     读取两个字节，取12bit为一个word
     支持取 12bits,24bits,36bits,48bits,60bits
-    author:南方航空,LLGZ@csair.com
+       author:南方航空,LLGZ@csair.com
     '''
     #print(type(buf), type(buf[pos]), type(buf[pos+1])) #bytes, int, int
-    if word_len==1:
-        return ((buf[pos +1] << 8 ) | buf[pos] ) & 0xFFF
 
-    #word_len>1
-    word=((buf[pos +1] << 8 ) | buf[pos] ) & 0xFFF
-    for ii in range(1,word_len):
-        high = ((buf[pos+ii*2+1] << 8 ) | buf[pos +ii*2] ) & 0xFFF
+    ttl=len(buf)  #读数据的时候,开始位置加上subframe和word的偏移，可能会超限
+    if word_len==1:
+        if pos+1 >= ttl:
+            return 0  #超限返回0
+        else:
+            return ((buf[pos +1] << 8 ) | buf[pos] ) & 0xFFF
+
+    #word_len>1 //只有获取大于1个word 的同步字,才有用
+    word=0
+    for ii in range(0,word_len):
+        if pos+ii*2+1 >= ttl:
+            high = 0
+        else:
+            high = ((buf[pos+ii*2+1] << 8 ) | buf[pos +ii*2] ) & 0xFFF
         word |= high << (12 * ii)
     return word
 
 def getPAR(dataver,param):
+    '''
+    获取参数在arinc429的32bit word中的位置配置
+    挑出有用的,整理一下,返回
+       author:南方航空,LLGZ@csair.com
+    '''
     global DATA
     if not hasattr(DATA,'par'):
         DATA.par=PAR.read_parameter_file(dataver)
@@ -548,6 +567,11 @@ def getPAR(dataver,param):
                 }
 
 def getFRA(dataver,param):
+    '''
+    获取参数在arinc717的12bit word中的位置配置
+    挑出有用的,整理一下,返回
+       author:南方航空,LLGZ@csair.com
+    '''
     global PARAMLIST
     global DATA
 
@@ -569,7 +593,7 @@ def getFRA(dataver,param):
             ret2=[]
             for ii in range( len(tmp.index)):
                 tmp2=[
-                    tmp.iat[ii,1],   #part(1,2,3),会有多组记录,对应返回多个32bit word(todo)
+                    tmp.iat[ii,1],   #part(1,2,3),会有多组记录,对应返回多个32bit word(完成)
                     tmp.iat[ii,2],   #recordRate
                     tmp.iat[ii,3],   #subframe
                     tmp.iat[ii,4],   #word
@@ -600,6 +624,11 @@ def getFRA(dataver,param):
             }
 
 def getAIR(reg):
+    '''
+    获取机尾号对应解码库的配置。
+    挑出有用的,整理一下,返回
+       author:南方航空,LLGZ@csair.com
+    '''
     reg=reg.upper()
     df_flt=AIR.csv(conf.aircraft)
     tmp=df_flt[ df_flt.iloc[:,0]==reg].copy()  #dataframe
@@ -612,6 +641,10 @@ def getAIR(reg):
         return [0,0,0]
 
 def getREG(fname):
+    '''
+    从zip文件名中，找出机尾号
+       author:南方航空,LLGZ@csair.com
+    '''
     tmp=fname.strip().split('_',1)
     if len(tmp[0])>6: #787的文件名没有用 _ 分隔
         return tmp[0][:6]
@@ -621,6 +654,9 @@ def getREG(fname):
         return ''
 
 def showsize(size):
+    '''
+    显示，为了 human readable
+    '''
     if size<1024.0*2:
         return '%.0f B'%(size)
     size /=1024.0
@@ -633,6 +669,9 @@ def showsize(size):
     if size<1024.0*2:
         return '%.2f G'%(size)
 def sysmem():
+    '''
+    获取本python程序占用的内存大小
+    '''
     size=psutil.Process(os.getpid()).memory_info().rss #实际使用的物理内存，包含共享内存
     #size=psutil.Process(os.getpid()).memory_full_info().uss #实际使用的物理内存，不包含共享内存
     return showsize(size)
