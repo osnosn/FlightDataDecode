@@ -281,7 +281,7 @@ def get_param(fra,par):
         '''
         #frame_counter=get_arinc429(buf, frame_pos, superframe_counter_set, word_sec )
 
-        sec_add = 1.0 / len(param_set)
+        sec_add = 4.0 / len(param_set)  #一个frame是4秒
         for pm_set in param_set:
             value=get_arinc429(buf, frame_pos, pm_set, word_sec )  #ARINC 429 format
             value =arinc429_decode(value ,par )
