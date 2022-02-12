@@ -106,9 +106,10 @@ https://github.com/KindVador/A429Library  #C++
 #import struct
 #from datetime import datetime
 import zipfile
-import psutil
+import psutil         #非必需库
 #from io import BytesIO
-import pandas as pd
+#pandas不是必需的库。获取参数返回的是dist的list表。并没有用到pandas。
+import pandas as pd   #非必需库
 import config_vec as conf
 import read_air as AIR
 import read_fra as FRA
@@ -297,7 +298,11 @@ def getDataFrameSet(fra2,word_sec):
     '''
     整理参数在arinc717位置记录的配置(在12 bit word中的位置)
     如果不是 self-distant , 会有每个位置的配置。 对所有的位置记录分组。
+        需要根据rate值，补齐其他的subframe。
+        比如:rate=4, 就是1-4subframe都有。rate=2，就是在1,3或2,4subframe中。
     如果是 self-distant , 只有第一个位置的配置。 根据 rate, 补齐所有的位置记录，并分组。
+        需要根据rate值，补齐其他的subframe, 和word位置。
+        subframe的补齐同上，word的间隔是,用 word/sec除以记录数确定。在每个subframe中均匀分部的。
         author:南方航空,LLGZ@csair.com  
     '''
     # ---分组---
@@ -474,6 +479,7 @@ def get_arinc429(buf, frame_pos, param_set, word_sec ):
     '''
     根据 fra的配置，获取arinc429格式的32bit word
       另:fra 配置中有多条不同的记录,对应多个32bit word(完成)
+      bit位置，是从1开始编号。word位置也是从1开始编号。同步字位置为1，数据字是从2开始编号(假设同步字只占1word)。
     author:南方航空,LLGZ@csair.com
     '''
     value=0
@@ -501,7 +507,7 @@ def get_arinc429(buf, frame_pos, param_set, word_sec ):
     return value
 def getWord(buf,pos, word_len=1):
     '''
-    读取两个字节，取12bit为一个word
+    读取两个字节，取12bit为一个word。低位在前。littleEndian,low-byte first.
     支持取 12bits,24bits,36bits,48bits,60bits
        author:南方航空,LLGZ@csair.com
     '''

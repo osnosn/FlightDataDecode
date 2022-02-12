@@ -8,8 +8,10 @@
       author:南方航空,LLGZ@csair.com
 """
 import sys
-import os,psutil
-from datetime import datetime
+import os
+import psutil   #非必须库
+#from datetime import datetime
+#pandas 可以不使用, read_parameter_file() 可以返回list, 不返回DataFrame。
 import pandas as pd
 import zipfile
 from io import StringIO

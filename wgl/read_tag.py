@@ -6,7 +6,7 @@
     author:南方航空,LLGZ@csair.com
 """
 import struct
-from datetime import datetime
+from datetime import datetime  #非必须库
 import zipfile
 
 def main():

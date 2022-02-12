@@ -29,8 +29,8 @@
 #import struct
 #from datetime import datetime
 import zipfile
-import psutil
-from io import BytesIO
+import psutil   #非必须库
+#from io import BytesIO
 
 def main():
     global FNAME,WFNAME,DUMPDATA
@@ -119,7 +119,7 @@ def main():
 
 def getWord(buf,pos):
     '''
-    读取两个字节，拼为一个16 bit word
+    读取两个字节，拼为一个16 bit word。高位在前。bigEndian,High-byte first.
        author:南方航空,LLGZ@csair.com
     '''
     #print(type(buf), type(buf[pos]), type(buf[pos+1])) #bytes, int, int

@@ -7,7 +7,7 @@
      author:南方航空,LLGZ@csair.com
 """
 import struct
-from datetime import datetime
+#from datetime import datetime
 
 def main():
     global VER  ,DUMPDATA

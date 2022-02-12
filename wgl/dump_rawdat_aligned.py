@@ -119,7 +119,7 @@
 #import struct
 #from datetime import datetime
 import zipfile
-import psutil
+import psutil   #非必须库
 from io import BytesIO
 
 def main():
