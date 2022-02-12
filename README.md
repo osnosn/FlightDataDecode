@@ -25,6 +25,6 @@
     - 只能找出每帧的开始和结束。找出帧头,和帧尾的格式。   
 * 2022-02 再次更新  
   - 对于 ARINC 573/717 的记录格式   
-    - 增加支持 PACKED BITS, UTC, 类型的值。共支持5种: BNR, BCD, CHARACTER, PACKED BITS, UTC.    
+    - 增加支持 DISCRETE, PACKED BITS, UTC, 类型的值。共支持7种: BCD, BNR LINEAR, BNR SEGMENTS, CHARACTER, DISCRETE, PACKED BITS, UTC.    
 
 

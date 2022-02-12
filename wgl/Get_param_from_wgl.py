@@ -246,17 +246,19 @@ def get_param(fra,par):
 
     #----------Data Type Warning-----------
     if par['type'].find('BCD')!=0 and \
+            par['type'].find('BNR LINEAR (A*X)')!=0 and \
+            par['type'].find('BNR SEGMENTS (A*X+B)')!=0 and \
             par['type'].find('CHARACTER')!=0 and \
+            par['type'].find('DISCRETE')!=0 and \
             par['type'].find('PACKED BITS')!=0 and \
-            par['type'].find('UTC')!=0 and \
-            par['type'].find('BNR')!=0:
+            par['type'].find('UTC')!=0 :
         print('!!!Warning!!! Data Type "%s" Decoding maybe NOT correct.\n' % (par['type']) )
 
     #----------打开zip压缩文件-----------
     try:
         fzip=zipfile.ZipFile(FNAME,'r') #打开zip文件
     except zipfile.BadZipFile as e:
-        print('ERR,FailOpenZipFile',e,FNAME,flush=True)
+        print('==>ERR,FailOpenZipFile',e,FNAME,flush=True)
         raise(Exception('ERR,FailOpenZipFile,%s'%FNAME))
     filename_zip='raw.dat'
     buf=fzip.read(filename_zip)
@@ -265,29 +267,30 @@ def get_param(fra,par):
     #----------寻找起始位置-----------
     ttl_len=len(buf)
     frame_pos=0  #frame开始位置,字节指针
-    while frame_pos<ttl_len - sync_word_len *2:  #寻找frame开始位置
-        word=getWord(buf,frame_pos, sync_word_len)
-        if word == sync1:
-            #print('==>Mark,x%X'%(frame_pos,))
-            break
-        frame_pos +=1
+    frame_pos=find_SYNC1(buf, ttl_len, frame_pos, word_sec, sync_word_len, (sync1,sync2,sync3,sync4) )
+    if frame_pos > 0:
+        print('!!!Warning!!! First SYNC at x%X, not beginning of DATA.'%(frame_pos),flush=True)
     if frame_pos >= ttl_len - sync_word_len *2:
-        print('ERR,SYNC1 not found.',flush=True)
-        raise(Exception('ERR,SYNC1 not found.'))
+        #整个文件都没找到同步字
+        print('==>ERR, SYNC not found at end of DATA.',flush=True)
+        raise(Exception('ERR,SYNC not found at end of DATA.'))
     
     #----------读参数-----------
     ii=0    #计数
     pm_list=[] #参数列表
     pm_sec=0.0   #参数的时间轴,秒数
-    while frame_pos<ttl_len -2:
-        '''
-        if getWord(buf,frame_pos+word_sec*2,sync_word_len) != sync2:
-            print('==>notFound sync2.%X,x%X'%(sync2,frame_pos))
-        if getWord(buf,frame_pos+word_sec*4,sync_word_len) != sync3:
-            print('==>notFound sync3.%X,x%X'%(sync3,frame_pos))
-        if getWord(buf,frame_pos+word_sec*6,sync_word_len) != sync4:
-            print('==>notFound sync4.%X,x%X'%(sync4,frame_pos))
-        '''
+    while True:
+        # 有几个dataVer的数据,不是从文件头开始,只匹配sync1会找错。且不排除中间会错/乱。
+        #所以每次都要用find_SYNC1()判断。  实际测试,发现有同步字错误,但frame间隔正确。
+        frame_pos2=frame_pos   #保存旧位置
+        frame_pos=find_SYNC1(buf, ttl_len, frame_pos, word_sec, sync_word_len, (sync1,sync2,sync3,sync4) )  #判断同步字，或继续寻找新位置
+        if frame_pos>frame_pos2:
+            print('==>ERR, SYNC loss at x%X，refound at x%X' % (frame_pos2, frame_pos) )
+            pm_sec +=4  #如果失去同步,重新同步后,时间加4秒
+        if frame_pos>=ttl_len -2:
+            #-----超出文件结尾，退出-----
+            break
+
         #frame_counter=get_arinc429(buf, frame_pos, superframe_counter_set, word_sec )
 
         sec_add = 4.0 / len(param_set)  #一个frame是4秒
@@ -298,10 +301,28 @@ def get_param(fra,par):
             pm_list.append({'t':round(pm_sec,10),'v':value})
             #pm_list.append({'t':round(pm_sec,10),'v':bin(value)})
             #pm_list.append({'t':round(pm_sec,10),'v':value,'c':frame_counter})
-            pm_sec += sec_add
+            pm_sec += sec_add   #时间轴累加
 
         frame_pos += word_sec * 4 * 2   # 4subframe, 2bytes
     return pm_list
+
+def find_SYNC1(buf, ttl_len, frame_pos, word_sec, sync_word_len, sync):
+    '''
+    判断 frame_pos 位置，是否满足同步字特征。如果不满足, 继续寻找下一个起始位置
+    '''
+    #ttl_len=len(buf)
+    while frame_pos<ttl_len - sync_word_len *2:  #寻找frame开始位置
+        #----似乎只判断连续两个同步字位置正确, 就够了-----
+        if getWord(buf,frame_pos, sync_word_len) == sync[0] and \
+                getWord(buf,frame_pos+word_sec*2,sync_word_len) == sync[1] :
+        #if getWord(buf,frame_pos, sync_word_len) == sync[0] and \
+        #        getWord(buf,frame_pos+word_sec*2,sync_word_len) == sync[1] and \
+        #        getWord(buf,frame_pos+word_sec*4,sync_word_len) == sync[2] and \
+        #        getWord(buf,frame_pos+word_sec*6,sync_word_len) == sync[3] :
+            #print('==>Mark,x%X'%(frame_pos,))
+            break
+        frame_pos +=1
+    return frame_pos
 
 def getDataFrameSet(fra2,word_sec):
     '''
@@ -394,6 +415,7 @@ def arinc429_decode(word,conf):
         return '%02d:%02d:%02d' % (hh,mm,ss)
     else:
         return arinc429_BNR_decode(word ,conf)
+
 def arinc429_BCD_decode(word,conf):
     '''
     从 ARINC429格式中取出 值
@@ -453,6 +475,7 @@ def arinc429_BCD_decode(word,conf):
             #把值移到最右(移动到bit0)，并获取值
             value = ( word >> (conf['pos'] - conf['blen']) ) & bits
         return value * sign
+
 def arinc429_BNR_decode(word,conf):
     '''
     从 ARINC429格式中取出 值
@@ -490,14 +513,13 @@ def arinc429_BNR_decode(word,conf):
             value *= float(conf['A'])
         if len(conf['B'])>0:
             value += float(conf['B'])
-    elif conf['type'].find('PACKED BITS')==0 or \
-            conf['type'].find('UTC')==0:
-        pass
     else:
-        #这个没处理
-        print('ERR,other',conf['type'],flush=True)
-        raise(Exception('ERR,%s, not treated'%conf['type']))
+        #----已知 PACKED BITS, UTC, DISCRETE, 就应该按 BNR 处理---
+        #其他不能识别的类型，默认按BNR处理
+        #在此，无需给出错误提示
+        pass
     return value 
+
 def get_arinc429(buf, frame_pos, param_set, word_sec ):
     '''
     根据 fra的配置，获取arinc429格式的32bit word
@@ -528,6 +550,7 @@ def get_arinc429(buf, frame_pos, param_set, word_sec ):
             word >>= -1 * move
         value |= word
     return value
+
 def getWord(buf,pos, word_len=1):
     '''
     读取两个字节，取12bit为一个word。低位在前。littleEndian,low-byte first.
