@@ -147,8 +147,6 @@ def main():
 
     if PARAM is None:
         #-----------打印参数的配置内容-----------------
-        print('dataVer:',air[0],air[1])
-        print()
         for vv in ('ALT_STD','AC_TAIL7'):
             fra=getFRA(air[0],vv)
             if len(fra)<1:
@@ -160,6 +158,7 @@ def main():
             for vv in fra['2']:
                 print('Part:{0[0]:<5}, recordRate:{0[1]:<5}, subframe:{0[2]:<5}, word:{0[3]:<5}, bitOut:{0[4]:<5}, bitLen:{0[5]:<5}, bitIn:{0[6]:<5}, type:{0[7]:<5}, '.format(vv) )
             print()
+        print('dataVer:',air[0],air[1])
     else:
         #-----------获取一个参数--------------------
         fra =getFRA(air[0],PARAM)
@@ -177,7 +176,9 @@ def main():
         print('PARAM:',PARAM)
         pm_list=get_param(fra,par) #获取一个参数
         #print(pm_list)
-        print(pm_list[0]) #打印第一组值
+        print('Result[0]:',pm_list[0]) #打印第一组值
+        print('DataVer:',air[0])
+
         df_pm=pd.DataFrame(pm_list)
 
         #-----------参数写入csv文件--------------------
@@ -237,12 +238,19 @@ def get_param(fra,par):
     print('Frame定义: Word/SEC:%d, syncLen(word):%d, sync1234: %X,%X,%X,%X'%(word_sec,sync_word_len,sync1,sync2,sync3,sync4) )
     print('   SuperFrame Counter:',superframe_counter_set)
     print()
-    print('param(fra):',len(param_set))
+    print('param(fra): len:%d'%( len(param_set)) )
     for vv in param_set:
         print(vv)
     print('param(par):',par)
     print()
 
+    #----------Data Type Warning-----------
+    if par['type'].find('BCD')!=0 and \
+            par['type'].find('CHARACTER')!=0 and \
+            par['type'].find('PACKED BITS')!=0 and \
+            par['type'].find('UTC')!=0 and \
+            par['type'].find('BNR')!=0:
+        print('!!!Warning!!! Data Type "%s" Decoding maybe NOT correct.\n' % (par['type']) )
 
     #----------打开zip压缩文件-----------
     try:
@@ -287,8 +295,9 @@ def get_param(fra,par):
             value=get_arinc429(buf, frame_pos, pm_set, word_sec )  #ARINC 429 format
             value =arinc429_decode(value ,par )
 
-            pm_list.append({'t':pm_sec,'v':value})
-            #pm_list.append({'t':pm_sec,'v':value,'c':frame_counter})
+            pm_list.append({'t':round(pm_sec,10),'v':value})
+            #pm_list.append({'t':round(pm_sec,10),'v':bin(value)})
+            #pm_list.append({'t':round(pm_sec,10),'v':value,'c':frame_counter})
             pm_sec += sec_add
 
         frame_pos += word_sec * 4 * 2   # 4subframe, 2bytes
@@ -331,8 +340,9 @@ def getDataFrameSet(fra2,word_sec):
         group_set.append(p_set)
 
     # --------打印 分组配置----------
-    for vv in group_set:
-        print(vv)
+    #print('分组配置: len:%d'%(len(group_set) ) )
+    #for vv in group_set:
+    #    print(vv)
 
     # --------根据rate补齐记录-------
     param_set=[]
@@ -367,13 +377,23 @@ def getDataFrameSet(fra2,word_sec):
 def arinc429_decode(word,conf):
     '''
     par可能有的 Type: 'CONSTANT' 'DISCRETE' 'PACKED BITS' 'BNR LINEAR (A*X)' 'COMPUTED ON GROUND' 'CHARACTER' 'BCD' 'BNR SEGMENTS (A*X+B)' 'UTC'
-    par实际有的 Type: 'BNR LINEAR (A*X)' 'CHARACTER' 'BCD' 'UTC'
+    par实际有的 Type: 'BNR LINEAR (A*X)' 'BNR SEGMENTS (A*X+B)' 'CHARACTER' 'BCD' 'UTC' 'PACKED BITS'
         author:南方航空,LLGZ@csair.com  
     '''
-    if conf['type'].find('BNR')==0:
+    if conf['type'].find('BNR')==0 or \
+            conf['type'].find('PACKED BITS')==0:
         return arinc429_BNR_decode(word ,conf)
-    else: #BCD, CHARACTER
+    elif conf['type'].find('BCD')==0 or \
+            conf['type'].find('CHARACTER')==0:
         return arinc429_BCD_decode(word ,conf)
+    elif conf['type'].find('UTC')==0:
+        val=arinc429_BNR_decode(word ,conf)
+        ss= val & 0x3f         #6bits
+        mm= (val >>6) & 0x3f   #6bits
+        hh= (val >>12) & 0x1f  #5bits
+        return '%02d:%02d:%02d' % (hh,mm,ss)
+    else:
+        return arinc429_BNR_decode(word ,conf)
 def arinc429_BCD_decode(word,conf):
     '''
     从 ARINC429格式中取出 值
@@ -466,10 +486,13 @@ def arinc429_BNR_decode(word,conf):
         if conf['Resol'].find('Resol=')==0:
             value *= float(conf['Resol'][6:])
     elif conf['type'].find('BNR SEGMENTS (A*X+B)')==0:
-        if len(conf['Resol'])>0:
-            #这个没处理
-            print('ERR,BNR SEGMENTS (A*X+B), not treated',flush=True)
-            raise(Exception('ERR,BNR SEGMENTS (A*X+B), not treated'))
+        if len(conf['A'])>0:
+            value *= float(conf['A'])
+        if len(conf['B'])>0:
+            value += float(conf['B'])
+    elif conf['type'].find('PACKED BITS')==0 or \
+            conf['type'].find('UTC')==0:
+        pass
     else:
         #这个没处理
         print('ERR,other',conf['type'],flush=True)
@@ -569,6 +592,8 @@ def getPAR(dataver,param):
                 'type'    :tmp2.iat[0,2],    #Type(BCD,CHARACTER)
                 'format'  :tmp2.iat[0,17],    #Display Format Mode (DECIMAL,ASCII)
                 'Resol'   :tmp2.iat[0,12],    #Computation:Value=Constant Value or Resol=Coef A(Resolution) or ()
+                'A'       :tmp2.iat[0,29] if tmp2.iat[0,29] is not None else '',    #Coef A(Res)
+                'B'       :tmp2.iat[0,30] if tmp2.iat[0,30] is not None else '',    #Coef b
                 'format'  :tmp2.iat[0,25],    #Internal Format (Float ,Unsigned or Signed)
                 }
 
