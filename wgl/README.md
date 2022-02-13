@@ -5,10 +5,9 @@
 ```
 $ ./get_param_from_wgl.py
 Usage:
- 读取 wgl中 raw.dat 。
-   读解码一个参数。
- 命令行工具。
-./get_param_from_wgl.py [-h|--help] [-f|--file]
+   命令行工具。
+ 读取 wgl中 raw.dat,根据参数编码规则,解码一个参数。
+./Get_param_from_wgl.py [-h|--help]
    * (必要参数)
    -h, --help                 print usage.
  * -f, --file xxx.wgl.zip     "....wgl.zip" filename

@@ -21,11 +21,11 @@ def main():
 import os,sys,getopt
 def usage():
     print(u'Usage:')
-    print(u' 配置文件')
+    print(u'   配置文件')
     print(sys.argv[0]+' [-h|--help] ')
     print('   -h, --help     print usage.')
     print('   -d             show config.')
-    print(u'               author:南方航空,LLGZ@csair.com')
+    print(u'\n               author:南方航空,LLGZ@csair.com')
     print()
     return
 if __name__=='__main__':

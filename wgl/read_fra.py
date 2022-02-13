@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-读解码库，参数配置文件 vec 中 xx.fra 文件。比如 010412.fra
+读解码库，参数配置文件 vec 中 xx.fra 文件。比如 010XXX.fra
 仅支持 ARINC 573 PCM 格式
    author:南方航空,LLGZ@csair.com
 """
@@ -31,14 +31,34 @@ def main():
     pd.set_option('display.min_row',33)
     pd.set_option('display.min_row',330)
     #print(FRA)
-    print(FRA.keys())
+    #print(FRA.keys())
+
+    if PARAMLIST:
+        #----------显示所有参数名-------------
+        #print(FRA['2'].iloc[:,0].tolist())
+        ii=0
+        for vv in FRA['2'].iloc[:,0].tolist():
+            print(vv, end=',\t')
+            if ii % 9 ==0:
+                print()
+            ii+=1
+        if len(TOCSV)>4:
+            print('Write to CSV file:',TOCSV)
+            FRA['2'].iloc[:,0].to_csv(TOCSV,sep='\t')
+        return
 
     if PARAM is not None and len(PARAM)>0:  #显示单个参数名
+        #----------显示单个参数的配置内容-------------
         param=PARAM.upper()
         tmp=FRA['2']
         tmp2=tmp[ tmp.iloc[:,0]==param ].copy() #dataframe
         tmp=tmp.iloc[[0,]].append( tmp2,  ignore_index=False )
         print(tmp)
+        print()
+        if len(tmp2)<1:
+            print('Parameter %s not found.'%param)
+            print()
+            return
         return
 
     print_fra(FRA, '1', [
@@ -103,24 +123,15 @@ def main():
             'Resolution']
             )
 
-    if PARAMLIST:
-        #print(FRA['2'].iloc[:,0].tolist())
-        ii=0
-        for vv in FRA['2'].iloc[:,0].tolist():
-            print(vv, end=',\t')
-            if ii % 9 ==0:
-                print()
-            ii+=1
-
     memsize=0
     for kk in FRA:
         memsize+=getsizeof(FRA[kk],False)
     print('FRA(%d):'%len(FRA),showsize(memsize))
 
     print('end mem:',sysmem())
-    if TOCSV:
-        csv_fname='%d.csv' % int(FNAME)
-        #FRA.to_csv(csv_fname)
+    if len(TOCSV)>4:
+        #FRA.to_csv(TOCSV)
+        print('==>ERR,  There has 4 tables. Can not save to 1 CSV.')
 
 def print_fra(FRA, frakey,colname):
     if frakey not in FRA:
@@ -143,6 +154,7 @@ def read_parameter_file(dataver):
         dataver=int(dataver)
     if str(dataver).startswith('787'):
         print('ERR,dataver %s not support.' % (dataver,) )
+        print('Use "read_frd.py instead.')
         return None
     dataver='%06d' % dataver  #6位字符串
 
@@ -218,15 +230,16 @@ def sysmem():
 import os,sys,getopt
 def usage():
     print(u'Usage:')
-    print(u' 读解码库，参数配置文件 vec 中 xx.fra 文件。比如 010412.fra')
-    print(u' 命令行工具。')
-    print(sys.argv[0]+' [-h|--help] [-f|--file]  ')
+    print(u'   命令行工具。')
+    print(u' 读解码库，参数配置文件 vec 中 xx.fra 文件。比如 010XXX.fra')
+    print(sys.argv[0]+' [-h|--help]')
     print('   -h, --help        print usage.')
-    print('   -v, --ver=10412   dataver 中的参数配置表')
-    print('   --csv            save to "dataver.csv" file.')
-    print('   --paramlist      list all param name.')
-    print('   --param alt_std  show "alt_std" param.')
-    print(u'               author:南方航空,LLGZ@csair.com')
+    print('   -v, --ver=10XXX      dataver 中的参数配置表')
+    print('   --csv xxx.csv        save to "xxx.csv" file.')
+    print('   --csv xxx.csv.gz     save to "xxx.csv.gz" file.')
+    print('   --paramlist          list all param name.')
+    print('   -p,--param alt_std   show "alt_std" param.')
+    print(u'\n               author:南方航空,LLGZ@csair.com')
     print()
     return
 if __name__=='__main__':
@@ -234,14 +247,14 @@ if __name__=='__main__':
         usage()
         exit()
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:],'hvf:',['help','ver=','csv','paramlist','param='])
+        opts, args = getopt.gnu_getopt(sys.argv[1:],'hvp:f:',['help','ver=','csv=','paramlist','param='])
     except getopt.GetoptError as e:
         print(e)
         usage()
         exit(2)
     FNAME=None
     DUMPDATA=False
-    TOCSV=False
+    TOCSV=''
     PARAMLIST=False
     PARAM=None
     for op,value in opts:
@@ -253,10 +266,10 @@ if __name__=='__main__':
         elif op in('-d',):
             DUMPDATA=True
         elif op in('--csv',):
-            TOCSV=True
+            TOCSV=value
         elif op in('--paramlist',):
             PARAMLIST=True
-        elif op in('--param',):
+        elif op in('--param','-p',):
             PARAM=value
     if len(args)>0:  #命令行剩余参数
         FNAME=args[0]  #只取第一个

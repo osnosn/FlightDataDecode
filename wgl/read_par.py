@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
- 读解码库，参数配置文件 vec 中 xx.par 文件。比如 010412.par
+ 读解码库，参数配置文件 vec 中 xx.par 文件。比如 010XXX.par
     author:南方航空,LLGZ@csair.com
 """
 import sys
@@ -23,6 +23,29 @@ def main():
     print('begin mem:',sysmem())
     PAR=read_parameter_file(FNAME)
 
+    if PARAMLIST:
+        #----------显示所有参数名-------------
+        ii=0
+        for vv in PAR.iloc[:,0].tolist():
+            print(vv, end=',\t')
+            if ii % 9 ==0:
+                print()
+            ii+=1
+        print()
+        if len(TOCSV)>4:
+            print('Write to CSV file:',TOCSV)
+            PRA.iloc[:,0].to_csv(TOCSV,sep='\t')
+
+        if 0:
+            dict2=PAR.iloc[:,[0,2,7,8,17,36,37,38]].to_dict('split')
+            #print(dict2)
+            #print(dict2['data'])
+            for vv in dict2['data']:
+                if not isinstance(vv[7],list) or len(vv[7])<1:
+                    continue
+                print(vv)
+        return
+
     if PARAM is not None and len(PARAM)>0:
         #----------显示单个参数的配置内容-------------
         param=PARAM.upper()
@@ -33,26 +56,6 @@ def main():
         pd.set_option('display.width',156)
         print(len(tmp.columns))
         print(tmp)
-        return
-
-    if PARAMLIST:
-        #----------显示所有参数名-------------
-        ii=0
-        for vv in PAR.iloc[:,0].tolist():
-            print(vv, end=',\t')
-            if ii % 9 ==0:
-                print()
-            ii+=1
-        print()
-
-        if 0:
-            dict2=PAR.iloc[:,[0,2,7,8,17,36,37,38]].to_dict('split')
-            #print(dict2)
-            #print(dict2['data'])
-            for vv in dict2['data']:
-                if not isinstance(vv[7],list) or len(vv[7])<1:
-                    continue
-                print(vv)
         return
 
     pd.set_option('display.max_columns',18)
@@ -86,6 +89,9 @@ def main():
     print('PAR:',getsizeof(PAR))
     print('end mem:',sysmem())
     #print(PAR.loc[:,2].unique() ) #列出所有的Type
+    #print(PAR.loc[:,6].unique() ) #列出所有的SignBit
+    #print(PAR.loc[:,7].unique() ) #列出所有的MSB
+    #print(PAR.loc[:,8].unique() ) #列出所有的DataBit
     #print(PAR.loc[:,12].unique() ) #列出所有的Computation:Value=Constant Value or Resol=Coef...
     #print(PAR.loc[:,29].dropna().tolist() ) #列出所有的 Coef A(Res) ,有数组
     #print(PAR.loc[:,30].dropna().tolist() ) #列出所有的 Coef b,有数组
@@ -95,9 +101,9 @@ def main():
     #print(PAR.loc[:,34].unique() ) #列出所有的 Coef A,都是None
     #print(PAR.loc[:,35].unique() ) #列出所有的 Power,都是None
     #print(PAR.loc[0] ) #列出所有的column
-    if TOCSV:
-        csv_fname='%d.csv' % int(FNAME)
-        PAR.to_csv(csv_fname)
+    if len(TOCSV)>0:
+        print('Write to CSV file:',TOCSV)
+        PAR.to_csv(TOCSV)
 
 def read_parameter_file(dataver):
 
@@ -212,15 +218,16 @@ def sysmem():
 import os,sys,getopt
 def usage():
     print(u'Usage:')
-    print(u' 读解码库，参数配置文件 vec 中 xx.par 文件。比如 010412.par')
-    print(u' 命令行工具。')
-    print(sys.argv[0]+' [-h|--help] [-f|--file]  ')
+    print(u'   命令行工具。')
+    print(u' 读解码库，参数配置文件 vec 中 xx.par 文件。比如 010XXX.par')
+    print(sys.argv[0]+' [-h|--help]')
     print('   -h, --help        print usage.')
-    print('   -v, --ver=10412   dataver 中的参数配置表')
-    print('   --csv          save to "dataver.csv" file.')
-    print('   --paramlist      list all param name.')
-    print('   --param alt_std  show "alt_std" param.')
-    print(u'               author:南方航空,LLGZ@csair.com')
+    print('   -v, --ver=10XXX      dataver 中的参数配置表')
+    print('   --csv xxx.csv        save to "xxx.csv" file.')
+    print('   --csv xxx.csv.gz     save to "xxx.csv.gz" file.')
+    print('   --paramlist          list all param name.')
+    print('   -p,--param alt_std   show "alt_std" param.')
+    print(u'\n               author:南方航空,LLGZ@csair.com')
     print()
     return
 if __name__=='__main__':
@@ -228,14 +235,14 @@ if __name__=='__main__':
         usage()
         exit()
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:],'hvf:',['help','ver=','csv','paramlist','param='])
+        opts, args = getopt.gnu_getopt(sys.argv[1:],'hvp:f:',['help','ver=','csv=','paramlist','param='])
     except getopt.GetoptError as e:
         print(e)
         usage()
         exit(2)
     FNAME=None
     DUMPDATA=False
-    TOCSV=False
+    TOCSV=''
     PARAMLIST=False
     PARAM=None
     for op,value in opts:
@@ -247,10 +254,10 @@ if __name__=='__main__':
         elif op in('-d',):
             DUMPDATA=True
         elif op in('--csv',):
-            TOCSV=True
+            TOCSV=value
         elif op in('--paramlist',):
             PARAMLIST=True
-        elif op in('--param',):
+        elif op in('-p','--param',):
             PARAM=value
     if len(args)>0:  #命令行剩余参数
         FNAME=args[0]  #只取第一个

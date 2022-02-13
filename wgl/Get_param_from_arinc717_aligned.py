@@ -284,12 +284,12 @@ def get_param(fra,par):
         #所以每次都要用find_SYNC1()判断。  实际测试,发现有同步字错误,但frame间隔正确。
         frame_pos2=frame_pos   #保存旧位置
         frame_pos=find_SYNC1(buf, ttl_len, frame_pos, word_sec, sync_word_len, (sync1,sync2,sync3,sync4) )  #判断同步字，或继续寻找新位置
-        if frame_pos>frame_pos2:
-            print('==>ERR, SYNC loss at x%X，refound at x%X' % (frame_pos2, frame_pos) )
-            pm_sec +=4  #如果失去同步,重新同步后,时间加4秒
         if frame_pos>=ttl_len -2:
             #-----超出文件结尾，退出-----
             break
+        if frame_pos>frame_pos2:
+            print('==>ERR, SYNC loss at x%X，refound at x%X' % (frame_pos2, frame_pos) )
+            pm_sec +=4  #如果失去同步,重新同步后,时间加4秒
 
         #frame_counter=get_arinc429(buf, frame_pos, superframe_counter_set, word_sec )
 
@@ -733,11 +733,10 @@ def sysmem():
 import os,sys,getopt
 def usage():
     print(u'Usage:')
-    print(u' 读取 wgl中 raw.dat 。')
-    print(u'   读解码一个参数。')
-    print(u' 命令行工具。')
+    print(u'   命令行工具。')
+    print(u' 读取 wgl中 raw.dat,根据参数编码规则,解码一个参数。')
 
-    print(sys.argv[0]+' [-h|--help] [-f|--file]  ')
+    print(sys.argv[0]+' [-h|--help]')
     print('   * (必要参数)')
     print('   -h, --help                 print usage.')
     print(' * -f, --file xxx.wgl.zip     "....wgl.zip" filename')

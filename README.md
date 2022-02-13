@@ -3,7 +3,8 @@
 [FOQA (Flight Operations Quality Asurance)](http://en.wikipedia.org/wiki/Flight_operations_quality_assurance)  
 
 这个项目，可以用。但没有达到完全可用状态。  
-是我在了解 无线QAR(WQAR) 原始 raw.dat 文件过程中，编写的程序。可以解码出大部分的记录参数。  
+是我在了解 无线QAR(WQAR) 原始 raw.dat 文件过程中，编写的程序。   
+**目前可以解码出大部分的记录参数。**   
 有兴趣的，可以参考一下，继续完善。  
 
 这些程序都在 [wgl 目录中](https://github.com/osnosn/FlightDataDecode/tree/main/wgl)。  

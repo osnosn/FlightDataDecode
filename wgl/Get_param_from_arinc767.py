@@ -7,7 +7,7 @@
  Boeing787, ARINC 767, 
     每个frame的头部是 header，header包含5个内容：
       Sync word (2bytes):  0xEB90 
-      Frame length: total size of the frame, up to 2048 bytes(include header and tailer) 16bits
+      Frame length: total size of the frame, up to 2048 bytes(include header and trailer) 16bits
       Time Stamp: "c time" field of 32bits 
       Frame Type/ID attributes: 8bits frame type can either be used for separate classifications or combined with the 1-byte Frame ID for identification purposes.
      For a given Frame ID, the Parameters are recorded, 
@@ -22,9 +22,114 @@
    recording the Frame Header, the Trailer can be used to 
    process the parameters. 
   --------------------------
-  实际读取数据。header 和 tailer 中的 type,id 都是一一对应。
-     timestamp 似乎是 毫秒。
-     但, 所有的 type=0, id 有 1,3,4,5,7,8,10,11 这几种。
+      ARINC CHARACTERISTIC 767
+   ENHANCED AIRBORNE FLIGHT RECORDER
+     Published: November 22, 2006
+
+      ARINC CHARACTERISTIC 767-1
+   ENHANCED AIRBORNE FLIGHT RECORDER
+     Published: May 29, 2009
+
+   EAFR(Enhanced Airborne Flight Recorder)
+   FRED(Flight Recorder Electronic Documentation) 用于描述/定义记录在EAFR中的内容和格式的文档 (ARINC 647A)
+
+   CNS/ATM Frame Format
+   Frame 格式
+      ----Header---
+     2bytes 0xEB90
+     2bytes frame length in bytes
+     4bytes Time tag, Count of milliseconds since start of recording.
+     1bytes Frame Type, Fixed at "10" for Buld Data Frame.
+     1bytes Frame ID
+      ----Frame data---
+     xbytes Frame Data
+      ----Trailer--
+     2bytes Frame Type+Frame ID
+      -------------
+    * All numbers are stored in BigEndian order.
+    * FrameID:0x01=TIS-B, 0x02=FIS-B, 0x03=ADS-B, 0x04=Datalink
+    * FrameLength,Total frame length including header,trailer and data field. Max size is 8kbytes.
+    * AFDX message payload padded with "1" for byte alignment.
+   -----------------------
+    FRAME BASED FLIGHT DATA RECORDING FORMAT
+   The parameter are packed into the frame in the order specified in the Parameter Description. The fraame is padded with extra bits to the next byte boundary.The Frame Length field should be used to determine the end of the frame since extra space may be include in the rame for unused parameters or opaque data.
+
+   For EAFR Flight Data recording,
+   Frame 格式
+      ----Header---
+     2bytes 0xEB90
+     2bytes frame length in bytes. 14-2048bytes.
+     4bytes Time tag, Count of milliseconds since start of recording.
+     1bytes Frame Type, Fixed at "0".(Uncompressed Fixed Frame)
+     1bytes Frame ID, 1-255 (1,2 are reserved)
+      ----Frame data---
+     xbytes Frame Data
+      ----Trailer--
+     1bytes Frame Type, 0x00
+     1bytes Frame Frame ID, 1-255
+      -------------
+    * All numbers are stored in BigEndian order.
+    * FrameID:0x01=TIS-B, 0x02=FIS-B, 0x03=ADS-B, 0x04=Datalink
+    * FrameLength,Total size of the frame,in bytes,including header,trailer and data field.
+    * Frame Type can be combined with Frame ID, resulting in 16 bites for Frame ID.
+    * Time would wrap to zero if a recording session lasted 49 days. This is not permitted by this standard.
+    * Frames must contain at least one parameter.
+   -----------------------
+    Standard Documentary Data Frame Format
+    Frame ID =1 的 Frame 格式
+      ----Header---
+     2bytes 0xEB90
+     2bytes frame length in bytes. 140
+     4bytes Time tag,
+     1bytes Frame Type, 0
+     1bytes Frame ID,   1
+      ----Frame data---
+     8char  "647X-XX",Identifies the standart that the Application format.
+     32char "905-E2485-00 Rev B"(padding with spaces omitted for clarity),Identifies the standart that the Application format.
+     8char  "N123ZZ",Aircraft tail number.
+     64char  "Honeywell hardware 967-0212-002 software 998-1111-511"(paddig with spaces omitted for clarity),FDAU make and part number.
+     16char  "YYYY/MM/DD-HH:MM",Date and Time from aircraft clock source.HH is 24 hour time referenced to UTC.
+      ----Trailer--
+     1bytes Frame Type, 0
+     1bytes Frame Frame ID, 1
+      -------------
+    Mark-Time Frames
+    Frame ID =2 的 Frame 格式
+      ----Header---
+     2bytes 0xEB90
+     2bytes 32 ,frame length in bytes.
+     4bytes Time tag,
+     1bytes Frame Type, 0
+     1bytes Frame ID,   2
+      ----Frame data---
+     2bytes (1-65535) Recording Session Number.
+     16char  "YYYY/MM/DD-HH:MM",Date and Time from aircraft clock source.HH is 24 hour time referenced to UTC.
+     2bytes (1 or 2) EAFR ID.
+      ----Trailer--
+     1bytes Frame Type, 0
+     1bytes Frame Frame ID, 2
+      -------------
+   The SFDR recording format is base on Frames, which consist of on ordered set of Parameters and an associated Frame Label and Time Stamp. Frames can be recorded at any desired frequency, either periodic or event driven.典型的周期是以2的幂(1hz,2hz,4hz...),但可以使用任意周期,从100hz到1/3600hz(1/hour). During playback, the frames are aligned in time using their time stamps.
+   相同周期的参数，放入相同的Frame中。每个单个Frame有自己特定的周期。
+   Parameters can be any length(from 1 to 32bits), and they are packed into the frame to efficiently use recording memory space. However, it is typically desirable to pad the frames to the nearest word length so that the allways start on a word boundary.
+
+   example frame
+      Frame:
+    ____________________________________
+   |Frame Header|Paramters|Frame Trailer| 
+   |------------------------------------| 
+      Frame Header:
+    ________________________________________________________
+   |Sync Pattern|Frame Length|Time Stamp|Frame Type|Frame ID| 
+   |--------------------------------------------------------|
+      Parameters:
+    _______________________________________________________________
+   |1|2|3|4|5|6|7|8|1|2|3|4|5|6|7|8|1|2|3|4|5|6|7|8|1|2|3|4|5|6|7|8| 
+   |    Baro Altitude                |   Airspeed        |D|D| Pad | 
+   |---------------------------------------------------------------|
+ --------------------------------------------------------------
+  实际读文件: 每个FrameID相同的Frame的length是相同的。
+
 """
 #import struct
 #from datetime import datetime
@@ -52,32 +157,28 @@ def main():
 
     #----------寻找起始位置-----------
     frame_pos=0  #frame开始位置,字节指针
-    while frame_pos<ttl_len -2:  #寻找frame开始位置
-        word=getWord(buf,frame_pos)
-        if word == sync767:
-            print('==>Mark,x%X'%(frame_pos,))
-            break
-        frame_pos +=1
+    frame_pos, frame_size=find_SYNC(buf, ttl_len, frame_pos, sync767)
     if frame_pos >= ttl_len -2:
         print('ERR,SYNC1 not found.',flush=True)
         raise(Exception('ERR,SYNC1 not found.'))
     
-    #----------验证同步字位置，header内容, tailer内容-----------
+    #----------验证同步字位置，header内容, trailer内容-----------
     ii=0    #计数
     pm_list=[] #参数列表
     pm_sec=0.0   #参数的时间轴,秒数
-    while frame_pos<ttl_len -2:
-        #----------同步字--------
-        sync_word=getWord(buf,frame_pos) #当前位置的同步字
-        if sync_word == sync767:
-            print('==>Found sync767.%X,x%X'%(sync_word,frame_pos))
-        else:
-            print('==>notFound sync767.%X,x%X'%(sync_word,frame_pos))
+    ttl_data_size=0
+    while True:
+        #----------验证同步字,并返回size--------
+        frame_pos2 = frame_pos
+        frame_pos, frame_size=find_SYNC(buf, ttl_len, frame_pos, sync767) #同时返回size
+        if frame_pos>=ttl_len -2:
+            #-----超出文件结尾，退出-----
             break
+        if frame_pos > frame_pos2:
+            print('==>ERR, miss SYNC at x%X, Refound at x%X'%(frame_pos2, frame_pos))
 
         #----------frame size-------
-        frame_size=getWord(buf,frame_pos+2) #size
-        print('Size: %d(%X)'%(frame_size,frame_size))
+        #frame_size=getWord(buf,frame_pos+2) #size
 
         #----------timestamp--------
         tm=getWord(buf,frame_pos+4) #timestamp
@@ -97,25 +198,38 @@ def main():
         frame_id=getWord(buf,frame_pos+8) # type & id
         frame_type= frame_id >> 8
         frame_id &= 0xff
-        print('Frame type: %X' % frame_type)
+
+        #----------trailer: type & id--------
+        frame_tail=getWord(buf,frame_pos+frame_size-2) # type & id
+        frame_tail_type= frame_tail >> 8
+        frame_tail_id = frame_tail & 0xff
+        if frame_id != frame_tail_id or frame_type != frame_tail_type:
+            print('==>ERR, type or id in header & trailer is not same.')
+        if frame_type != 0:
+            print('==>ERR, type is NOT 0.')
         print('Frame id:   %X' % frame_id)
 
-        #----------tailer: type & id--------
-        frame_tail=getWord(buf,frame_pos+frame_size-2) # type & id
-        frame_type= frame_tail >> 8
-        frame_id = frame_tail & 0xff
-        print('Frame tail type: %X' % frame_type)
-        print('Frame tail id:   %X' % frame_id)
-
         #----------frame data size--------
-        data_size=frame_size -10
-        print('Frame data size: %d'% data_size)
+        print('Frame data size: %d'% (frame_size,) )
 
         frame_pos += frame_size
     if frame_pos>=ttl_len -2:
         print('End of file.')
 
+    div4,mod4=divmod(ttl_data_size,4)
+    print('Total data size: %d, div4:%d, mod4:%d'% (ttl_data_size, div4, mod4) )
+
     print('mem:',sysmem())
+
+def find_SYNC(buf, ttl_len, frame_pos, sync767):
+    while frame_pos<ttl_len -2:  #寻找frame开始位置
+        frame_size=getWord(buf,frame_pos+2) #size
+        if getWord(buf,frame_pos) == sync767 and getWord(buf,frame_pos+frame_size) == sync767:
+            #当前位置有同步字,加上size之后的位置,也有同步字
+            #print('==>Mark,x%X'%(frame_pos,))
+            break
+        frame_pos +=1
+    return frame_pos, frame_size
 
 def getWord(buf,pos):
     '''
@@ -157,9 +271,9 @@ def sysmem():
 import os,sys,getopt
 def usage():
     print(u'Usage:')
-    print(u' 读取 wgl中 raw.dat 。把12bit的frame展开为16bit，高4bit填0。方便下一步处理。')
-    print(u' 命令行工具。')
-    print(sys.argv[0]+' [-h|--help] [-f|--file]  ')
+    print(u'   命令行工具。')
+    print(u' 读取,来源于PC卡的原始数据文件。尝试解码一个参数。')
+    print(sys.argv[0]+' [-h|--help]')
     print('   -h, --help     print usage.')
     print('   -f, --file=    "....wgl.zip" filename')
     #print('   -w xxx.dat     写入文件"xxx.dat"')

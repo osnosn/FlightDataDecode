@@ -49,8 +49,8 @@ def usage():
     print(u' 命令行工具。')
     print(sys.argv[0]+' [-h|--help] [-v|--ver]  ')
     print('   -h, --help        print usage.')
-    print('   -v, --ver=10412   整数')
-    print(u'               author:南方航空,LLGZ@csair.com')
+    print('   -v, --ver=10234   整数')
+    print(u'\n               author:南方航空,LLGZ@csair.com')
     print()
     return
 if __name__=='__main__':

@@ -46,12 +46,12 @@ def main():
 import os,sys,getopt
 def usage():
     print(u'Usage:')
+    print(u'   命令行工具。')
     print(u' 读取 wgl中 eofloacat.qar 。没什么用。')
-    print(u' 命令行工具。')
-    print(sys.argv[0]+' [-h|--help] [-f|--file]  ')
+    print(sys.argv[0]+' [-h|--help]')
     print('   -h, --help     print usage.')
     print('   -f, --file=    "....wgl.zip" filename')
-    print(u'               author:南方航空,LLGZ@csair.com')
+    print(u'\n               author:南方航空,LLGZ@csair.com')
     print()
     return
 if __name__=='__main__':
