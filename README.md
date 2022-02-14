@@ -4,7 +4,7 @@
 
 这个项目，可以用。但没有达到完全可用状态。  
 是我在了解 无线QAR(WQAR) 原始 raw.dat 文件过程中，编写的程序。   
-**目前可以解码出大部分的记录参数。**   
+**目前可以解码出所有的记录参数。**   
 有兴趣的，可以参考一下，继续完善。  
 
 这些程序都在 [wgl 目录中](https://github.com/osnosn/FlightDataDecode/tree/main/wgl)。  
@@ -25,7 +25,8 @@
   - 对于 ARINC 767 的记录格式   
     - 只能找出每帧的开始和结束。找出帧头,和帧尾的格式。   
 * 2022-02 再次更新  
-  - 对于 ARINC 573/717 的记录格式   
-    - 增加支持 DISCRETE, PACKED BITS, UTC, 类型的值。共支持7种: BCD, BNR LINEAR, BNR SEGMENTS, CHARACTER, DISCRETE, PACKED BITS, UTC.    
+  - 对于 ARINC 573/717 的记录格式: 增加支持 DISCRETE, PACKED BITS, UTC, 类型的值。共支持7种: BCD, BNR LINEAR, BNR SEGMENTS, CHARACTER, DISCRETE, PACKED BITS, UTC.    
+* 2022-02 再次更新  
+  - 对于 ARINC 573/717 的记录格式: 可以解码所有的参数，包括regular,superframe参数。
 
 

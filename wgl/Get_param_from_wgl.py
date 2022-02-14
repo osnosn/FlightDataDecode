@@ -136,12 +136,22 @@ def main():
         if len(fra)<1:
             print('Empty dataVer.')
             return
+        #---regular parameter
         ii=0
         for vv in fra['2'].iloc[:,0].tolist():
             print(vv, end=',\t')
             if ii % 9 ==0:
                 print()
             ii+=1
+        print()
+        #---superframe parameter
+        ii=0
+        for vv in fra['4'].iloc[:,0].tolist():
+            print(vv, end=',\t')
+            if ii % 9 ==0:
+                print()
+            ii+=1
+        print()
         print('mem:',sysmem())
         return
 
@@ -166,7 +176,7 @@ def main():
         if len(fra)<1:
             print('Empty dataVer.')
             return
-        if len(fra['2'])<1:
+        if len(fra['2'])<1 and len(fra['4'])<1:
             print('Parameter not found.')
             return
         #print(PARAM,'(fra):',fra)
@@ -174,7 +184,10 @@ def main():
         #print()
 
         print('PARAM:',PARAM)
-        pm_list=get_param(fra,par) #获取一个参数
+        if len(fra['2'])>0:
+            pm_list=get_param(fra,par) #获取一个参数,regular
+        else:
+            pm_list=get_super(fra,par) #获取一个参数,superframe
         #print(pm_list)
         print('Result[0]:',pm_list[0]) #打印第一组值
         print('DataVer:',air[0])
@@ -194,9 +207,215 @@ def main():
     print('mem:',sysmem())
     return
 
+def get_super(fra,par):
+    '''
+    获取 superframe 参数，返回 ARINC 429 format
+  -------------------------------------
+  bit:|32|31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|9|8|7|6|5|4|3|2|1| 
+      |  | SSM |                            DATA field                  | SDI|     label     | 
+     _/  \     | MSB -->                                        <-- LSB |    |               | 
+    /     \    
+   |parity |   
+  -------------------------------------  
+    author:南方航空,LLGZ@csair.com  
+    '''
+    global FNAME,WFNAME,DUMPDATA
+
+    #初始化变量
+    word_sec=int(fra['1'][0])
+    sync_word_len=int(fra['1'][1])//12  #整除, 同步字的字数(长度)
+    sync1=int(fra['1'][2],16)  #同步字1
+    sync2=int(fra['1'][3],16)
+    sync3=int(fra['1'][4],16)
+    sync4=int(fra['1'][5],16)
+    superframe_counter_set=[{
+            #counter1
+            'part':1,
+            'rate':1,
+            'sub' :int(fra['1'][6]),
+            'word':int(fra['1'][7]),
+            'bout':int(fra['1'][8]),
+            'blen':int(fra['1'][9]),
+            'v_first':int(fra['1'][10]),
+            'bin' :12,
+            'occur': -1,
+            },
+            #counter2  没有从配置文件读入(todo)
+            #{'part':1,}
+            ]
+    if sync_word_len>1: #如果同步字 > 1 word
+        sync1=(sync1 << (12 * (sync_word_len-1))) +1  #生成长的同步字
+        sync2=(sync2 << (12 * (sync_word_len-1))) +1
+        sync3=(sync3 << (12 * (sync_word_len-1))) +1
+        sync4=(sync4 << (12 * (sync_word_len-1))) +1
+
+    #----------准备参数的配置-----------
+    super_set=[]
+    for vv in fra['3']: #全部内容变为 int
+        p_set={  #临时变量
+            'frameNo':int(vv[0]),
+            'sub' :int(vv[1]),
+            'word':int(vv[2]),
+            'bout':int(vv[3]),
+            'blen':int(vv[4]),
+            'counterNo' :int(vv[5]),
+            }
+        super_set.append(p_set)
+    super_set=super_set[0] #只取了第一项,通常一个super参数只会对应一个frameNo
+
+    #----------准备参数的配置,把一个period作为一个大frame处理-----------
+    superpm_set=[]
+    p_set=[]  #临时变量
+    last_part=0
+    for vv in fra['4']: #全部内容变为 int
+        vv[0]=int(vv[0]) #part
+        if vv[0]<=last_part:
+            #part=1,2,3 根据part分组
+            superpm_set.append(p_set)
+            p_set=[]
+        last_part=vv[0]
+        #frameNo=vv[2]   #应该由frameNo取找super_set中对应的配置,这里简单化了。
+        p_set.append({
+            'part':vv[0],
+            'rate': 1,
+            'sub' :super_set['sub'],
+            'word':super_set['word'] + (int(vv[3])-1) * word_sec * 4, #subframe + (Frame-1) * word_sec *4
+            'bout':int(vv[4]),
+            'blen':int(vv[5]),
+            'bin' :int(vv[6]),
+            'occur' : -1,
+            'resol': float(vv[7]), #resolution
+            'period':int(vv[1]),
+            })
+    if len(p_set)>0: #最后一组
+        superpm_set.append(p_set)
+
+    #----------打印参数-----------
+    print('Frame定义: Word/SEC:%d, syncLen(word):%d, sync1234: %X,%X,%X,%X'%(word_sec,sync_word_len,sync1,sync2,sync3,sync4) )
+    print('   SuperFrame Counter:',superframe_counter_set)
+    print()
+    print('super_set: ',super_set )
+    print('superpm: len:%d'%( len(superpm_set)) )
+    for vv in superpm_set:
+        print(vv)
+    print('param(par):',par)
+    print()
+
+    #----------Data Type Warning-----------
+    if par['type'].find('BCD')!=0 and \
+            par['type'].find('BNR LINEAR (A*X)')!=0 and \
+            par['type'].find('BNR SEGMENTS (A*X+B)')!=0 and \
+            par['type'].find('CHARACTER')!=0 and \
+            par['type'].find('DISCRETE')!=0 and \
+            par['type'].find('PACKED BITS')!=0 and \
+            par['type'].find('UTC')!=0 :
+        print('!!!Warning!!! Data Type "%s" Decoding maybe NOT correct.\n' % (par['type']) )
+
+    #----------打开zip压缩文件-----------
+    try:
+        fzip=zipfile.ZipFile(FNAME,'r') #打开zip文件
+    except zipfile.BadZipFile as e:
+        print('==>ERR,FailOpenZipFile',e,FNAME,flush=True)
+        raise(Exception('ERR,FailOpenZipFile,%s'%FNAME))
+    filename_zip='raw.dat'
+    buf=fzip.read(filename_zip)
+    fzip.close()
+
+    #----------寻找起始位置-----------
+    ttl_len=len(buf)
+    frame_pos=0  #frame开始位置,字节指针
+    frame_pos=find_SYNC1(buf, ttl_len, frame_pos, word_sec, sync_word_len, (sync1,sync2,sync3,sync4) )
+    if frame_pos > 0:
+        print('!!!Warning!!! First SYNC at x%X, not beginning of DATA.'%(frame_pos),flush=True)
+    if frame_pos >= ttl_len - sync_word_len *2:
+        #整个文件都没找到同步字
+        print('==>ERR, SYNC not found at end of DATA.',flush=True)
+        raise(Exception('ERR,SYNC not found at end of DATA.'))
+
+    period=superpm_set[0][0]['period']   #简单的从第一组的第一条记录中获取period
+
+    #----------计算counter_mask-----------
+    #有的库 counter 是递增 1, N个period一循环。 有的是递增 256,一个period一循环。
+    #根据前后两个Frame中的counter值，确定mask。
+    frame_counter  = get_arinc429(buf, frame_pos, superframe_counter_set, word_sec )
+    frame_counter -= get_arinc429(buf, frame_pos + word_sec * 4 * 2, superframe_counter_set, word_sec )
+    if abs(frame_counter) ==1:
+        count_mask = ( 1 << int(pow(period, 0.5)) ) -1  #平方根sqrt: pow(x, 0.5) or (x ** 0.5)
+        #count_mask= 0xf
+    else:
+        count_mask= 0
+    print('counter sep:',frame_counter,period,bin(count_mask) )
+    
+    #----------寻找SuperFrame起始位置-----------
+    val_first=super_set['counterNo'] #superframe counter 1/2
+    if val_first==2: val_first=1  #counter2 没从配置中读入(todo)
+    val_first=superframe_counter_set[val_first-1]['v_first']
+    pm_sec=0.0   #参数的时间轴,秒数
+    frame_pos,sec_add=find_FIRST_super(buf, ttl_len, frame_pos, word_sec, sync_word_len, (sync1,sync2,sync3,sync4), val_first, superframe_counter_set, period, count_mask )
+    pm_sec += sec_add  #加上时间增量
+
+    #----------读参数-----------
+    ii=0    #计数
+    pm_list=[] #参数列表
+    while True:
+        # 有几个dataVer的数据,不是从文件头开始,只匹配sync1会找错。且不排除中间会错/乱。
+        #所以每次都要确认first frame的位置。 实际测试,发现有同步字错误,但frame间隔正确。
+        frame_pos2=frame_pos   #保存旧位置
+        frame_pos,sec_add=find_FIRST_super(buf, ttl_len, frame_pos, word_sec, sync_word_len, (sync1,sync2,sync3,sync4), val_first, superframe_counter_set, period, count_mask )
+        pm_sec += sec_add  #加上时间增量
+        if frame_pos>=ttl_len -2:
+            #-----超出文件结尾，退出-----
+            break
+
+        for pm_set in superpm_set:
+            value=get_arinc429(buf, frame_pos, pm_set, word_sec )  #ARINC 429 format
+            value =arinc429_decode(value ,par )
+            # superpm_set 中有个 resolution 似乎是无用的。AGS配置中,说是自动计算的,不让改。
+            # 试着乘上去，数据就不对了。
+            #if pm_set[0]['resol'] != 0.0 and pm_set[0]['resol'] != 1.0: 
+            #    value *= pm_set[0]['resol']
+
+            pm_list.append({'t':round(pm_sec,10),'v':value})
+            #pm_list.append({'t':round(pm_sec,10),'v':bin(value)})
+            #pm_list.append({'t':round(pm_sec,10),'v':value,'c':frame_counter})
+
+        pm_sec += 4.0 * period  #一个frame是4秒
+        frame_pos += word_sec * 4 * 2 * period   # 4subframe, 2bytes,直接跳过一个period,哪怕中间有frame错误/缺失，都不管了。
+    return pm_list
+
+def find_FIRST_super(buf, ttl_len, frame_pos, word_sec, sync_word_len, sync, val_first, superframe_counter_set, period, count_mask ):
+    '''
+    判断 first frame 的位置，如果不是，则向后推 1 frame再找。
+    根据 superframe_counter 的内容，找到conter的值为 first value 的frame位置
+       author:南方航空,LLGZ@csair.com  
+    '''
+    pm_sec=0.0   #参数的时间轴,秒数
+    while True:
+        frame_pos2=frame_pos   #保存旧位置
+        frame_pos=find_SYNC1(buf, ttl_len, frame_pos, word_sec, sync_word_len, sync )  #判断同步字，或继续寻找新位置
+        if frame_pos>=ttl_len -2:
+            #-----超出文件结尾，退出-----
+            break
+        if frame_pos>frame_pos2:
+            print('==>ERR, SYNC loss at x%X，refound at x%X' % (frame_pos2, frame_pos) )
+            pm_sec +=4  #如果失去同步,重新同步后,时间加4秒。(这里应该根据跳过的距离确定时间增量,这里就简单粗暴了)
+
+        frame_counter=get_arinc429(buf, frame_pos, superframe_counter_set, word_sec )
+        if count_mask > 0:
+            frame_counter &= count_mask
+        if frame_counter==val_first:
+            #print('Found first superframe at x%X, cnter:%d' % (frame_pos, frame_counter) )
+            break
+        else:
+            print('NotFound first superframe at x%X, cnter:%d' % (frame_pos, frame_counter) )
+            pm_sec += 4.0   #一个frame是4秒
+            frame_pos += word_sec * 4 * 2   # 4subframe, 2bytes
+
+    return frame_pos, pm_sec  #返回位置, 时间增量
+
 def get_param(fra,par):
     '''
-    获取参数，返回 ARINC 429 format
+    获取 regular 参数，返回 ARINC 429 format
   -------------------------------------
   bit:|32|31|30|29|28|27|26|25|24|23|22|21|20|19|18|17|16|15|14|13|12|11|10|9|8|7|6|5|4|3|2|1| 
       |  | SSM |                            DATA field                  | SDI|     label     | 
@@ -222,7 +441,7 @@ def get_param(fra,par):
             'word':int(fra['1'][7]),
             'bout':int(fra['1'][8]),
             'blen':int(fra['1'][9]),
-            'v_1st':int(fra['1'][10]),
+            'v_first':int(fra['1'][10]),
             'bin' :12,
             'occur': -1,
             }]
@@ -289,9 +508,8 @@ def get_param(fra,par):
             break
         if frame_pos>frame_pos2:
             print('==>ERR, SYNC loss at x%X，refound at x%X' % (frame_pos2, frame_pos) )
-            pm_sec +=4  #如果失去同步,重新同步后,时间加4秒
+            pm_sec +=4  #如果失去同步,重新同步后,时间加4秒。(这里应该根据跳过的距离确定时间增量,这里就简单粗暴了)
 
-        #frame_counter=get_arinc429(buf, frame_pos, superframe_counter_set, word_sec )
 
         sec_add = 4.0 / len(param_set)  #一个frame是4秒
         for pm_set in param_set:
@@ -300,7 +518,6 @@ def get_param(fra,par):
 
             pm_list.append({'t':round(pm_sec,10),'v':value})
             #pm_list.append({'t':round(pm_sec,10),'v':bin(value)})
-            #pm_list.append({'t':round(pm_sec,10),'v':value,'c':frame_counter})
             pm_sec += sec_add   #时间轴累加
 
         frame_pos += word_sec * 4 * 2   # 4subframe, 2bytes
@@ -337,7 +554,7 @@ def getDataFrameSet(fra2,word_sec):
     '''
     # ---分组---
     group_set=[]
-    p_set=[]
+    p_set=[]  #临时变量
     last_part=0
     for vv in fra2:
         vv[0]=int(vv[0]) #part
@@ -380,7 +597,7 @@ def getDataFrameSet(fra2,word_sec):
                 sub_rate=1
             word_sep=word_sec//sub_rate  #整除
             for word_rate in range(sub_rate):  #补word, 根据分组记录的第一条rate补
-                p_set=[]
+                p_set=[]  #临时变量
                 for vv in group:
                     p_set.append({
                         'part':vv['part'],
@@ -637,14 +854,16 @@ def getFRA(dataver,param):
     if PARAMLIST:
         return DATA.fra
 
-    ret2=[]
+    ret2=[]  #for regular
+    ret3=[]  #for superframe
+    ret4=[]  #for superframe pm
     if len(param)>0:
         param=param.upper() #改大写
+        #---find regular parameter----
         tmp=DATA.fra['2']
         tmp=tmp[ tmp.iloc[:,0]==param].copy()  #dataframe
         #print(tmp)
         if len(tmp.index)>0:  #找到记录
-            ret2=[]
             for ii in range( len(tmp.index)):
                 tmp2=[
                     tmp.iat[ii,1],   #part(1,2,3),会有多组记录,对应返回多个32bit word(完成)
@@ -658,6 +877,36 @@ def getFRA(dataver,param):
                     tmp.iat[ii,8],   #Imposed,Computed
                     ]
                 ret2.append(tmp2)
+        #---find superframe parameter----
+        tmp=DATA.fra['4']
+        tmp=tmp[ tmp.iloc[:,0]==param].copy()  #dataframe
+        #print(tmp)
+        if len(tmp.index)>0:  #找到记录
+            superframeNo=tmp.iat[0,3]
+            for ii in range( len(tmp.index)):
+                tmp2=[
+                    tmp.iat[ii,1],   #part(1,2,3),会有多组记录,对应返回多个32bit word(完成)
+                    tmp.iat[ii,2],   #period
+                    tmp.iat[ii,3],   #superframe no
+                    tmp.iat[ii,4],   #Frame
+                    tmp.iat[ii,5],   #bitOut
+                    tmp.iat[ii,6],   #bitLen
+                    tmp.iat[ii,7],   #bitIn
+                    tmp.iat[ii,10],  #resolution
+                    ]
+                ret4.append(tmp2)
+            tmp=DATA.fra['3']
+            tmp=tmp[ tmp.iloc[:,0]==superframeNo].copy()  #dataframe
+            for ii in range( len(tmp.index)):
+                tmp2=[
+                    tmp.iat[ii,0],   #superframe no
+                    tmp.iat[ii,1],   #subframe
+                    tmp.iat[ii,2],   #word
+                    tmp.iat[ii,3],   #bitOut
+                    tmp.iat[ii,4],   #bitLen
+                    tmp.iat[ii,5],   #superframe couter 1/2
+                    ]
+                ret3.append(tmp2)
                     
 
     return { '1':
@@ -675,6 +924,8 @@ def getFRA(dataver,param):
                 DATA.fra['1'].iat[1,11], #Value in 1st frame (0/1)
                 ],
              '2':ret2,
+             '3':ret3,
+             '4':ret4,
             }
 
 def getAIR(reg):

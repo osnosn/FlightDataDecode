@@ -36,29 +36,49 @@ def main():
     if PARAMLIST:
         #----------显示所有参数名-------------
         #print(FRA['2'].iloc[:,0].tolist())
+        #---regular parameter
         ii=0
         for vv in FRA['2'].iloc[:,0].tolist():
             print(vv, end=',\t')
             if ii % 9 ==0:
                 print()
             ii+=1
+        print()
+        #---superframe parameter
+        ii=0
+        for vv in FRA['4'].iloc[:,0].tolist():
+            print(vv, end=',\t')
+            if ii % 9 ==0:
+                print()
+            ii+=1
+        print()
         if len(TOCSV)>4:
             print('Write to CSV file:',TOCSV)
-            FRA['2'].iloc[:,0].to_csv(TOCSV,sep='\t')
+            tmp=FRA['2'].iloc[:,0].append(FRA['4'].iloc[:,0], ignore_index=False)
+            tmp.to_csv(TOCSV,sep='\t')
         return
 
     if PARAM is not None and len(PARAM)>0:  #显示单个参数名
         #----------显示单个参数的配置内容-------------
         param=PARAM.upper()
+        #---regular parameter
         tmp=FRA['2']
         tmp2=tmp[ tmp.iloc[:,0]==param ].copy() #dataframe
         tmp=tmp.iloc[[0,]].append( tmp2,  ignore_index=False )
-        print(tmp)
+        if len(tmp2)>0:
+            print(tmp)
+        else:
+            print('Parameter %s not found in Regular parameter.'%param)
         print()
-        if len(tmp2)<1:
-            print('Parameter %s not found.'%param)
-            print()
-            return
+        #---superframe parameter
+        tmp=FRA['4']
+        tmp2=tmp[ tmp.iloc[:,0]==param ].copy() #dataframe
+        tmp=tmp.iloc[[0,]].append( tmp2,  ignore_index=False )
+        if len(tmp2)>0:
+            print(tmp)
+        else:
+            print('Parameter %s not found in Superframe parameter.'%param)
+        print()
         return
 
     print_fra(FRA, '1', [
@@ -100,7 +120,8 @@ def main():
             )
     #print(FRA['2'].iloc[:,12].unique() )  #显示 Occurence No
 
-    print_fra(FRA, '3', [
+    if len(FRA['3'])>1:
+        print_fra(FRA, '3', [
             'Superframe No',
             '(Subframe)',
             '(Word)',
@@ -108,8 +129,11 @@ def main():
             '(Data Bits)',
             '',]
             )
+    else:
+        print('No Superframe.')
 
-    print_fra(FRA, '4', [
+    if len(FRA['4'])>1:
+        print_fra(FRA, '4', [
             'Superframe Parameter Name',
             'Part (1,2 or 3)',
             'Period Of',
@@ -122,7 +146,10 @@ def main():
             'Range Max',
             'Resolution']
             )
+    else:
+        print('No Superframe Parameter.')
 
+    print()
     memsize=0
     for kk in FRA:
         memsize+=getsizeof(FRA[kk],False)
