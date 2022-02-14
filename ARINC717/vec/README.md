@@ -1,6 +1,6 @@
 # vec 目录  
 
-是用来存放  
+是用来存放   
 * xxxxxx.vec (DataVer,Parameter,Data Frame 配置文件) ARINC 573 PCM  
 * aircraft.air (机号的配置文件)  
 
