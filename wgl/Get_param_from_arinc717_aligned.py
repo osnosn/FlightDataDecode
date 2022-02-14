@@ -280,8 +280,8 @@ def get_super(fra,par):
             'rate': 1,
             'sub' :super_set['sub'],
             'word':super_set['word'] + (int(vv[3])-1) * word_sec * 4, #subframe + (Frame-1) * word_sec *4
-            'bout':int(vv[4]),
-            'blen':int(vv[5]),
+            'bout':int(vv[4]),  #以下两项bout,blen,应该用super_set中的设置,获取数据后,再用这里的配置取出最终bits。
+            'blen':int(vv[5]),  #但是因为super_set中的内容都是12,12。所以这里就直接用了最终配置。
             'bin' :int(vv[6]),
             'occur' : -1,
             'resol': float(vv[7]), #resolution
@@ -368,6 +368,8 @@ def get_super(fra,par):
             break
 
         for pm_set in superpm_set:
+            #获取anrinc429,第一步应该用super_set中的bout,blen设置,获取数据后,再用superpm_set中的配置取出最终bits。
+            #但是因为super_set中的内容都是12,12。所以这里就直接用了最终配置。
             value=get_arinc429(buf, frame_pos, pm_set, word_sec )  #ARINC 429 format
             value =arinc429_decode(value ,par )
             # superpm_set 中有个 resolution 似乎是无用的。AGS配置中,说是自动计算的,不让改。
