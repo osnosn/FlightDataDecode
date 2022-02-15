@@ -1,7 +1,7 @@
 # ARINC717 目录   
 
 ### 更新   
-* 还没做。TODO   
+* 正在做... TODO   
 
 
 
@@ -13,9 +13,12 @@ ARINC 717 Aligned 文件,是从 ARINC 717 文件整理而来。主要做了两�
 
 
 所有python3程序用到的库   
-  * `import os,sys,getopt`  基本库  
+  * `import csv`  
+  * `from io import StringIO`  
+  * `import gzip`  
+  * `import os,sys,getopt`  
   * `import zipfile`  
-  * `import pandas as pd`   解码，未用到，读air配置文件,依赖了。读其他配置文件, 用到了。  
+
 
 编写时使用的是 python3.9 版本。   
 

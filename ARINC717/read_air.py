@@ -5,10 +5,9 @@
  读取 aircraft.air 文件。机尾号与解码库的对应表。
     author:南方航空,LLGZ@csair.com
 """
-#import struct
-#from datetime import datetime
-import pandas as pd
+import csv
 import config_vec as conf
+import gzip
 
 def main(reg):
     global FNAME,DUMPDATA
@@ -17,35 +16,55 @@ def main(reg):
 
     FNAME=conf.aircraft
 
-    df_flt=csv(FNAME)
-    columns=df_flt.columns
+    air_csv=air(FNAME)
+    #第一行是标题。第二行,是第一行的继续
+    #从第三行开始，是数据表
+    #最后一行，是个注释
+    columns=air_csv[0]
 
     if ALLREG:
         #----------显示所有机尾号-------------
-        tmp=df_flt.iloc[1:,0]  #series
+        #第0列是机尾号
         ii=1
-        for vv in tmp.to_list():
-            if vv.startswith('//'):
+        for vv in air_csv:
+            if vv[0].startswith('//'):
                 continue
-            print(vv, end=',\t')
+            print(vv[0], end=',\t')
             if ii % 10 ==0:
                 print()
             ii+=1
         print()
+        #----写CSV文件--------
         if len(TOCSV)>4:
             print('Write to CSV file:',TOCSV)
-            #tmp=df_flt.iloc[1:,0]  #series
-            #tmp=df_flt.iloc[1:,[0,2,3,6,12,13]]  #DataFrame
-            tmp=df_flt.iloc[1:,[0,12]]  #DataFrame
-            tmp.to_csv(TOCSV,sep='\t')
+            if TOCSV.endswith('.gz'):
+                fp=gzip.open(TOCSV,'wt',encoding='utf8')
+            else:
+                fp=open(TOCSV,'w',encoding='utf8')
+            loc=(0,2,3,6,12,13)
+            loc=(0,12)
+            ii=-1
+            for row in air_csv:
+                ii+=1
+                if len(row)<2:
+                    continue
+                fp.write(str(ii))
+                for cc in loc:
+                    fp.write('\t'+row[cc])
+                fp.write('\n')
+            fp.close()
         return
 
     if ALLVER:
         #----------显示所有解码库号-------------
-        tmp=df_flt.iloc[1:,12].unique()  #numpy.ndarray
-        tmp.sort()
+        dataVer=[]
+        for row in air_csv:
+            if len(row)<2: continue
+            if row[12] not in dataVer:
+                dataVer.append(row[12])
+        dataVer.sort()
         ii=1
-        for vv in tmp.tolist():
+        for vv in dataVer:
             print(vv, end=',\t')
             if ii % 5 ==0:
                 print()
@@ -54,20 +73,31 @@ def main(reg):
         return
 
     if ALLTYPE:
-        #----------显示所有解码库号-------------
+        #----------显示所有机型号-------------
         print('All aircraft Type:')
-        tmp=df_flt.iloc[1:,3].unique()  #numpy.ndarray
+        acType=[]
+        for row in air_csv:
+            if len(row)<2: continue
+            if row[3] not in acType:
+                acType.append(row[3])
+        acType.sort()
         ii=1
-        for vv in tmp.tolist():
+        for vv in acType:
             print(vv, end=',\t')
             if ii % 5 ==0:
                 print()
             ii+=1
         print()
-        print('All aircraft COMP:')
-        tmp=df_flt.iloc[1:,2].unique()  #numpy.ndarray
+
+        print('All aircraft BASE:')
+        acBase=[]
+        for row in air_csv:
+            if len(row)<2: continue
+            if row[2] not in acBase:
+                acBase.append(row[2])
+        acBase.sort()
         ii=1
-        for vv in tmp.tolist():
+        for vv in acBase:
             print(vv, end=',\t')
             if ii % 5 ==0:
                 print()
@@ -80,25 +110,27 @@ def main(reg):
         if not reg.startswith('B-'):
             reg = 'B-'+reg
         print(reg)
-
-        pd.set_option('display.max_columns',64)
-        pd.set_option('display.width',156)
-        #pd.set_option('display.width',256)
-        #tmp=df_flt[ df_flt[columns[0]]==reg].copy()  #dataframe
-        tmp2=df_flt[ df_flt.iloc[:,0]==reg].copy()  #dataframe
-        tmp=tmp2.append(tmp2, ignore_index=False )
-        if len(tmp2)<1:
+        index=0
+        for row in air_csv: #找机尾号
+            if row[0]==reg: break
+            index +=1
+        if index>=len(air_csv):
             print('Aircraft registration %s not found.' % reg)
             print()
             return
-        tmp.iloc[1]=[x for x in range(len(columns))] #添加一个数字序列，用来标记column的index
-        tmp.dropna(axis=1,inplace=True)
-        tmp.iat[1,0]='col序列-->'
-        print(tmp)
+        for ii in range(len(air_csv[index])):
+            print(ii,air_csv[index][ii],air_csv[0][ii],sep=',\t')
+        print()
         return
 
+    #--------------DUMP------------
+    #---显示columns---
     #print(len(columns))
-    print(columns)
+    print('Columns:')
+    ii=0
+    for row in columns:
+        print('   ',ii,'\t',row)
+        ii +=1
     col=['// A/C tail', 'Reception date', 'Airline', 'A/C type',
             'A/C type wired no', 'A/C ident', #'A/C serial number',
     #        'A/C in operation (1=YES/0=NO)', 'QAR/DAR recorder model',
@@ -109,54 +141,50 @@ def main(reg):
     #        'Version for analysis/FDR',
     #        'Version for analysis/FDR2', '//AGS'
             ]
-    print(df_flt[col])
-    #print(df_flt)
+    #---显示 指定列的 前后5行---
+    print('Dump head row:')
+    show_col=(0,1,2,3,4,5,12,13,14,15)
+    ttl_rows=len(air_csv)
+    ii=-1
+    for row in air_csv:
+        ii +=1
+        if len(row)<2:
+            continue
+        if ii==30:
+            print('   ... ...')
+        if ii>10 and ii< ttl_rows-10:
+            continue
+        print(len(row),ii,end='\t')
+        for cc in show_col:
+            print(row[cc]+',',end='\t')
+        print()
 
+    #----写CSV文件--------
     if len(TOCSV)>4:
         print('Write to CSV file:',TOCSV)
-        df_flt.to_csv(TOCSV)
+        if TOCSV.endswith('.gz'):
+            fp=gzip.open(TOCSV,'wt',encoding='utf8')
+        else:
+            fp=open(TOCSV,'w',encoding='utf8')
+        buf=csv.writer(fp,delimiter='\t')
+        buf.writerows(air_csv)
+        fp.close()
     return
 
 
-def csv(csv_filename):
-    #print('   read "%s"'%csv_filename)
+def air(csv_filename):
     if not os.path.exists(csv_filename):
         print('   "%s" Not Found.'%csv_filename)
         return
-    fp=open(csv_filename,'r',encoding='utf16')
-    head1=fp.readline().strip()
-    head2=fp.readline().strip()
-    fp.close()
-    head=(head1+'\t'+head2).split('\t')
-    for ii in range(len(head)):
-        if head[ii]=='(Spare)': #处理重复项目
-            head[ii]+=str(ii)
-    '''
-    df_flt=pd.read_csv(csv_filename,
-                   header=0,
-                   #skiprows=[0,1,2,3,4,6,7,8,9],
-                   skiprows=[1,],    #aircraft.air
-                   index_col=None,sep='\t',
-                   #nrows=10000,
-                   engine='c',
-                   encoding='utf16'
-                   )
-    '''
-    df_flt=pd.read_table(csv_filename,
-                   #header=0,
-                   header=None,
-                   names=head,
-                   #skiprows=[0,1,2,3,4,6,7,8,9],
-                   skiprows=[0,1,],    #aircraft.air
-                   index_col=None,sep='\t',
-                   #nrows=10000,
-                   #on_bad_lines='warn',
-                   engine='c',
-                   encoding='utf16'
-                   )
-    return df_flt
-
-
+    air_csv=[]
+    with open(csv_filename,'r',encoding='utf16') as fp:
+        buf=csv.reader(fp,delimiter='\t')
+        for row in buf:
+            air_csv.append(row)
+    #第一行和第二行合并,删除第二行 
+    air_csv[0].append(','.join(air_csv[1]))
+    del air_csv[1]
+    return air_csv
 
 
 

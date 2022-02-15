@@ -58,8 +58,11 @@ wgl 目录中有两个空文件，只是给出个例子，看看压缩包内,文
   * `Get_param_from_wgl.py`   
 
 所有python3程序用到的库   
-  * `import os,sys,getopt`  基本库  
+  * `import os,sys,getopt`  
+  * `from datetime import datetime`  
   * `import zipfile`  
+  * `from io import BytesIO`  
+  * `from io import StringIO`  
   * `import pandas as pd`   解码，未用到，读air配置文件,依赖了。读其他配置文件, 用到了。  
   * `import psutil`   解码，未用到  
   * `import struct`   解码，未用到  

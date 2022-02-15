@@ -3,7 +3,7 @@
 
 """
 读取 wgl 中 raw.dat 。
-读解码一个参数。')
+解码一个参数。
 仅支持 ARINC 573/717 PCM 格式
 ------
 https://github.com/aeroneous/PyARINC429   #py3.5
@@ -132,7 +132,7 @@ def main():
 
     if PARAMLIST:
         #-----------列出记录中的所有参数名称--------------
-        fra=getFRA(air[0],'ALT_STD')
+        fra=getFRA(air[0],'')  #第二个参数会被忽略
         if len(fra)<1:
             print('Empty dataVer.')
             return
@@ -157,7 +157,7 @@ def main():
 
     if PARAM is None:
         #-----------打印参数的配置内容-----------------
-        for vv in ('ALT_STD','AC_TAIL7'):
+        for vv in ('ALT_STD','AC_TAIL7'): #打印这两个示例参数名
             fra=getFRA(air[0],vv)
             if len(fra)<1:
                 print('Empty dataVer.')
