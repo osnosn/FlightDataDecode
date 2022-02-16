@@ -12,17 +12,20 @@ import csv
 from io import StringIO
 import config_vec as conf
 
+PAR=None  #保存读入的配置. 当作为模块,被调用时使用.
+DataVer=None
+
 def main():
     global FNAME,DUMPDATA
     global TOCSV
     global PARAMLIST
     global PARAM
-    PAR=read_parameter_file(FNAME)
+    par_conf=read_parameter_file(FNAME)
 
     if PARAMLIST:
         #----------显示所有参数名-------------
         ii=0
-        for vv in PAR:
+        for vv in par_conf:
             print(vv[0], end=',\t')
             if ii % 10 ==0:
                 print()
@@ -36,7 +39,7 @@ def main():
             else:
                 fp=open(TOCSV,'w',encoding='utf8')
             ii=0
-            for row in PAR:
+            for row in par_conf:
                 fp.write(str(ii)+'\t'+row[0]+'\n')
                 ii+=1
         return
@@ -45,12 +48,12 @@ def main():
         #----------显示单个参数的配置内容-------------
         param=PARAM.upper()
         idx=0
-        for row in PAR:
+        for row in par_conf:
             if row[0] == param: break
             idx +=1
-        if idx < len(PAR):
-            for ii  in range(len(PAR[0])):
-                print(ii, PAR[idx][ii], PAR[0][ii], sep=',\t')
+        if idx < len(par_conf):
+            for ii  in range(len(par_conf[0])):
+                print(ii, par_conf[idx][ii], par_conf[0][ii], sep=',\t')
         else:
             print('Parameter %s not found in Regular parameter.'%param)
         print()
@@ -67,13 +70,13 @@ def main():
 
     loc=(0,2,3,4,5,6,7,8,9,17,20,24,25,36,37,38,39,40)
     #tmp.iat[0,2]='InternalFormat' # Internal Format (Float ,Unsigned or Signed)
-    par_len=len(PAR)-1
+    par_len=len(par_conf)-1
     print('---------- recorder num:',par_len,'------------')
-    for ii in range(len(PAR[0])):
+    for ii in range(len(par_conf[0])):
         print(ii,end=',')
         for jj in range(1,6):
-            print('\t',PAR[jj][ii], end=',')
-        print('\t',PAR[0][ii])
+            print('\t',par_conf[jj][ii], end=',')
+        print('\t',par_conf[0][ii])
 
 
     #----写CSV文件--------
@@ -84,13 +87,20 @@ def main():
         else:
             fp=open(TOCSV,'w',encoding='utf8')
         buf=csv.writer(fp,delimiter='\t')
-        buf.writerows(PAR)
+        buf.writerows(par_conf)
         fp.close()
     return
 
 def read_parameter_file(dataver):
+    global PAR
+    global DataVer
 
     dataver='%06d' % int(dataver)  #6位字符串
+    if PAR is not None and DataVer==dataver:
+        return PAR
+    else:
+        DataVer=dataver
+        PAR=None
 
     filename_zip=dataver+'.par'     #.vec压缩包内的文件名
     zip_fname=os.path.join(conf.vec,dataver+'.vec')  #.vec文件名
@@ -105,7 +115,7 @@ def read_parameter_file(dataver):
         print('ERR,FailOpenZipFile',e,zip_fname,flush=True)
         raise(Exception('ERR,FailOpenZipFile'))
     
-    PAR=[]
+    par_conf=[]
     with StringIO(fzip.read(filename_zip).decode('utf16')) as fp:
         ki=-1
         offset=0  #总偏移
@@ -119,9 +129,9 @@ def read_parameter_file(dataver):
                 ki +=1
                 if ki>0:
                     #print('one_par:',one_par,'\n')
-                    PAR.append( one_PAR(PAR_offset,one_par) )
+                    par_conf.append( one_PAR(PAR_offset,one_par) )
                     #if ki==1:
-                    #    print('PAR(%d):'%len(PAR), PAR,'\n')
+                    #    print('par_conf(%d):'%len(par_conf), par_conf,'\n')
                     #    print('PAR_offset:',PAR_offset,'\n')
                     #if ki>2:
                     #    break
@@ -142,11 +152,11 @@ def read_parameter_file(dataver):
             else:
                 for jj in range( len(tmp2) ):
                     one_par[ tmp1[0] ][jj].append( tmp2[jj] )
-        PAR.append( one_PAR(PAR_offset,one_par) )
+        par_conf.append( one_PAR(PAR_offset,one_par) )
 
     fzip.close()
 
-    return PAR       #返回list
+    return par_conf       #返回list
 
 def one_PAR(PAR_offset,one_par):
     '''

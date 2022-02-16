@@ -9,6 +9,8 @@ import csv
 import config_vec as conf
 import gzip
 
+AIR=None  #保存读入的配置. 当作为模块,被调用时使用.
+
 def main(reg):
     global FNAME,DUMPDATA
     global ALLREG,ALLVER,ALLTYPE
@@ -173,6 +175,9 @@ def main(reg):
 
 
 def air(csv_filename):
+    global AIR
+    if AIR is not None:
+        return AIR
     if not os.path.exists(csv_filename):
         print('   "%s" Not Found.'%csv_filename)
         return
@@ -184,7 +189,8 @@ def air(csv_filename):
     #第一行和第二行合并,删除第二行 
     air_csv[0].append(','.join(air_csv[1]))
     del air_csv[1]
-    return air_csv
+    AIR=air_csv
+    return AIR
 
 
 

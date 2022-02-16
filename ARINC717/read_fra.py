@@ -12,25 +12,28 @@ import gzip
 from io import StringIO
 import config_vec as conf
 
+FRA=None  #保存读入的配置. 当作为模块,被调用时使用.
+DataVer=None
+
 def main():
     global FNAME,DUMPDATA
     global TOCSV
     global PARAMLIST
     global PARAM
-    FRA=read_parameter_file(FNAME)
-    if FRA is None:
+    fra_conf=read_parameter_file(FNAME)
+    if fra_conf is None:
         return
 
-    #print(FRA)
-    #print(FRA.keys())
+    #print(fra_conf)
+    #print(fra_conf.keys())
 
     if PARAMLIST:
         #----------显示所有参数名-------------
-        #print(FRA['2'].iloc[:,0].tolist())
+        #print(fra_conf['2'].iloc[:,0].tolist())
         #---regular parameter
         print('------------------------------------------------')
         ii=0
-        for vv in FRA['2']:
+        for vv in fra_conf['2']:
             print(vv[0], end=',\t')
             if ii % 10 ==0:
                 print()
@@ -39,7 +42,7 @@ def main():
         #---superframe parameter
         print('------------------------------------------------')
         ii=0
-        for vv in FRA['4']:
+        for vv in fra_conf['4']:
             print(vv[0], end=',\t')
             if ii % 10 ==0:
                 print()
@@ -53,11 +56,11 @@ def main():
             else:
                 fp=open(TOCSV,'w',encoding='utf8')
             ii=0
-            for row in FRA['2']:
+            for row in fra_conf['2']:
                 fp.write(str(ii)+'\t'+row[0]+'\n')
                 ii+=1
             ii=0
-            for row in FRA['4']:
+            for row in fra_conf['4']:
                 fp.write(str(ii)+'\t'+row[0]+'\n')
                 ii+=1
             fp.close()
@@ -68,38 +71,38 @@ def main():
         param=PARAM.upper()
         #---regular parameter
         idx=0
-        for row in FRA['2']:
+        for row in fra_conf['2']:
             if row[0] == param: break
             idx +=1
-        if idx < len(FRA['2']):
-            for ii in range(FRA['2_items']):
-                print(ii,FRA['2'][idx][ii], FRA['2'][0][ii], sep=',\t')
+        if idx < len(fra_conf['2']):
+            for ii in range(fra_conf['2_items']):
+                print(ii,fra_conf['2'][idx][ii], fra_conf['2'][0][ii], sep=',\t')
         else:
             print('Parameter %s not found in Regular parameter.'%param)
         print()
         #---superframe parameter
         idx=0
-        for row in FRA['4']:
+        for row in fra_conf['4']:
             if row[0] == param: break
             idx +=1
-        if idx < len(FRA['4']):
-            for ii in range(FRA['4_items']):
-                print(ii,FRA['4'][idx][ii], FRA['4'][0][ii], sep=',\t')
+        if idx < len(fra_conf['4']):
+            for ii in range(fra_conf['4_items']):
+                print(ii,fra_conf['4'][idx][ii], fra_conf['4'][0][ii], sep=',\t')
         else:
             print('Parameter %s not found in Superframe parameter.'%param)
         print()
 
         return
 
-    print_fra(FRA, '1')
-    print_fra(FRA, '2')
-    if len(FRA['3'])>1:
-        print_fra(FRA, '3')
+    print_fra(fra_conf, '1')
+    print_fra(fra_conf, '2')
+    if len(fra_conf['3'])>1:
+        print_fra(fra_conf, '3')
     else:
         print('No Superframe.')
 
-    if len(FRA['4'])>1:
-        print_fra(FRA, '4')
+    if len(fra_conf['4'])>1:
+        print_fra(fra_conf, '4')
     else:
         print('No Superframe Parameter.')
     print()
@@ -107,25 +110,25 @@ def main():
     if len(TOCSV)>4:
         print('==>ERR,  There has 4 tables. Can not save to 1 CSV.')
 
-def print_fra(FRA, frakey ):
-    if frakey not in FRA:
+def print_fra(fra_conf, frakey ):
+    if frakey not in fra_conf:
         print('ERR, %s not in list' % frakey)
         return
-    fra_len=len(FRA[frakey])-1
+    fra_len=len(fra_conf[frakey])-1
     print('----',frakey,'------------- recorder num:',fra_len,'-----')
     if fra_len>6:
         show_len=6
     else:
         show_len=fra_len
-    for ii in range(FRA[frakey+'_items']):
+    for ii in range(fra_conf[frakey+'_items']):
         print(ii,end=',')
         for jj in range(1,show_len+1):
-            print('\t',FRA[frakey][jj][ii], end=',')
-        print('\t',FRA[frakey][0][ii])
+            print('\t',fra_conf[frakey][jj][ii], end=',')
+        print('\t',fra_conf[frakey][0][ii])
 
 def read_parameter_file(dataver):
     '''
-    FRA={
+    fra_conf={
          '1': [ 
             [x,x,,....],   <-- items number
             [x,x,,....],
@@ -153,6 +156,9 @@ def read_parameter_file(dataver):
 
     }
     '''
+    global FRA
+    global DataVer
+
     if isinstance(dataver,(str,float)):
         dataver=int(dataver)
     if str(dataver).startswith('787'):
@@ -160,6 +166,11 @@ def read_parameter_file(dataver):
         print('Use "read_frd.py instead.')
         return None
     dataver='%06d' % dataver  #6位字符串
+    if FRA is not None and DataVer==dataver:
+        return FRA
+    else:
+        DataVer=dataver
+        FRA=None
 
     filename_zip=dataver+'.fra'     #.vec压缩包内的文件名
     zip_fname=os.path.join(conf.vec,dataver+'.vec')  #.vec文件名
@@ -174,7 +185,7 @@ def read_parameter_file(dataver):
         print('ERR,FailOpenZipFile',e,zip_fname,flush=True)
         raise(Exception('ERR,FailOpenZipFile,%s'%(zip_fname)))
     
-    FRA={}
+    fra_conf={}
     with StringIO(fzip.read(filename_zip).decode('utf16')) as fp:
         for line in fp.readlines():
             line_tr=line.strip('\r\n //')
@@ -184,15 +195,16 @@ def read_parameter_file(dataver):
             if line.startswith('//') and tmp1[0] == '7':     # "7|..." 的标题比较特殊，起始多了一个tab
                 tmp1[1]=tmp1[0].lstrip()
             tmp2=tmp1[1].split('\t')
-            if tmp1[0] in FRA:
-                if FRA[ tmp1[0]+'_items' ] != len(tmp2):
-                    print('ERR,data(%s) length require %d, but %d.' % (tmp1[0], FRA[ tmp1[0]+'_items' ], len(tmp2)) )
-                    #raise(Exception('ERR,DataLengthNotSame,data(%s) require %d but %d.'% (tmp1[0], FRA[ tmp1[0]+'_items' ], len(tmp2)) ))
-                FRA[ tmp1[0] ].append( tmp2 )
+            if tmp1[0] in fra_conf:
+                if fra_conf[ tmp1[0]+'_items' ] != len(tmp2):
+                    print('ERR,data(%s) length require %d, but %d.' % (tmp1[0], fra_conf[ tmp1[0]+'_items' ], len(tmp2)) )
+                    #raise(Exception('ERR,DataLengthNotSame,data(%s) require %d but %d.'% (tmp1[0], fra_conf[ tmp1[0]+'_items' ], len(tmp2)) ))
+                fra_conf[ tmp1[0] ].append( tmp2 )
             else:
-                FRA[ tmp1[0] ]=[ tmp2, ]
-                FRA[ tmp1[0]+'_items' ]=len(tmp2)
+                fra_conf[ tmp1[0] ]=[ tmp2, ]
+                fra_conf[ tmp1[0]+'_items' ]=len(tmp2)
     fzip.close()
+    FRA=fra_conf
     return FRA       #返回list
 
 
