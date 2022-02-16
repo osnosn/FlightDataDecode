@@ -201,8 +201,9 @@ def main():
             df_pm.to_csv(WFNAME,sep='\t',index=False)
             return
 
+        #-----------显示参数的部分内容--------------------
         pd.set_option('display.min_row',200)
-        print( df_pm['v'][1000:].tolist() )
+        print( df_pm['v'][1000:1200].tolist() )
 
     print('mem:',sysmem())
     return
@@ -952,7 +953,8 @@ def getREG(fname):
     从zip文件名中，找出机尾号
        author:南方航空,LLGZ@csair.com
     '''
-    tmp=fname.strip().split('_',1)
+    basename=os.path.basename(fname)
+    tmp=basename.strip().split('_',1)
     if len(tmp[0])>6: #787的文件名没有用 _ 分隔
         return tmp[0][:6]
     elif len(tmp[0])>0:

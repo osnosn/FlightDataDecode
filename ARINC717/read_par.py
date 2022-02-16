@@ -12,8 +12,8 @@ import csv
 from io import StringIO
 import config_vec as conf
 
-PAR=None  #保存读入的配置. 当作为模块,被调用时使用.
-DataVer=None
+#PAR=None  #保存读入的配置. 当作为模块,被调用时使用.
+#DataVer=None
 
 def main():
     global FNAME,DUMPDATA
@@ -47,6 +47,21 @@ def main():
     if PARAM is not None and len(PARAM)>0:
         #----------显示单个参数的配置内容-------------
         param=PARAM.upper()
+        idx=[]
+        ii=0
+        for row in par_conf: #找出所有记录
+            if row[0] == param: idx.append(ii)
+            ii +=1
+        if len(idx)>0:
+            for ii in range(len(par_conf[0])):
+                print(ii,end=',\t')
+                for jj in idx:
+                    print(par_conf[jj][ii], end=',\t')
+                print(par_conf[0][ii])
+        else:
+            print('Parameter %s not found in Regular parameter.'%param)
+        '''
+        # 只找出第一条记录，通常par参数只会有一条记录
         idx=0
         for row in par_conf:
             if row[0] == param: break
@@ -56,6 +71,7 @@ def main():
                 print(ii, par_conf[idx][ii], par_conf[0][ii], sep=',\t')
         else:
             print('Parameter %s not found in Regular parameter.'%param)
+        '''
         print()
         return
 
@@ -92,15 +108,15 @@ def main():
     return
 
 def read_parameter_file(dataver):
-    global PAR
-    global DataVer
+    #global PAR
+    #global DataVer
 
     dataver='%06d' % int(dataver)  #6位字符串
-    if PAR is not None and DataVer==dataver:
-        return PAR
-    else:
-        DataVer=dataver
-        PAR=None
+    #if PAR is not None and DataVer==dataver:
+    #    return PAR
+    #else:
+    #    DataVer=dataver
+    #    PAR=None
 
     filename_zip=dataver+'.par'     #.vec压缩包内的文件名
     zip_fname=os.path.join(conf.vec,dataver+'.vec')  #.vec文件名
@@ -156,6 +172,7 @@ def read_parameter_file(dataver):
 
     fzip.close()
 
+    #PAR=par_conf
     return par_conf       #返回list
 
 def one_PAR(PAR_offset,one_par):

@@ -9,7 +9,7 @@ import csv
 import config_vec as conf
 import gzip
 
-AIR=None  #保存读入的配置. 当作为模块,被调用时使用.
+#AIR=None  #保存读入的配置. 当作为模块,被调用时使用.
 
 def main(reg):
     global FNAME,DUMPDATA
@@ -112,16 +112,21 @@ def main(reg):
         if not reg.startswith('B-'):
             reg = 'B-'+reg
         print(reg)
-        index=0
-        for row in air_csv: #找机尾号
-            if row[0]==reg: break
-            index +=1
-        if index>=len(air_csv):
+        idx=[]
+        ii=0
+        for row in air_csv: #找机尾号,所有的
+            if row[0]==reg: idx.append(ii)
+            ii +=1
+        if len(idx)>0:
+            for ii in range(len(air_csv[idx[0]])):
+                print(ii,end=',\t')
+                for jj in idx:
+                    print(air_csv[jj][ii],end=',\t')
+                print(air_csv[0][ii])
+        else:
             print('Aircraft registration %s not found.' % reg)
             print()
             return
-        for ii in range(len(air_csv[index])):
-            print(ii,air_csv[index][ii],air_csv[0][ii],sep=',\t')
         print()
         return
 
@@ -175,9 +180,9 @@ def main(reg):
 
 
 def air(csv_filename):
-    global AIR
-    if AIR is not None:
-        return AIR
+    #global AIR
+    #if AIR is not None:
+    #    return AIR
     if not os.path.exists(csv_filename):
         print('   "%s" Not Found.'%csv_filename)
         return
@@ -189,8 +194,9 @@ def air(csv_filename):
     #第一行和第二行合并,删除第二行 
     air_csv[0].append(','.join(air_csv[1]))
     del air_csv[1]
-    AIR=air_csv
-    return AIR
+    #AIR=air_csv
+    #return AIR
+    return air_csv   #返回list
 
 
 
