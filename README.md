@@ -21,8 +21,12 @@
   - 对于 ARINC 767 的记录格式   
     - 只能找出每帧的开始和结束。找出帧头,和帧尾的格式。   
 * [ARINC717 目录](https://github.com/osnosn/FlightDataDecode/tree/main/ARINC717), 从 wgl 整理后的程序。详细更新看 [ARINC717 目录中的 README](https://github.com/osnosn/FlightDataDecode/blob/main/ARINC717/README.md)  
-  * 完成。2022-02  
+  * 整理完成。2022-02  
 * [ARINC767 目录](https://github.com/osnosn/FlightDataDecode/blob/main/wgl/README.md), 从 wgl 整理后的程序。详细更新看 [ARINC767 目录中的 README](https://github.com/osnosn/FlightDataDecode/blob/main/ARINC767/README.md)  
   * 等测试程序完成后，再整理。  
+
+### 其他  
+* 认为此项目对您有帮助，请点个星星，或留个言，或发封邮件给我，让我高兴一下.  
+  If you think this project is helpful to you, click a Star, or leave a message, or send me an Email to make me happy.
 
 

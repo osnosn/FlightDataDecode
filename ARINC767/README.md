@@ -19,3 +19,10 @@
 配置文件的来源，请看 [vec目录中的README](https://github.com/osnosn/FlightDataDecode/tree/main/ARINC767/vec).    
 
 
+
+
+### 其他  
+* 认为此项目对您有帮助，请点个星星，或留个言，或发封邮件给我，让我高兴一下.  
+  If you think this project is helpful to you, click a Star, or leave a message, or send me an Email to make me happy.
+
+

@@ -1,7 +1,7 @@
 # ARINC717 目录   
 
 ### 更新   
-* 整理完成。 2022-02. 使用的例程是 `myqar_test.py`。 
+* 整理完成。 2022-02. 使用的例程是 `TEST_myqar.py`。 
 
 
 
@@ -24,5 +24,9 @@ ARINC 717 Aligned 文件,是从 ARINC 717 文件整理而来。主要做了两�
 
 这些程序需要 vec 目录中的配置文件。(机型编码规范, 或者参数编码规则)    
 配置文件的来源，请看 [vec目录中的README](https://github.com/osnosn/FlightDataDecode/tree/main/ARINC717/vec).    
+
+### 其他  
+* 认为此项目对您有帮助，请点个星星，或留个言，或发封邮件给我，让我高兴一下.  
+  If you think this project is helpful to you, click a Star, or leave a message, or send me an Email to make me happy.
 
 

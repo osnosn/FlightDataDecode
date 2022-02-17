@@ -250,7 +250,7 @@ def get_super(fra,par):
         sync3=(sync3 << (12 * (sync_word_len-1))) +1
         sync4=(sync4 << (12 * (sync_word_len-1))) +1
 
-    #----------准备参数的配置-----------
+    #----------参数配置的整理-----------
     super_set=[]
     for vv in fra['3']: #全部内容变为 int
         p_set={  #临时变量
@@ -264,7 +264,7 @@ def get_super(fra,par):
         super_set.append(p_set)
     super_set=super_set[0] #只取了第一项,通常一个super参数只会对应一个frameNo
 
-    #----------准备参数的配置,把一个period作为一个大frame处理-----------
+    #----------参数配置的整理,把一个period作为一个大frame处理-----------
     superpm_set=[]
     p_set=[]  #临时变量
     last_part=0
@@ -1000,6 +1000,8 @@ def usage():
     print('   -w xxx.csv            参数写入文件"xxx.csv"')
     print('   -w xxx.csv.gz         参数写入文件"xxx.csv.gz"')
     print(u'\n               author:南方航空,LLGZ@csair.com')
+    print(u' 认为此项目对您有帮助，请发封邮件给我，让我高兴一下.')
+    print(u' If you think this project is helpful to you, please send me an email to make me happy.')
     print()
     return
 if __name__=='__main__':

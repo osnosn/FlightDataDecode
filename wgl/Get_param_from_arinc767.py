@@ -278,6 +278,8 @@ def usage():
     print('   -f, --file=    "....wgl.zip" filename')
     #print('   -w xxx.dat     写入文件"xxx.dat"')
     print(u'\n               author:南方航空,LLGZ@csair.com')
+    print(u' 认为此项目对您有帮助，请发封邮件给我，让我高兴一下.')
+    print(u' If you think this project is helpful to you, please send me an email to make me happy.')
     print()
     return
 if __name__=='__main__':

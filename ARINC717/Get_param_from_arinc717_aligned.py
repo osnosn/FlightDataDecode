@@ -116,7 +116,8 @@ class ARINC717():
         self.par_dataver=-1
         self.qar=None
         self.qar_filename=''
-        self.qar_file(fname)
+        if len(fname)>0:
+            self.qar_file(fname)
 
     def qar_file(self,qar_filename):
         #----------打开zip压缩文件-----------
@@ -189,7 +190,7 @@ class ARINC717():
             sync3=(sync3 << (12 * (sync_word_len-1))) +1
             sync4=(sync4 << (12 * (sync_word_len-1))) +1
 
-        #----------准备参数的配置-----------
+        #----------参数配置的整理-----------
         super_set=[]
         for vv in fra['3']: #全部内容变为 int
             p_set={  #临时变量
@@ -203,7 +204,7 @@ class ARINC717():
             super_set.append(p_set)
         super_set=super_set[0] #只取了第一项,通常一个super参数只会对应一个frameNo
 
-        #----------准备参数的配置,把一个period作为一个大frame处理-----------
+        #----------参数配置的整理,把一个period作为一个大frame处理-----------
         superpm_set=[]
         p_set=[]  #临时变量
         last_part=0
@@ -516,7 +517,7 @@ class ARINC717():
     def arinc429_decode(self,word,conf):
         '''
         par可能有的 Type: 'CONSTANT' 'DISCRETE' 'PACKED BITS' 'BNR LINEAR (A*X)' 'COMPUTED ON GROUND' 'CHARACTER' 'BCD' 'BNR SEGMENTS (A*X+B)' 'UTC'
-        par实际有的 Type: 'BNR LINEAR (A*X)' 'BNR SEGMENTS (A*X+B)' 'CHARACTER' 'BCD' 'UTC' 'PACKED BITS'
+        par实际有的 Type: 'BNR LINEAR (A*X)' 'BNR SEGMENTS (A*X+B)' 'CHARACTER' 'BCD' 'UTC' 'PACKED BITS' 'DISCRETE'
             author:南方航空,LLGZ@csair.com  
         '''
         if conf['type'].find('BNR')==0 or \
@@ -696,6 +697,7 @@ class ARINC717():
         return word
 
     def readPAR(self):
+        '读 par 配置'
         dataver=self.getAIR()[0]
         if isinstance(dataver,(str,float)):
             dataver=int(dataver)
@@ -749,6 +751,7 @@ class ARINC717():
                     }
 
     def readFRA(self):
+        '读 fra 配置'
         dataver=self.getAIR()[0]
         if isinstance(dataver,(str,float)):
             dataver=int(dataver)
@@ -779,7 +782,7 @@ class ARINC717():
             tmp=self.fra['2']
             idx=[]
             ii=0
-            for row in tmp: #找出所有记录
+            for row in tmp: #找出所有记录,一个参数会有多条记录
                 if row[0] == param: idx.append(ii)
                 ii +=1
 
@@ -878,6 +881,7 @@ class ARINC717():
             return [0,0,'','']  #没找到
 
     def readAIR(self):
+        '读 air 配置'
         if self.air is None:
             self.air=AIR.air(conf.aircraft)
 
@@ -912,168 +916,40 @@ class ARINC717():
         获取当前文件的 DataVer
         '''
         return self.fra_dataver
+    def close(self):
+        '清除,保留的所有配置和数据'
+        self.air=None
+        self.fra=None
+        self.fra_dataver=-1
+        self.par=None
+        self.par_dataver=-1
+        self.qar=None
+        self.qar_filename=''
 
 
-import pandas as pd
-def main():
-    global FNAME,WFNAME,DUMPDATA
-    global PARAM,PARAMLIST
-
-    print('mem:',sysmem())
-    myQAR=ARINC717(FNAME)
-    print('mem:',sysmem())
-
-    if PARAMLIST:
-        #-----------列出记录中的所有参数名称--------------
-        regularlist,superlist=myQAR.paramlist()
-        #---regular parameter
-        ii=0
-        for vv in regularlist:
-            print(vv, end=',\t')
-            if ii % 10 ==0:
-                print()
-            ii+=1
-        print()
-        print('--------------------------------------------')
-        #---superframe parameter
-        ii=0
-        for vv in superlist:
-            print(vv, end=',\t')
-            if ii % 10 ==0:
-                print()
-            ii+=1
-        print()
-        print('mem:',sysmem())
-
-        #-----------参数写入csv文件--------------------
-        if WFNAME is not None and len(WFNAME)>0:
-            print('Write into file "%s".' % WFNAME)
-            df_pm=pd.concat([pd.DataFrame(regularlist),pd.DataFrame(superlist)])
-            df_pm.to_csv(WFNAME,sep='\t',index=False)
-            return
-        return
-
-    if PARAM is None:
-        #-----------打印参数的配置内容-----------------
-        for vv in ('ALT_STD','AC_TAIL7'):
-            fra=myQAR.getFRA(vv)
-            if len(fra)<1:
-                print('Empty dataVer.')
-                continue
-            print('parameter:',vv)
-            print('Word/SEC:{0[0]}, synchro len:{0[1]} bit, sync1:{0[2]}, sync2:{0[3]}s, sync3:{0[4]}, sync4:{0[5]}, '.format(fra['1']))
-            print('   superframe counter:subframe:{0[6]:<5}, word:{0[7]:<5}, bitOut:{0[8]:<5}, bitLen:{0[9]:<5}, value in 1st frame:{0[10]:<5}, '.format(fra['1']) )
-            for vv in fra['2']:
-                print('Part:{0[0]:<5}, recordRate:{0[1]:<5}, subframe:{0[2]:<5}, word:{0[3]:<5}, bitOut:{0[4]:<5}, bitLen:{0[5]:<5}, bitIn:{0[6]:<5}, type:{0[7]:<5}, '.format(vv) )
-            print()
-        print('DataVer:',myQAR.dataVer())
-    else:
-        #-----------获取一个参数--------------------
-        pm_list=myQAR.get_param(PARAM)
-        #print(pm_list)
-        if len(pm_list)<1:
-            PARAM=PARAM.upper()
-            print('参数 "%s" 没找到, 或者获取失败.'% PARAM)
-            print(pm_list)
-            print('DataVer:',myQAR.dataVer())
-            return
-        print('Result[0]:',pm_list[0]) #打印第一组值
-        print('DataVer:',myQAR.dataVer())
-
-        df_pm=pd.DataFrame(pm_list)
-
-        #-----------参数写入csv文件--------------------
-        if WFNAME is not None and len(WFNAME)>0:
-            print('Write into file "%s".' % WFNAME)
-            #df_pm.to_csv(WFNAME,index=False)
-            df_pm.to_csv(WFNAME,sep='\t',index=False)
-            return
-
-        #-----------显示参数的部分内容--------------------
-        pd.set_option('display.min_row',200)
-        print( df_pm['v'][1000:1200].tolist() )
-
-    print('mem:',sysmem())
-    return
-
-def showsize(size):
-    '''
-    显示，为了 human readable
-    '''
-    if size<1024.0*2:
-        return '%.0f B'%(size)
-    size /=1024.0
-    if size<1024.0*2:
-        return '%.2f K'%(size)
-    size /=1024.0
-    if size<1024.0*2:
-        return '%.2f M'%(size)
-    size /=1024.0
-    if size<1024.0*2:
-        return '%.2f G'%(size)
-import psutil         #非必需库
-def sysmem():
-    '''
-    获取本python程序占用的内存大小
-    '''
-    size=psutil.Process(os.getpid()).memory_info().rss #实际使用的物理内存，包含共享内存
-    #size=psutil.Process(os.getpid()).memory_full_info().uss #实际使用的物理内存，不包含共享内存
-    return showsize(size)
-
-import os,sys,getopt
+import os,sys
 def usage():
-    print(u'Usage:')
-    print(u'   命令行工具。')
+    print()
     print(u' 读取 wgl中 raw.dat,根据参数编码规则,解码一个参数。')
+    print(u'Usage:')
 
-    print(sys.argv[0]+' [-h|--help]')
-    print('   * (必要参数)')
-    print('   -h, --help                 print usage.')
-    print(' * -f, --file xxx.wgl.zip     "....wgl.zip" filename')
-    print(' * -p, --param alt_std        show "ALT_STD" param. 自动全部大写。')
-    print('   --paramlist                list all param name.')
-    print('   -w xxx.csv            参数写入文件"xxx.csv"')
-    print('   -w xxx.csv.gz         参数写入文件"xxx.csv.gz"')
+    print('   import Get_param_from_arinc717_aligned as A717')
+    print('   qar_file="B-1234-xxxxxxxxx.wgl.zip"')
+    print('   myQAR=A717.ARINC717(qar_file)               #创建实例,并打开一个文件')
+    print('   regularlist,superlist=myQAR.paramlist()     #列出所有的常规参数和超级帧参数,的名称')
+    print('   fra=myQAR.getFRA("VRTG")      #获取参数的fra配置')
+    print('   par=myQAR.getFRA("VRTG")      #获取参数的par配置')
+    print('   dataver=myQAR.dataVer()       #已打开文件的dataVer')
+    print('   myQAR.get_param("VRTG")       #解码一个参数')
+    print('   myQAR.close()                 #关闭')
+    print('   myQAR.qar_file(qar_file)      #重新打开一个文件')
     print(u'\n               author:南方航空,LLGZ@csair.com')
+    print(u' 认为此项目对您有帮助，请发封邮件给我，让我高兴一下.')
+    print(u' If you think this project is helpful to you, please send me an email to make me happy.')
     print()
     return
-if __name__=='__main__':
-    if(len(sys.argv)<2):
-        usage()
-        exit()
-    try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:],'hw:df:p:',['help','file=','paramlist','param=',])
-    except getopt.GetoptError as e:
-        print(e)
-        usage()
-        exit(2)
-    FNAME=None
-    WFNAME=None
-    DUMPDATA=False
-    PARAMLIST=False
-    PARAM=None
-    for op,value in opts:
-        if op in ('-h','--help'):
-            usage()
-            exit()
-        elif op in('-f','--file'):
-            FNAME=value
-        elif op in('-w',):
-            WFNAME=value
-        elif op in('-d',):
-            DUMPDATA=True
-        elif op in('--paramlist',):
-            PARAMLIST=True
-        elif op in('-p','--param',):
-            PARAM=value
-    if len(args)>0:  #命令行剩余参数
-        FNAME=args[0]  #只取第一个
-    if FNAME is None:
-        usage()
-        exit()
-    if os.path.isfile(FNAME)==False:
-        print(FNAME,'Not a file')
-        exit()
 
-    main()
+if __name__=='__main__':
+    usage()
+    exit()
 

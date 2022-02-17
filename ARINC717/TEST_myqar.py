@@ -9,7 +9,10 @@ def main():
     global PARAM,PARAMLIST
 
     print('mem:',sysmem())
-    myQAR=A717.ARINC717(FNAME)
+    #myQAR=A717.ARINC717(FNAME)
+    myQAR=A717.ARINC717('')
+    print('mem:',sysmem())
+    myQAR.qar_file(FNAME)
     print('mem:',sysmem())
 
     if PARAMLIST:
@@ -80,8 +83,14 @@ def main():
 
         #-----------显示参数的部分内容--------------------
         pd.set_option('display.min_row',200)
-        print( df_pm['v'][1000:1200].tolist() )
+        if len(pm_list)>1200:
+            print( df_pm['v'][1000:1200].tolist() )
+        else:
+            print( df_pm['v'][10:90].tolist() )
 
+    print('mem:',sysmem())
+    myQAR.close()
+    print('closed.')
     print('mem:',sysmem())
     return
 
@@ -124,6 +133,8 @@ def usage():
     print('   -w xxx.csv            参数写入文件"xxx.csv"')
     print('   -w xxx.csv.gz         参数写入文件"xxx.csv.gz"')
     print(u'\n               author:南方航空,LLGZ@csair.com')
+    print(u' 认为此项目对您有帮助，请发封邮件给我，让我高兴一下.')
+    print(u' If you think this project is helpful to you, please send me an email to make me happy.')
     print()
     return
 if __name__=='__main__':
