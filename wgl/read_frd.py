@@ -110,9 +110,21 @@ def main():
     #show.sort()
     #print(FRA['3'].loc[:,1].unique() ) #列出所有的 Coef A,都是None
     show=FRA['3']
-    show=show[show.iloc[:,0]=='11']  #列出所有的 ParamID=5 的 ParamOrder
+    #show=show[show.iloc[:,0]=='3']  #列出所有的 ParamID=3 的 ParamOrder
+    #show=show[show.iloc[:,0]=='5']  #列出所有的 ParamID=5 的 ParamOrder
+
+    show=show[show.iloc[:,0]=='11']  #列出所有的 ParamID=11 的 ParamOrder
     show=show.loc[:,1].astype(int).sort_values()
-    print(show.tolist())
+    #print(show.tolist())
+
+    #-----打印frame id 的参数个数
+    show=FRA['3']
+    ids=(0,1,2,3,4,5,6,7,8,9,0xA,0xB,0xC)
+    print(' id', 'param num',sep='\t')
+    for vv in ids:
+        vv=str(vv)
+        tmp=show[show.iloc[:,0]==vv]
+        print(' %X'%int(vv), len(tmp.index),sep='\t')
 
 
     memsize=0

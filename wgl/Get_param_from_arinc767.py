@@ -163,6 +163,7 @@ def main():
         raise(Exception('ERR,SYNC1 not found.'))
     
     #----------验证同步字位置，header内容, trailer内容-----------
+    frameIDs={}  #记录各个frameid 的datasize
     ii=0    #计数
     pm_list=[] #参数列表
     pm_sec=0.0   #参数的时间轴,秒数
@@ -191,8 +192,7 @@ def main():
             print('ERR,time 3')
         else:
             MS_str= '%02d'% (MS/10)
-        print('Frame time1: %02d:%02d:%02d.%s'%(HH,MM,SS,MS_str))
-        #print('Frame time2: %d(%X)'%(tm,tm))
+        #print('Frame time1: %02d:%02d:%02d.%s'%(HH,MM,SS,MS_str))
 
         #----------type & id--------
         frame_id=getWord(buf,frame_pos+8) # type & id
@@ -207,10 +207,17 @@ def main():
             print('==>ERR, type or id in header & trailer is not same.')
         if frame_type != 0:
             print('==>ERR, type is NOT 0.')
-        print('Frame id:   %X' % frame_id)
+        #print('Frame id:   %X' % frame_id)
 
         #----------frame data size--------
-        print('Frame data size: %d'% (frame_size,) )
+        #print('Frame data size: %d'% (frame_size,) )
+
+        #------记录各个frame id 的 frame_size ----
+        if frame_id not in frameIDs:
+            frameIDs[frame_id]=frame_size
+        else:
+            if frameIDs[frame_id] != frame_size:
+                print('frame id %d size NOT same.' % frame_id)
 
         frame_pos += frame_size
     if frame_pos>=ttl_len -2:
@@ -218,6 +225,11 @@ def main():
 
     div4,mod4=divmod(ttl_data_size,4)
     print('Total data size: %d, div4:%d, mod4:%d'% (ttl_data_size, div4, mod4) )
+
+    #------打印各个frame id 的 frame_size ----
+    print('id','frame size',sep='\t')
+    for kk in frameIDs:
+        print(kk,frameIDs[kk],sep='\t')
 
     print('mem:',sysmem())
 
