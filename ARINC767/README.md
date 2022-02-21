@@ -1,12 +1,12 @@
 # ARINC767 目录  
 
 ### 更新  
-* 等 wgl 中的测试程序完成后，再做。TODO  
-
+* ~~等 wgl 中的测试程序完成后，再做。2022-02~~   
+* 格式不复杂, xml定义文件, 本应该随着原始记录文件,打包在一起的。可惜我拿到的原始记录文件中,xml被摘除了。所以此程序不再继续写了。2022-02   
 
 
 ### 说明  
-
+* `647a-1.zip` XML 样例, 来源 https://www.aviation-ia.com/support-files/647a-1
 
 所有python3程序用到的库   
   * `import os,sys,getopt`  基本库  

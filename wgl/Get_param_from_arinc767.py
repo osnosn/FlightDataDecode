@@ -32,6 +32,7 @@
 
    EAFR(Enhanced Airborne Flight Recorder)
    FRED(Flight Recorder Electronic Documentation) 用于描述/定义记录在EAFR中的内容和格式的文档 (ARINC 647A)
+   此文档的样例，可以从 "https://www.aviation-ia.com/support-files/647a-1" 获取。
 
    CNS/ATM Frame Format
    Frame 格式
@@ -52,7 +53,7 @@
     * AFDX message payload padded with "1" for byte alignment.
    -----------------------
     FRAME BASED FLIGHT DATA RECORDING FORMAT
-   The parameter are packed into the frame in the order specified in the Parameter Description. The fraame is padded with extra bits to the next byte boundary.The Frame Length field should be used to determine the end of the frame since extra space may be include in the rame for unused parameters or opaque data.
+   The parameter are packed into the frame in the order specified in the Parameter Description. The frame is padded with extra bits to the next byte boundary.The Frame Length field should be used to determine the end of the frame since extra space may be include in the rame for unused parameters or opaque data.
 
    For EAFR Flight Data recording,
    Frame 格式
@@ -135,12 +136,51 @@
 #from datetime import datetime
 import zipfile
 import psutil   #非必须库
+import config_vec as conf
+import read_air as AIR
+import read_frd as FRD
+import read_par as PAR
 #from io import BytesIO
+
+class DATA:
+    '用来保存配置参数的类'
+    pass
 
 def main():
     global FNAME,WFNAME,DUMPDATA
+    global DATAVER
 
-    print('mem:',sysmem())
+    print('mem0:',sysmem())
+
+    reg=getREG(FNAME)
+    if len(DATAVER)<1:
+        air=getAIR(reg)
+        dataver=air[0]
+    else:
+        dataver=DATAVER
+
+    print('Registration:',reg,'DataVer:',dataver)
+    print()
+
+    frad=getFRAD_config(dataver)
+
+    print()
+    for iid in frad:
+        if iid.endswith('_bits'):
+            continue
+        frad_bits=frad[str(iid)+'_bits']
+        print('FrameID:{},\t参数个数:{},\t 总bit数:{},\t字节数:{}'.format(iid, len(frad[iid]), frad_bits['ttl_bits'], frad_bits['ttl_bits']/8.0))
+        print('           \t dword:{},\t  剩余bits:{},\t 字节数:{}'.format(frad_bits['dword'], frad_bits['dbits'], frad_bits['dword']*4+frad_bits['dbits']/32.0))
+        pm_bytes=frad_bits['word']*2
+        pm_bytes +=frad_bits['bits']/16.0
+        print('           \t   word:{},\t   剩余bits:{},\t  字节数:{}'.format(frad_bits['word'], frad_bits['bits'], pm_bytes))
+        #ii=0
+        #for row in frad[iid]:
+        #    if ii>2: break
+        #    ii+=1
+        #    print(row)
+
+    print('mem conf end:',sysmem())
 
     #----------打开zip压缩文件-----------
     try:
@@ -161,7 +201,7 @@ def main():
     if frame_pos >= ttl_len -2:
         print('ERR,SYNC1 not found.',flush=True)
         raise(Exception('ERR,SYNC1 not found.'))
-    
+
     #----------验证同步字位置，header内容, trailer内容-----------
     frameIDs={}  #记录各个frameid 的datasize
     ii=0    #计数
@@ -189,7 +229,7 @@ def main():
         HH,MM = divmod(MM,60)
         if MS % 10 >0:
             MS_str= '%03d'% MS
-            print('ERR,time 3')
+            #print('ERR,time 3')
         else:
             MS_str= '%02d'% (MS/10)
         #print('Frame time1: %02d:%02d:%02d.%s'%(HH,MM,SS,MS_str))
@@ -199,12 +239,45 @@ def main():
         frame_type= frame_id >> 8
         frame_id &= 0xff
 
+        # if ID==1, read it
+        if frame_type==0 and frame_id==1 and frame_size==140:
+            str2=''  #临时变量
+            for num in range(0,8,2):
+                word=getWord(buf,frame_pos+10+num)
+                str2 += chr(word >> 8)
+                str2 += chr(word & 0xff)
+            print('Format:',str2)
+            str2=''  #临时变量
+            for num in range(0,32,2):
+                word=getWord(buf,frame_pos+18+num)
+                str2 += chr(word >> 8)
+                str2 += chr(word & 0xff)
+            print('      :',str2)
+            str2=''  #临时变量
+            for num in range(0,8,2):
+                word=getWord(buf,frame_pos+50+num)
+                str2 += chr(word >> 8)
+                str2 += chr(word & 0xff)
+            print('  Tail:',str2)
+            str2=''  #临时变量
+            for num in range(0,64,2):
+                word=getWord(buf,frame_pos+58+num)
+                str2 += chr(word >> 8)
+                str2 += chr(word & 0xff)
+            print('  FDAU:',str2)
+            str2=''  #临时变量
+            for num in range(0,16,2):
+                word=getWord(buf,frame_pos+122+num)
+                str2 += chr(word >> 8)
+                str2 += chr(word & 0xff)
+            print('UTC Time:',str2)
+
         #----------trailer: type & id--------
         frame_tail=getWord(buf,frame_pos+frame_size-2) # type & id
         frame_tail_type= frame_tail >> 8
         frame_tail_id = frame_tail & 0xff
         if frame_id != frame_tail_id or frame_type != frame_tail_type:
-            print('==>ERR, type or id in header & trailer is not same.')
+            print('==>ERR, type or id in header & trailer is not same. Type:%d != %d or ID:%d != %d'% (frame_type, frame_tail_type, frame_id, frame_tail_id ))
         if frame_type != 0:
             print('==>ERR, type is NOT 0.')
         #print('Frame id:   %X' % frame_id)
@@ -217,27 +290,30 @@ def main():
             frameIDs[frame_id]=frame_size
         else:
             if frameIDs[frame_id] != frame_size:
-                print('frame id %d size NOT same.' % frame_id)
+                print('frame id %d size NOT same.%d != %d' % (frame_id,frameIDs[frame_id], frame_size))
 
         frame_pos += frame_size
     if frame_pos>=ttl_len -2:
         print('End of file.')
 
-    div4,mod4=divmod(ttl_data_size,4)
-    print('Total data size: %d, div4:%d, mod4:%d'% (ttl_data_size, div4, mod4) )
+    #div4,mod4=divmod(ttl_data_size,4)
+    #print('Total data size: %d, div4:%d, mod4:%d'% (ttl_data_size, div4, mod4) )
 
     #------打印各个frame id 的 frame_size ----
-    print('id','frame size',sep='\t')
+    print('  ','Frame','Data',sep='\t')
+    print('ID','Size','Size(Byte)',sep='\t')
     for kk in frameIDs:
-        print(kk,frameIDs[kk],sep='\t')
+        print(kk,frameIDs[kk],frameIDs[kk]-10,sep='\t')
 
     print('mem:',sysmem())
 
 def find_SYNC(buf, ttl_len, frame_pos, sync767):
+    frame_size=0
     while frame_pos<ttl_len -2:  #寻找frame开始位置
         frame_size=getWord(buf,frame_pos+2) #size
-        if getWord(buf,frame_pos) == sync767 and getWord(buf,frame_pos+frame_size) == sync767:
-            #当前位置有同步字,加上size之后的位置,也有同步字
+        if getWord(buf,frame_pos) == sync767 and \
+                (frame_pos+frame_size>=ttl_len or getWord(buf,frame_pos+frame_size) == sync767 ):
+            #当前位置有同步字,加上size之后的位置,也有同步字,或者是文件结尾
             #print('==>Mark,x%X'%(frame_pos,))
             break
         frame_pos +=1
@@ -252,10 +328,289 @@ def getWord(buf,pos):
 
     ttl=len(buf)  #读数据的时候,开始位置加上偏移，可能会超限
     if pos+1 >= ttl:
-        print('Read out of range.')
+        print('Read out of range at %X/%X'%(pos,ttl))
+        #raise(Exception)
         return 0
     else:
         return ((buf[pos] << 8 ) | buf[pos +1] )
+
+def getPAR(dataver,param):
+    '''
+    获取参数在arinc429的32bit word中的位置配置
+    挑出有用的,整理一下,返回
+       author:南方航空,LLGZ@csair.com
+    '''
+    global DATA
+    if not hasattr(DATA,'par') or DATA.par is None:
+        DATA.par=PAR.read_parameter_file(dataver)
+    if DATA.par is None or len(DATA.par.index)<1:
+        return {}
+    param=param.upper()  #改大写
+    tmp=DATA.par
+    tmp2=tmp[ tmp.iloc[:,0]==param ].copy(deep=True) #dataframe ,找到对应参数的记录行
+    #pd.set_option('display.max_columns',78)
+    #pd.set_option('display.width',156)
+    #print('=>',type(tmp2))
+    #print(tmp2)
+    if len(tmp2.index)<1:
+        return {}
+    else:
+        tmp_part=[]
+        if isinstance(tmp2.iat[0,36], list):
+            #如果有多个部分的bits的配置, 组合一下
+            for ii in range(len(tmp2.iat[0,36])):
+                tmp_part.append({
+                        'id'  :int(tmp2.iat[0,36][ii]),  #Digit ,顺序标记
+                        'pos' :int(tmp2.iat[0,37][ii]),  #MSB   ,开始位置
+                        'blen':int(tmp2.iat[0,38][ii]),  #bitLen,DataBits,数据长度
+                        })
+        return {
+                'ssm'    :int(tmp2.iat[0,5]) if len(tmp2.iat[0,5])>0 else -1,   #SSM Rule , (0-15)0,4 
+                'signBit':int(tmp2.iat[0,6]) if len(tmp2.iat[0,6])>0 else -1,   #bitLen,SignBit  ,符号位位置
+                'pos'   :int(tmp2.iat[0,7]) if len(tmp2.iat[0,7])>0 else -1,   #MSB  ,开始位置
+                'blen'  :int(tmp2.iat[0,8]) if len(tmp2.iat[0,8])>0 else -1,   #bitLen,DataBits ,数据部分的总长度
+                'part'    :tmp_part,
+                'type'    :tmp2.iat[0,2],    #Type(BCD,CHARACTER)
+                'format'  :tmp2.iat[0,17],    #Display Format Mode (DECIMAL,ASCII)
+                'Resol'   :tmp2.iat[0,12],    #Computation:Value=Constant Value or Resol=Coef A(Resolution) or ()
+                'A'       :tmp2.iat[0,29] if tmp2.iat[0,29] is not None else '',    #Coef A(Res)
+                'B'       :tmp2.iat[0,30] if tmp2.iat[0,30] is not None else '',    #Coef b
+                'format'  :tmp2.iat[0,25],    #Internal Format (Float ,Unsigned or Signed)
+                }
+
+def getFRAD_config(dataVer):
+    if hasattr(DATA,'frad') and DATA.frad is not None:
+        return DATA.frad
+
+    frd=getFRD(dataVer)
+    '''
+    #打印内容
+    print(frd.keys())
+    for row in frd['2']:
+        print(row)
+    ii=0
+    for row in frd['3']:
+        ii+=1
+        if ii>3:break
+        print(row)
+    ii=0
+    for row in frd['4']:
+        ii+=1
+        if ii>3:break
+        print(row)
+    '''
+
+    conf={}
+    ii=0
+    for row in frd['2']:
+        #if ii>1: break
+        ii+=1
+        if row[0].startswith('Frame'): #跳过第一行,标题行 
+            continue
+        frame_id=row[0]
+        #print('====== %s ========' % frame_id)
+
+        if frame_id not in conf:
+            conf[frame_id]=[]
+        if str(frame_id)+'_bits' not in conf:
+            conf[str(frame_id)+'_bits']={
+                    'dword':0,
+                    'dbits':0,
+                    'word':0,
+                    'bits':0,
+                    'ttl_bits':0,
+                    }
+
+        jj=0
+        for pm_id in range(1,int(row[4])+1):
+            #if jj>12: break
+            jj+=1
+
+            buf_map=list(map(lambda x: frame_id == x[0] and pm_id==int(x[1]) ,frd['3'])) #查找匹配
+            if buf_map.count(True)>1:
+                print('=>ERR, find frd_3 >1.')
+            idx3=buf_map.index(True) #获取索引
+            pm_long_name=frd['3'][idx3][2]
+
+            buf_map=list(map(lambda x: pm_long_name==x[0] ,frd['4'])) #查找匹配
+            if buf_map.count(True)>1:
+                print('=>ERR, find frd_3 >1.')
+            idx4=buf_map.index(True) #获取索引
+            pm_name=frd['4'][idx3][1]
+            #print(pm_id, idx3,idx4, frd['3'][idx3], frd['4'][idx4])
+
+            par=getPAR(dataVer,pm_name)
+            #print(par)
+            if len(par)<1:
+                #print('=>ERR,par NOT found.',pm_id, idx3,idx4, frd['3'][idx3], frd['4'][idx4])
+                print('=>ERR,par NOT found.', frd['3'][idx3], frd['4'][idx4])
+                continue
+
+            pm_bits=0
+            if par['signBit']>0:
+                pm_bits +=1
+                #print('==>INFO, signBit',par['signBit'],frd['4'][idx4])  #有挺多参数,有符号位
+            if par['blen']>0:
+                pm_bits +=par['blen']
+
+            conf[str(frame_id)+'_bits']['ttl_bits'] +=pm_bits
+
+            #按填满一个 dword 计算
+            if conf[str(frame_id)+'_bits']['dbits'] + pm_bits >32:
+                conf[str(frame_id)+'_bits']['dbits'] = pm_bits
+                conf[str(frame_id)+'_bits']['dword'] +=1
+            else:
+                conf[str(frame_id)+'_bits']['dbits'] += pm_bits
+
+            #按填满一个 word 计算
+            if conf[str(frame_id)+'_bits']['bits'] + pm_bits >16:
+                conf[str(frame_id)+'_bits']['bits'] = pm_bits
+                conf[str(frame_id)+'_bits']['word'] +=1
+            else:
+                conf[str(frame_id)+'_bits']['bits'] += pm_bits
+
+            if conf[str(frame_id)+'_bits']['bits'] >16:
+                conf[str(frame_id)+'_bits']['bits'] -= 16
+                conf[str(frame_id)+'_bits']['word'] +=1
+
+            if par['pos'] != par['blen']:
+                print('==>INFO, param POS != BLEN')
+
+            conf_one={  #临时变量
+                    'seq':pm_id,
+                    'longName':pm_long_name,
+                    'name':pm_name,
+                    }
+            conf_one.update(par)
+            conf[frame_id].append(conf_one)
+
+
+    DATA.par=None  #没用了
+    DATA.frd=None  #没用了
+    DATA.frad=conf
+    return conf
+
+def getFRD(dataver):
+    '''
+    获取参数在arinc767的32bit word中的位置配置
+    挑出有用的,整理一下,返回
+       author:南方航空,LLGZ@csair.com
+    '''
+    global PARAMLIST
+    global DATA
+
+    if not hasattr(DATA,'frd') or DATA.frd is None:
+        DATA.frd=FRD.read_parameter_file(dataver)
+    if DATA.frd is None:
+        return {}
+
+    #if PARAMLIST:
+    return DATA.frd
+
+    ret2=[]  #for regular
+    ret3=[]  #for superframe
+    ret4=[]  #for superframe pm
+    if len(param)>0:
+        param=param.upper() #改大写
+        #---find regular parameter----
+        tmp=DATA.frd['2']
+        tmp=tmp[ tmp.iloc[:,0]==param].copy()  #dataframe
+        #print(tmp)
+        if len(tmp.index)>0:  #找到记录
+            for ii in range( len(tmp.index)):
+                tmp2=[
+                    tmp.iat[ii,1],   #part(1,2,3),会有多组记录,对应返回多个32bit word(完成)
+                    tmp.iat[ii,2],   #recordRate
+                    tmp.iat[ii,3],   #subframe
+                    tmp.iat[ii,4],   #word
+                    tmp.iat[ii,5],   #bitOut
+                    tmp.iat[ii,6],   #bitLen
+                    tmp.iat[ii,7],   #bitIn
+                    tmp.iat[ii,12],  #Occurence No
+                    tmp.iat[ii,8],   #Imposed,Computed
+                    ]
+                ret2.append(tmp2)
+        #---find superframe parameter----
+        tmp=DATA.frd['4']
+        tmp=tmp[ tmp.iloc[:,0]==param].copy()  #dataframe
+        #print(tmp)
+        if len(tmp.index)>0:  #找到记录
+            superframeNo=tmp.iat[0,3]
+            for ii in range( len(tmp.index)):
+                tmp2=[
+                    tmp.iat[ii,1],   #part(1,2,3),会有多组记录,对应返回多个32bit word(完成)
+                    tmp.iat[ii,2],   #period
+                    tmp.iat[ii,3],   #superframe no
+                    tmp.iat[ii,4],   #Frame
+                    tmp.iat[ii,5],   #bitOut
+                    tmp.iat[ii,6],   #bitLen
+                    tmp.iat[ii,7],   #bitIn
+                    tmp.iat[ii,10],  #resolution
+                    ]
+                ret4.append(tmp2)
+            tmp=DATA.frd['3']
+            tmp=tmp[ tmp.iloc[:,0]==superframeNo].copy()  #dataframe
+            for ii in range( len(tmp.index)):
+                tmp2=[
+                    tmp.iat[ii,0],   #superframe no
+                    tmp.iat[ii,1],   #subframe
+                    tmp.iat[ii,2],   #word
+                    tmp.iat[ii,3],   #bitOut
+                    tmp.iat[ii,4],   #bitLen
+                    tmp.iat[ii,5],   #superframe couter 1/2
+                    ]
+                ret3.append(tmp2)
+
+
+    return { '1':
+            [
+                DATA.frd['1'].iat[1,1],  #Word/Sec
+                DATA.frd['1'].iat[1,2],  #sync length
+                DATA.frd['1'].iat[1,3],  #sync1
+                DATA.frd['1'].iat[1,4],  #sync2
+                DATA.frd['1'].iat[1,5],  #sync3
+                DATA.frd['1'].iat[1,6],  #sync4
+                DATA.frd['1'].iat[1,7],  #subframe, [superframe counter]
+                DATA.frd['1'].iat[1,8],  #word
+                DATA.frd['1'].iat[1,9],  #bitOut
+                DATA.frd['1'].iat[1,10], #bitLen
+                DATA.frd['1'].iat[1,11], #Value in 1st frame (0/1)
+                ],
+             '2':ret2,
+             '3':ret3,
+             '4':ret4,
+            }
+
+def getAIR(reg):
+    '''
+    获取机尾号对应解码库的配置。
+    挑出有用的,整理一下,返回
+       author:南方航空,LLGZ@csair.com
+    '''
+    reg=reg.upper()
+    df_flt=AIR.csv(conf.aircraft)
+    tmp=df_flt[ df_flt.iloc[:,0]==reg].copy()  #dataframe
+    if len(tmp.index)>0:  #找到记录
+        return [tmp.iat[0,12],   #dataver
+                tmp.iat[0,13],   #dataver
+                tmp.iat[0,16],   #recorderType
+                tmp.iat[0,16]]   #recorderType
+    else:
+        return [0,0,0,0]
+
+def getREG(fname):
+    '''
+    从zip文件名中，找出机尾号
+       author:南方航空,LLGZ@csair.com
+    '''
+    basename=os.path.basename(fname)
+    tmp=basename.strip().split('_',1)
+    if len(tmp[0])>6: #787的文件名没有用 _ 分隔
+        return tmp[0][:6]
+    elif len(tmp[0])>0:
+        return tmp[0]
+    else:
+        return ''
 
 def showsize(size):
     '''
@@ -286,9 +641,10 @@ def usage():
     print(u'   命令行工具。')
     print(u' 读取,来源于PC卡的原始数据文件。尝试解码一个参数。')
     print(sys.argv[0]+' [-h|--help]')
-    print('   -h, --help     print usage.')
-    print('   -f, --file=    "....wgl.zip" filename')
-    #print('   -w xxx.dat     写入文件"xxx.dat"')
+    print('   -h, --help                print usage.')
+    print('   -v, --ver 787151          指定DataVer')
+    print('   -f, --file="....wgl.zip"     filename')
+    #print('   -w xxx.dat               写入文件"xxx.dat"')
     print(u'\n               author:南方航空,LLGZ@csair.com')
     print(u' 认为此项目对您有帮助，请发封邮件给我，让我高兴一下.')
     print(u' If you think this project is helpful to you, please send me an email to make me happy.')
@@ -299,7 +655,7 @@ if __name__=='__main__':
         usage()
         exit()
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:],'hw:df:',['help','file=',])
+        opts, args = getopt.gnu_getopt(sys.argv[1:],'hv:w:df:',['help','file=','ver=',])
     except getopt.GetoptError as e:
         print(e)
         usage()
@@ -307,12 +663,15 @@ if __name__=='__main__':
     FNAME=None
     WFNAME=None
     DUMPDATA=False
+    DATAVER=''
     for op,value in opts:
         if op in ('-h','--help'):
             usage()
             exit()
         elif op in('-f','--file'):
             FNAME=value
+        elif op in('-v','--ver'):
+            DATAVER=value
         elif op in('-w',):
             WFNAME=value
         elif op in('-d',):

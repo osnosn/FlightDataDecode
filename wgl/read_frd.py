@@ -22,34 +22,40 @@ def main():
     global PARAMLIST
     global PARAM
     print('begin mem:',sysmem())
-    FRA=read_parameter_file(FNAME)
-    if FRA is None:
+    FRD_list=read_parameter_file(FNAME)
+    if FRD_list is None:
         return
+    #转换为DataFrame
+    FRD={}
+    for kk in FRD_list:
+        if kk.endswith('_len'):
+            continue
+        FRD[kk]=pd.DataFrame(FRD_list[kk])
 
     pd.set_option('display.max_columns',18)
     pd.set_option('display.width',156)
     pd.set_option('display.min_row',33)
     pd.set_option('display.min_row',330)
-    #print(FRA)
-    #print(FRA.keys())
+    #print(FRD)
+    #print(FRD.keys())
 
     if PARAMLIST:
         #----------显示所有参数名-------------
         ii=0
-        #print(FRA['4'].iloc[:,1].tolist())
-        for vv in FRA['4'].iloc[:,1].tolist():
+        #print(FRD['4'].iloc[:,1].tolist())
+        for vv in FRD['4'].iloc[:,1].tolist():
             print(vv, end=',\t')
             if ii % 9 ==0:
                 print()
             ii+=1
         if len(TOCSV)>4:
             print('Write to CSV file:',TOCSV)
-            FRA['4'].iloc[:,1].to_csv(TOCSV,sep='\t')
+            FRD['4'].iloc[:,1].to_csv(TOCSV,sep='\t')
         return
 
     if PARAM is not None and len(PARAM)>0:  #显示单个参数名
         #----------显示单个参数的配置内容-------------
-        print_fra(FRA, '1', [  #这个也显示一下
+        print_fra(FRD, '1', [  #这个也显示一下
             'ARINC Version',
             'File Revision',
             'File Date',
@@ -59,7 +65,7 @@ def main():
             )
 
         param=PARAM.upper()
-        tmp=FRA['4']
+        tmp=FRD['4']
         tmp2=tmp[ tmp.iloc[:,1]==param ].copy() #dataframe
         pm_tb4=tmp.iloc[[0,]].append( tmp2,  ignore_index=False )
         if len(tmp2)<1:
@@ -70,13 +76,13 @@ def main():
             return
         pm_longName=tmp2.iat[0,0]
 
-        tmp=FRA['3']
+        tmp=FRD['3']
         tmp2=tmp[ tmp.iloc[:,2]==pm_longName ].copy() #dataframe
         pm_tb3=tmp.iloc[[0,]].append( tmp2,  ignore_index=False )
         frameID=tmp2.iat[0,0]
         frameOrder=tmp2.iat[0,1]
 
-        tmp=FRA['2']
+        tmp=FRD['2']
         tmp2=tmp[ tmp.iloc[:,0]==frameID ].copy() #dataframe
         pm_tb2=tmp.iloc[[0,]].append( tmp2,  ignore_index=False )
 
@@ -88,7 +94,7 @@ def main():
         print()
         return
 
-    print_fra(FRA, '1', [
+    print_fra(FRD, '1', [
             'ARINC Version',
             'File Revision',
             'File Date',
@@ -97,19 +103,19 @@ def main():
             'File Name']
             )
 
-    print_fra(FRA, '2', [
+    print_fra(FRD, '2', [
         'Frame Id', 'Frame Name', 'Frame rate', 'Frame rate', 'Parameter Nr for this frame id', 'Recording Phase']
             )
 
-    print_fra(FRA, '3', ['Frame Id', 'Parameter order', 'Parameter Long Name', 'Parameter Mnemonic']
+    print_fra(FRD, '3', ['Frame Id', 'Parameter order', 'Parameter Long Name', 'Parameter Mnemonic']
             )
 
-    print_fra(FRA, '4', ['Parameter Long Name', 'Parameter Name'] )
-    #print(FRA['3'].loc[:,1].dropna().tolist() ) #列出所有的 ParamOrder
-    #show=FRA['3'].loc[1:,1].unique().astype(int)  #列出所有的 ParamOrder
+    print_fra(FRD, '4', ['Parameter Long Name', 'Parameter Name'] )
+    #print(FRD['3'].loc[:,1].dropna().tolist() ) #列出所有的 ParamOrder
+    #show=FRD['3'].loc[1:,1].unique().astype(int)  #列出所有的 ParamOrder
     #show.sort()
-    #print(FRA['3'].loc[:,1].unique() ) #列出所有的 Coef A,都是None
-    show=FRA['3']
+    #print(FRD['3'].loc[:,1].unique() ) #列出所有的 Coef A,都是None
+    show=FRD['3']
     #show=show[show.iloc[:,0]=='3']  #列出所有的 ParamID=3 的 ParamOrder
     #show=show[show.iloc[:,0]=='5']  #列出所有的 ParamID=5 的 ParamOrder
 
@@ -118,7 +124,7 @@ def main():
     #print(show.tolist())
 
     #-----打印frame id 的参数个数
-    show=FRA['3']
+    show=FRD['3']
     ids=(0,1,2,3,4,5,6,7,8,9,0xA,0xB,0xC)
     print(' id', 'param num',sep='\t')
     for vv in ids:
@@ -128,20 +134,20 @@ def main():
 
 
     memsize=0
-    for kk in FRA:
-        memsize+=getsizeof(FRA[kk],False)
-    print('FRA(%d):'%len(FRA),showsize(memsize))
+    for kk in FRD:
+        memsize+=getsizeof(FRD[kk],False)
+    print('FRD(%d):'%len(FRD),showsize(memsize))
 
     print('end mem:',sysmem())
     if len(TOCSV)>4:
-        #FRA.to_csv(TOCSV)
+        #FRD.to_csv(TOCSV)
         print('==>ERR,  There has 4 tables. Can not save to 1 CSV.')
 
-def print_fra(FRA, frakey,colname):
-    if frakey not in FRA:
+def print_fra(FRD, frakey,colname):
+    if frakey not in FRD:
         print('ERR, %s not in list' % frakey)
         return
-    tmp=pd.concat([FRA[frakey][0:1],FRA[frakey]])
+    tmp=pd.concat([FRD[frakey][0:1],FRD[frakey]])
     #print(tmp.iloc[0].values.tolist())
 
     print(frakey, end=')')
@@ -175,7 +181,7 @@ def read_parameter_file(dataver):
         print('ERR,FailOpenZipFile',e,zip_fname,flush=True)
         raise(Exception('ERR,FailOpenZipFile,%s'%(zip_fname)))
     
-    FRA={}
+    FRD={}
     with StringIO(fzip.read(filename_zip).decode('utf16')) as fp:
     #with open(vec_fname,'r',encoding='utf16') as fp:
         for line in fp.readlines():
@@ -184,25 +190,25 @@ def read_parameter_file(dataver):
             #if line.startswith('//') and tmp1[0] == '7':     # "7|..." 的标题比较特殊，起始多了一个tab
             #    tmp1[1]=tmp1[0].lstrip()
             tmp2=tmp1[1].split('\t')
-            if tmp1[0] in FRA:
-                if FRA[ tmp1[0]+'_len' ] != len(tmp2):
-                    print('ERR,data(%s) length require %d, but %d.' % (tmp1[0], FRA[ tmp1[0]+'_len' ], len(tmp2)) )
-                    #raise(Exception('ERR,DataLengthNotSame,data(%s) require %d but %d.'% (tmp1[0], FRA[ tmp1[0]+'_len' ], len(tmp2)) ))
-                FRA[ tmp1[0] ].append( tmp2 )
+            if tmp1[0] in FRD:
+                if FRD[ tmp1[0]+'_len' ] != len(tmp2):
+                    print('ERR,data(%s) length require %d, but %d.' % (tmp1[0], FRD[ tmp1[0]+'_len' ], len(tmp2)) )
+                    #raise(Exception('ERR,DataLengthNotSame,data(%s) require %d but %d.'% (tmp1[0], FRD[ tmp1[0]+'_len' ], len(tmp2)) ))
+                FRD[ tmp1[0] ].append( tmp2 )
             else:
-                FRA[ tmp1[0] ]=[ tmp2, ]
-                FRA[ tmp1[0]+'_len' ]=len(tmp2)
+                FRD[ tmp1[0] ]=[ tmp2, ]
+                FRD[ tmp1[0]+'_len' ]=len(tmp2)
 
 
     fzip.close()
 
-    df_FRA={}
-    for kk in FRA:
-        if kk.endswith('_len'):
-            continue
-        df_FRA[kk]=pd.DataFrame(FRA[kk])
-    return df_FRA     #返回dataframe
-    #return FRA       #返回list
+    #df_FRD={}
+    #for kk in FRD:
+    #    if kk.endswith('_len'):
+    #        continue
+    #    df_FRD[kk]=pd.DataFrame(FRD[kk])
+    #return df_FRD     #返回dataframe
+    return FRD       #返回list
 
 def showsize(size):
     if size<1024.0*2:
@@ -250,7 +256,7 @@ if __name__=='__main__':
         usage()
         exit()
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:],'hvp:f:',['help','ver=','csv=','paramlist','param='])
+        opts, args = getopt.gnu_getopt(sys.argv[1:],'hv:p:f:',['help','ver=','csv=','paramlist','param='])
     except getopt.GetoptError as e:
         print(e)
         usage()
