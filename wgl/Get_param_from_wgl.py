@@ -868,14 +868,14 @@ def getFRA(dataver,param):
         #print(tmp)
         if len(tmp.index)>0:  #找到记录
             for ii in range( len(tmp.index)):
-                tmp2=[
-                    tmp.iat[ii,1],   #part(1,2,3),会有多组记录,对应返回多个32bit word(完成)
-                    tmp.iat[ii,2],   #recordRate
-                    tmp.iat[ii,3],   #subframe
-                    tmp.iat[ii,4],   #word
-                    tmp.iat[ii,5],   #bitOut
-                    tmp.iat[ii,6],   #bitLen
-                    tmp.iat[ii,7],   #bitIn
+                tmp2=[  #regular 参数配置
+                    tmp.iat[ii,1],   #part(1,2,3),会有多组记录,对应返回多个32bit word. 同一组最多3个part,3个part分别读出,写入同一个32bit word.
+                    tmp.iat[ii,2],   #recordRate, 记录频率(记录次数/Frame)
+                    tmp.iat[ii,3],   #subframe, 位于哪个subframe(1-4)
+                    tmp.iat[ii,4],   #word, 在subframe中第几个word(sync word编号为1)
+                    tmp.iat[ii,5],   #bitOut, 在12bit中,第几个bit开始
+                    tmp.iat[ii,6],   #bitLen, 共几个bits
+                    tmp.iat[ii,7],   #bitIn,  写入arinc429的32bits word中,从第几个bits开始写
                     tmp.iat[ii,12],  #Occurence No
                     tmp.iat[ii,8],   #Imposed,Computed
                     ]
@@ -887,44 +887,44 @@ def getFRA(dataver,param):
         if len(tmp.index)>0:  #找到记录
             superframeNo=tmp.iat[0,3]
             for ii in range( len(tmp.index)):
-                tmp2=[
-                    tmp.iat[ii,1],   #part(1,2,3),会有多组记录,对应返回多个32bit word(完成)
-                    tmp.iat[ii,2],   #period
-                    tmp.iat[ii,3],   #superframe no
-                    tmp.iat[ii,4],   #Frame
-                    tmp.iat[ii,5],   #bitOut
-                    tmp.iat[ii,6],   #bitLen
-                    tmp.iat[ii,7],   #bitIn
-                    tmp.iat[ii,10],  #resolution
+                tmp2=[ #superframe 单一参数记录
+                    tmp.iat[ii,1],   #part(1,2,3),会有多组记录,对应返回多个32bit word. 同一组最多3个part,3个part分别读出,写入同一个32bit word.
+                    tmp.iat[ii,2],   #period, 周期,每几个frame出现一次
+                    tmp.iat[ii,3],   #superframe no, 对应"superframe全局配置"中的superframe no
+                    tmp.iat[ii,4],   #Frame,  位于第几个frame (由superframe counter,找出编号为1的frame)
+                    tmp.iat[ii,5],   #bitOut, 在12bit中,第几个bit开始
+                    tmp.iat[ii,6],   #bitLen, 共几个bits
+                    tmp.iat[ii,7],   #bitIn,  写入arinc429的32bits word中,从第几个bits开始写
+                    tmp.iat[ii,10],  #resolution, 未用到
                     ]
                 ret4.append(tmp2)
             tmp=DATA.fra['3']
             tmp=tmp[ tmp.iloc[:,0]==superframeNo].copy()  #dataframe
             for ii in range( len(tmp.index)):
-                tmp2=[
+                tmp2=[ #superframe 全局配置
                     tmp.iat[ii,0],   #superframe no
-                    tmp.iat[ii,1],   #subframe
-                    tmp.iat[ii,2],   #word
-                    tmp.iat[ii,3],   #bitOut
-                    tmp.iat[ii,4],   #bitLen
-                    tmp.iat[ii,5],   #superframe couter 1/2
+                    tmp.iat[ii,1],   #subframe, 位于哪个subframe(1-4)
+                    tmp.iat[ii,2],   #word, 在subframe中第几个word(sync word编号为1)
+                    tmp.iat[ii,3],   #bitOut, 在12bit中,第几个bit开始(通常=12)
+                    tmp.iat[ii,4],   #bitLen, 共几个bits(通常=12)
+                    tmp.iat[ii,5],   #superframe counter 1/2, 对应Frame总配置中的第几个counter
                     ]
                 ret3.append(tmp2)
                     
 
     return { '1':
-            [
-                DATA.fra['1'].iat[1,1],  #Word/Sec
-                DATA.fra['1'].iat[1,2],  #sync length
-                DATA.fra['1'].iat[1,3],  #sync1
+            [  #Frame 总配置, 最多两条记录(表示有两个counter)
+                DATA.fra['1'].iat[1,1],  #Word/Sec, 每秒的word数量,即 word/subframe
+                DATA.fra['1'].iat[1,2],  #sync length, 同步字长度(bits=12,24,36)
+                DATA.fra['1'].iat[1,3],  #sync1, 同步字,前12bits
                 DATA.fra['1'].iat[1,4],  #sync2
                 DATA.fra['1'].iat[1,5],  #sync3
                 DATA.fra['1'].iat[1,6],  #sync4
-                DATA.fra['1'].iat[1,7],  #subframe, [superframe counter]
-                DATA.fra['1'].iat[1,8],  #word
-                DATA.fra['1'].iat[1,9],  #bitOut
-                DATA.fra['1'].iat[1,10], #bitLen
-                DATA.fra['1'].iat[1,11], #Value in 1st frame (0/1)
+                DATA.fra['1'].iat[1,7],  #subframe,[superframe counter],每个frame中都有,这4项是counter的位置
+                DATA.fra['1'].iat[1,8],  #word,    [superframe counter]
+                DATA.fra['1'].iat[1,9],  #bitOut,  [superframe counter]
+                DATA.fra['1'].iat[1,10], #bitLen,  [superframe counter]
+                DATA.fra['1'].iat[1,11], #Value in 1st frame (0/1), 编号为1的frame,counter的值(counter的最小值)
                 ],
              '2':ret2,
              '3':ret3,

@@ -788,14 +788,14 @@ class ARINC717():
 
             if len(idx)>0:  #找到记录
                 for ii in idx:
-                    tmp2=[  #临时变量
-                        tmp[ii][1],   #part(1,2,3),会有多组记录,对应返回多个32bit word(完成)
-                        tmp[ii][2],   #recordRate
-                        tmp[ii][3],   #subframe
-                        tmp[ii][4],   #word
-                        tmp[ii][5],   #bitOut
-                        tmp[ii][6],   #bitLen
-                        tmp[ii][7],   #bitIn
+                    tmp2=[  #regular 参数配置
+                        tmp[ii][1],   #part(1,2,3),会有多组记录,对应返回多个32bit word. 同一组最多3个part,3个part分别读出,写入同一个32bit word.
+                        tmp[ii][2],   #recordRate, 记录频率(记录次数/Frame)
+                        tmp[ii][3],   #subframe, 位于哪个subframe(1-4)
+                        tmp[ii][4],   #word, 在subframe中第几个word(sync word编号为1)
+                        tmp[ii][5],   #bitOut, 在12bit中,第几个bit开始
+                        tmp[ii][6],   #bitLen, 共几个bits
+                        tmp[ii][7],   #bitIn,  写入arinc429的32bits word中,从第几个bits开始写
                         tmp[ii][12],  #Occurence No
                         tmp[ii][8],   #Imposed,Computed
                         ]
@@ -811,15 +811,15 @@ class ARINC717():
             if len(idx)>0:  #找到记录
                 superframeNo=tmp[ idx[0] ][3] #取找到的第一条记录中的值
                 for ii in idx:
-                    tmp2=[
-                        tmp[ii][1],   #part(1,2,3),会有多组记录,对应返回多个32bit word(完成)
-                        tmp[ii][2],   #period
-                        tmp[ii][3],   #superframe no
-                        tmp[ii][4],   #Frame
-                        tmp[ii][5],   #bitOut
-                        tmp[ii][6],   #bitLen
-                        tmp[ii][7],   #bitIn
-                        tmp[ii][10],  #resolution
+                    tmp2=[ #superframe 单一参数记录
+                        tmp[ii][1],   #part(1,2,3),会有多组记录,对应返回多个32bit word. 同一组最多3个part,3个part分别读出,写入同一个32bit word.
+                        tmp[ii][2],   #period, 周期,每几个frame出现一次
+                        tmp[ii][3],   #superframe no, 对应"superframe全局配置"中的superframe no
+                        tmp[ii][4],   #Frame,  位于第几个frame (由superframe counter,找出编号为1的frame)
+                        tmp[ii][5],   #bitOut, 在12bit中,第几个bit开始
+                        tmp[ii][6],   #bitLen, 共几个bits
+                        tmp[ii][7],   #bitIn,  写入arinc429的32bits word中,从第几个bits开始写
+                        tmp[ii][10],  #resolution, 未用到
                         ]
                     ret4.append(tmp2)
                 tmp=self.fra['3']
@@ -831,29 +831,29 @@ class ARINC717():
 
                 if len(idx)>0:  #找到记录,通常一定会有记录
                     for ii in idx:
-                        tmp2=[
+                        tmp2=[ #superframe 全局配置
                             tmp[ii][0],   #superframe no
-                            tmp[ii][1],   #subframe
-                            tmp[ii][2],   #word
-                            tmp[ii][3],   #bitOut
-                            tmp[ii][4],   #bitLen
-                            tmp[ii][5],   #superframe couter 1/2
+                            tmp[ii][1],   #subframe, 位于哪个subframe(1-4)
+                            tmp[ii][2],   #word, 在subframe中第几个word(sync word编号为1)
+                            tmp[ii][3],   #bitOut, 在12bit中,第几个bit开始(通常=12)
+                            tmp[ii][4],   #bitLen, 共几个bits(通常=12)
+                            tmp[ii][5],   #superframe couter 1/2, 对应Frame总配置中的第几个counter
                             ]
                         ret3.append(tmp2)
 
         return { '1':
-                [
-                    self.fra['1'][1][1],  #Word/Sec
-                    self.fra['1'][1][2],  #sync length
-                    self.fra['1'][1][3],  #sync1
+                [  #Frame 总配置, 最多两条记录(表示有两个counter)
+                    self.fra['1'][1][1],  #Word/Sec, 每秒的word数量,即 word/subframe
+                    self.fra['1'][1][2],  #sync length, 同步字长度(bits=12,24,36)
+                    self.fra['1'][1][3],  #sync1, 同步字,前12bits
                     self.fra['1'][1][4],  #sync2
                     self.fra['1'][1][5],  #sync3
                     self.fra['1'][1][6],  #sync4
-                    self.fra['1'][1][7],  #subframe, [superframe counter]
-                    self.fra['1'][1][8],  #word
-                    self.fra['1'][1][9],  #bitOut
-                    self.fra['1'][1][10], #bitLen
-                    self.fra['1'][1][11], #Value in 1st frame (0/1)
+                    self.fra['1'][1][7],  #subframe, [superframe counter],每个frame中都有,这4项是counter的位置
+                    self.fra['1'][1][8],  #word,     [superframe counter]
+                    self.fra['1'][1][9],  #bitOut,   [superframe counter]
+                    self.fra['1'][1][10], #bitLen,   [superframe counter]
+                    self.fra['1'][1][11], #Value in 1st frame (0/1), 编号为1的frame,counter的值(counter的最小值)
                     ],
                  '2':ret2,
                  '3':ret3,
