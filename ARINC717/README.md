@@ -22,7 +22,9 @@ ARINC 717 Aligned 文件,是从 ARINC 717 文件整理而来。主要做了两�
   * `import zipfile`  
 
 
-编写时使用的是 python3.9 版本。   
+编写时使用的是 python-3.9.2 版本。import包都是 python-3.9.2内置或自带的包。   
+在 python-3.6.8 中测试OK。   
+理论上,在所有的 python-3.x 都能运行。   
 
 这些程序需要 vec 目录中的配置文件。(机型编码规范, 或者参数编码规则)    
 配置文件的来源，请看 [vec目录中的README](https://github.com/osnosn/FlightDataDecode/tree/main/ARINC717/vec).    

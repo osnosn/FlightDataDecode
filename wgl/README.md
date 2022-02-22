@@ -68,7 +68,9 @@ wgl 目录中有两个空文件，只是给出个例子，看看压缩包内,文
   * `import struct`   解码，未用到  
 
 
-编写时使用的是 python3.9 版本。   
+编写时使用的是 python3.9.2 版本。pandas-1.3.4, numpy-1.21.4, psutil-5.9.0, 其他包都是 python-3.9.2 内置或自带的包。   
+在 python-3.6.8 中测试OK。pandas-1.0.3, numpy-1.18.2, psutil-5.8.0    
+理论上,在所有的 python-3.x 都能运行。   
 
 这些程序需要 vec 目录中的配置文件。(机型编码规范, 或者参数编码规则)    
 配置文件的来源，请看 [vec目录中的README](https://github.com/osnosn/FlightDataDecode/tree/main/wgl/vec).    

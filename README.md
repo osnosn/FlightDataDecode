@@ -6,7 +6,7 @@
 是我在了解 无线QAR(WQAR) 原始 raw.dat 文件过程中，编写的测试程序。**目前可以解码出所有的记录参数。**   
 这些程序都在 [wgl 目录中](https://github.com/osnosn/FlightDataDecode/tree/main/wgl)。它们都有详细的注释。方便你学习/了解。   
 
-整理后的代码，将会放在其他目录。【[ARINC717](https://github.com/osnosn/FlightDataDecode/tree/main/ARINC717)】,【[ARINC767](https://github.com/osnosn/FlightDataDecode/tree/main/ARINC767)】, 可能会删除很多注释。   
+整理后的代码，将会放在其他目录。【[ARINC717](https://github.com/osnosn/FlightDataDecode/tree/main/ARINC717)】,【[ARINC767](https://github.com/osnosn/FlightDataDecode/tree/main/ARINC767)】, 可能会删除部分注释。   
 
 ### 更新  
 * [wgl 目录](https://github.com/osnosn/FlightDataDecode/tree/main/wgl), 测试程序。详细更新看 [wgl 目录中的 README](https://github.com/osnosn/FlightDataDecode/blob/main/wgl/README.md)   
