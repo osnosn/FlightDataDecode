@@ -29,6 +29,23 @@ ARINC 717 Aligned 文件,是从 ARINC 717 文件整理而来。主要做了两�
 这些程序需要 vec 目录中的配置文件。(机型编码规范, 或者参数编码规则)    
 配置文件的来源，请看 [vec目录中的README](https://github.com/osnosn/FlightDataDecode/tree/main/ARINC717/vec).    
 
+此目录中的 py 脚本，都可以作为命令行程序运行。   
+直接运行，会给出帮助。   
+```
+$ ./TEST_myqar.py  -h
+Usage:
+   命令行工具。
+ 读取 wgl中 raw.dat,根据参数编码规则,解码一个参数。
+./TEST_myqar.py [-h|--help]
+   * (必要参数)
+   -h, --help                 print usage.
+ * -f, --file xxx.wgl.zip     "....wgl.zip" filename
+ * -p, --param alt_std        show "ALT_STD" param. 自动全部大写。
+   --paramlist                list all param name.
+   -w xxx.csv            参数写入文件"xxx.csv"
+   -w xxx.csv.gz         参数写入文件"xxx.csv.gz"
+```
+
 ### 其他  
 * 认为此项目对您有帮助，请点个星星，或留个言，或发封邮件给我，让我高兴一下.  
   If you think this project is helpful to you, click a Star, or leave a message, or send me an Email to make me happy.
