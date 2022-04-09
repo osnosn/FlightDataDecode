@@ -2,11 +2,13 @@
 
 [FOQA (Flight Operations Quality Asurance)](http://en.wikipedia.org/wiki/Flight_operations_quality_assurance)  
 
-这个项目，可以使用。但没有达到完全可用状态。  
-是我在了解 无线QAR(WQAR) 原始 raw.dat 文件过程中，编写的测试程序。**目前可以解码出所有的记录参数。**   
-这些程序都在 [wgl 目录中](https://github.com/osnosn/FlightDataDecode/tree/main/wgl)。它们都有详细的注释。方便你学习/了解。   
+这个项目，完全可以使用。但程序并不完善，个别条件/逻辑没有去实现(注释有写)。读入的参数编码规则(配置文件)，没有整理后写入数据库。不能同时解出多个参数。   
 
-整理后的代码，将会放在其他目录。【[ARINC717](https://github.com/osnosn/FlightDataDecode/tree/main/ARINC717)】,【[ARINC767](https://github.com/osnosn/FlightDataDecode/tree/main/ARINC767)】, 可能会删除部分注释。   
+这是我在了解 无线QAR(WQAR) 原始 raw.dat 文件过程中，编写的测试程序。**目前可以解码出所有的记录参数。**   
+这些测试程序都在 [wgl 目录中](https://github.com/osnosn/FlightDataDecode/tree/main/wgl)。它们都有详细的注释。方便你学习/了解。   
+
+**如果你想直接使用，请使用整理后的代码。**   
+整理后的最终代码，放在了其他目录。【[ARINC717](https://github.com/osnosn/FlightDataDecode/tree/main/ARINC717)】,【[ARINC767](https://github.com/osnosn/FlightDataDecode/tree/main/ARINC767)】, 注释也被整理过。   
 
 ### 更新  
 * [wgl 目录](https://github.com/osnosn/FlightDataDecode/tree/main/wgl), 测试程序。详细更新看 [wgl 目录中的 README](https://github.com/osnosn/FlightDataDecode/blob/main/wgl/README.md)   
