@@ -4,6 +4,7 @@
 * 整理完成。 2022-02   
 * 使用的例程是 `TEST_myqar.py`。   
 * 预计,今后不再更新了。2022-02   
+* 附加了一个arinc717的样例。样例数据经过处理，**修改/脱敏了部分内容**。包括且不限于: 机号,航班号,日期,经纬度.... 2023-04   
 
 
 
@@ -45,6 +46,11 @@ Usage:
    -w xxx.csv            参数写入文件"xxx.csv"
    -w xxx.csv.gz         参数写入文件"xxx.csv.gz"
 ```
+* 这几个文件，是用于修改原始数据的程序。  
+  * Get_param_from_arinc717_aligned_modify.py   
+  * modify_tag.py   
+  * modify_TEST_myqar.py   
+
 
 ### 其他  
 * 认为此项目对您有帮助，请点个星星，或留个言，或发封邮件给我，让我高兴一下.  
