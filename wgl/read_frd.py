@@ -187,8 +187,6 @@ def read_parameter_file(dataver):
         for line in fp.readlines():
             line_tr=line.strip('\r\n //')
             tmp1=line_tr.split('|',1)
-            #if line.startswith('//') and tmp1[0] == '7':     # "7|..." 的标题比较特殊，起始多了一个tab
-            #    tmp1[1]=tmp1[0].lstrip()
             tmp2=tmp1[1].split('\t')
             if tmp1[0] in FRD:
                 if FRD[ tmp1[0]+'_len' ] != len(tmp2):

@@ -152,6 +152,12 @@ class ARINC717():
             pm_list=self.get_regular(fra,par) #获取一个参数,regular
         else:
             pm_list=self.get_super(fra,par) #获取一个参数,superframe
+
+        #----------改写raw.dat-----------
+        if self.write_raw_dat is not None:
+            wfp=open(self.write_raw_dat,'wb')
+            wfp.write(self.qar)
+            wfp.close()
         return pm_list
 
     def get_super(self,fra,par):
@@ -320,12 +326,6 @@ class ARINC717():
 
             pm_sec += 4.0 * period  #一个frame是4秒
             frame_pos += word_sec * 4 * 2 * period   # 4subframe, 2bytes,直接跳过一个period,哪怕中间有frame错误/缺失，都不管了。
-        #----------改写raw.dat-----------
-        if self.write_raw_dat is not None:
-            wfp=open(self.write_raw_dat,'wb')
-            wfp.write(self.qar)
-            wfp.close()
-
         return pm_list
 
     def find_FIRST_super(self, ttl_len, frame_pos, word_sec, sync_word_len, sync, val_first, superframe_counter_set, period, count_mask ):
@@ -771,11 +771,11 @@ class ARINC717():
             else:
                 byte=bytearray(b'0')
                 byte[0]=(~mask >> 8 ) & 0xFF
-                buf[pos +1] &= byte[0]
-                buf[pos +1] |= (word >> 8 )& 0xFF
+                buf[pos +1] &= byte[0]             #清除对应bit
+                buf[pos +1] |= (word >> 8 )& 0xFF  #写入值
                 byte[0]= ~mask & 0xFF
-                buf[pos] &= byte[0]
-                buf[pos] |= word & 0xFF
+                buf[pos] &= byte[0]                #清除对应bit
+                buf[pos] |= word & 0xFF            #写入值
                 #return ((buf[pos +1] << 8 ) | buf[pos] ) & 0xFFF
 
     def readPAR(self):
@@ -1020,7 +1020,7 @@ def usage():
     print('   myQAR=A717.ARINC717(qar_file)               #创建实例,并打开一个文件')
     print('   regularlist,superlist=myQAR.paramlist()     #列出所有的常规参数和超级帧参数,的名称')
     print('   fra=myQAR.getFRA("VRTG")      #获取参数的fra配置')
-    print('   par=myQAR.getFRA("VRTG")      #获取参数的par配置')
+    print('   par=myQAR.getPAR("VRTG")      #获取参数的par配置')
     print('   dataver=myQAR.dataVer()       #已打开文件的dataVer')
     print('   myQAR.get_param("VRTG")       #解码一个参数')
     print('   myQAR.close()                 #关闭')
