@@ -132,8 +132,10 @@ def main():
     except zipfile.BadZipFile as e:
         print('ERR,FailOpenZipFile',e,FNAME,flush=True)
         raise(Exception('ERR,FailOpenZipFile'))
-    filename_zip='raw.dat'
-    buf=fzip.read(filename_zip)
+    #filename_zip='raw.dat'
+    #buf=fzip.read(filename_zip)
+    names=fzip.namelist()
+    buf=fzip.read(names[0]) #读取第一个文件内容,放入内存
     fzip.close()
 
     word_cnt=0   #12bit字计数
@@ -148,6 +150,7 @@ def main():
             ii=0
             word_cnt +=1
             if word_cnt > 500000:  #测试用，暂时读500k就结束
+                print(' ---文件已经扫描500k, 结束---')
                 break
         word= byte * 0x100 + pre_byte
         #word &= 0xfff
@@ -156,21 +159,28 @@ def main():
         #if mark<0 and word in (0x247,0x5B8,0xA47,0xDB8):
         if mark<0 and word == 0x247:
             mark=ii
-            print('==>Mark,%d,x%X'%(ii,word_cnt))
-        if ii==mark:
+            print('------->Mark sync1.at x{:<5X} word(16bit)+{:02d} byte'.format(word_cnt,ii))
+            #print('==>Mark,%d,x%X'%(ii,word_cnt))
+        #if ii==mark: #两字节对齐
+        if True: #不对齐
             if word == 0x247:
-                print('==>Found sync1.247,%d,x%X,len:x%X'%(ii,word_cnt,word_cnt-word_cnt2))
+                print('==>Found sync1.247,at x{:<5X} word(16bit)+{:02d} byte, len:x{:<5X}'.format(word_cnt,ii,word_cnt-word_cnt2))
+                #print('==>Found sync1.247,%d,x%X,len:x%X'%(ii,word_cnt,word_cnt-word_cnt2))
                 word_cnt2=word_cnt
             elif word == 0x5B8:
-                print('==>Found sync2.5B8,%d,x%X,len:x%X'%(ii,word_cnt,word_cnt-word_cnt2))
+                print('==>Found sync2.5B8,at x{:<5X} word(16bit)+{:02d} byte, len:x{:<5X}'.format(word_cnt,ii,word_cnt-word_cnt2))
+                #print('==>Found sync2.5B8,%d,x%X,len:x%X'%(ii,word_cnt,word_cnt-word_cnt2))
                 word_cnt2=word_cnt
             elif word == 0xA47:
-                print('==>Found sync3.A47,%d,x%X,len:x%X'%(ii,word_cnt,word_cnt-word_cnt2))
+                print('==>Found sync3.A47,at x{:<5X} word(16bit)+{:02d} byte, len:x{:<5X}'.format(word_cnt,ii,word_cnt-word_cnt2))
+                #print('==>Found sync3.A47,%d,x%X,len:x%X'%(ii,word_cnt,word_cnt-word_cnt2))
                 word_cnt2=word_cnt
             elif word == 0xDB8:
-                print('==>Found sync4.DB8,%d,x%X,len:x%X'%(ii,word_cnt,word_cnt-word_cnt2))
+                print('==>Found sync4.DB8,at x{:<5X} word(16bit)+{:02d} byte, len:x{:<5X}'.format(word_cnt,ii,word_cnt-word_cnt2))
+                #print('==>Found sync4.DB8,%d,x%X,len:x%X'%(ii,word_cnt,word_cnt-word_cnt2))
                 word_cnt2=word_cnt
         if word_cnt-word_cnt2 >0x1000:  #512=0x200,512*4=0x800, 1024=0x400, 1024*4=0x1000
+            # separation > 1024 word, Reset Mark.
             mark=-1  #重置，重新找 sync1
             pass
 
@@ -180,7 +190,11 @@ def main():
 
 def getbyte(buf):
     dat=BytesIO(buf)
-    dat.read(3*1024*1024) #跳过3m内容，测试用
+    if 0:
+        print(' ---跳过3m内容---')
+        dat.read(3*1024*1024) #跳过3m内容，测试用
+    else:
+        print(' ---从文件头开始---')
     while True:
         bb=dat.read(1)
         if not bb:  # when EOF, return b'', len(bb)==0
@@ -188,6 +202,7 @@ def getbyte(buf):
         #yield bb
         yield ord(bb)
     dat.close()
+    print(' ---文件扫描结束---')
     return 'done'
 
 def showsize(size):

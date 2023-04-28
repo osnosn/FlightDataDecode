@@ -20,13 +20,21 @@
   - 对于 ARINC 573/717 的记录格式: 增加支持 DISCRETE, PACKED BITS, UTC, 类型的值。共支持7种: BCD, BNR LINEAR, BNR SEGMENTS, CHARACTER, DISCRETE, PACKED BITS, UTC.    
 * 2022-02 再次更新  
   - 对于 ARINC 573/717 的记录格式: 可以解码所有的参数，包括 regular, superframe 参数。  
+* 2023-04 再次更新  
+  - 对于 ARINC 767 的记录格式   
+    - `Get_param_from_arinc767-new2023.py`   
+    - 增加支持 "COMPUTED ON BOARD" 类型的值.    
+    - 可以解码所有的记录参数。   
+  - `dump_rawdat_bitstream.py` 更改了显示格式。   
+  - `dump_rawdat_aligned.py` 更改了显示格式。   
 
 
 
 ### 说明
 这个目录中的py程序，可以使用。但没有达到完全可用状态。  
-是我在了解 无线QAR(WQAR) 原始 raw.dat 文件过程中，编写的程序。   
-**目前可以解码出所有的记录参数。**   
+是我在了解 无线QAR(WQAR) 原始文件过程中，编写的程序。   
+**目前可以对 ARINC 717 Aligned 格式的文件，解码出所有的记录参数。**   
+**目前可以对 ARINC 767 格式的文件，解码出所有的记录参数。**   
 有兴趣的，可以参考一下。  
 
 整理后的代码，将会放在其他目录。【[ARINC717](https://github.com/osnosn/FlightDataDecode/tree/main/ARINC717)】,【[ARINC767](https://github.com/osnosn/FlightDataDecode/tree/main/ARINC767)】   
@@ -58,14 +66,14 @@ wgl 目录中有两个空文件，只是给出个例子，看看压缩包内,文
   * `Get_param_from_wgl.py`   
 
 所有python3程序用到的库   
-  * `import os,sys,getopt`  
+  * `import os, sys, getopt`  
   * `from datetime import datetime`  
   * `import zipfile`  
   * `from io import BytesIO`  
   * `from io import StringIO`  
   * `import pandas as pd`   解码，未用到，读air配置文件,依赖了。读其他配置文件, 用到了。  
   * `import psutil`   解码，未用到  
-  * `import struct`   解码，未用到  
+  * `import struct`   
 
 
 编写时使用的是 python3.9.2 版本。pandas-1.3.4, numpy-1.21.4, psutil-5.9.0, 其他包都是 python-3.9.2 内置或自带的包。   

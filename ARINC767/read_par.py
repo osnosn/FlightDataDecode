@@ -5,109 +5,118 @@
  读解码库，参数配置文件 vec 中 xx.par 文件。比如 010XXX.par
     author:南方航空,LLGZ@csair.com
 """
-import sys
 import os
-import psutil   #非必须库
-#from datetime import datetime
-#pandas 可以不使用, read_parameter_file() 可以返回list, 不返回DataFrame。
-import pandas as pd
 import zipfile
+import gzip
+import csv
 from io import StringIO
 import config_vec as conf
+
+#PAR=None  #保存读入的配置. 当作为模块,被调用时使用.
+#DataVer=None
 
 def main():
     global FNAME,DUMPDATA
     global TOCSV
     global PARAMLIST
     global PARAM
-    print('begin mem:',sysmem())
-    PAR=read_parameter_file(FNAME)
+    par_conf=read_parameter_file(FNAME)
 
     if PARAMLIST:
         #----------显示所有参数名-------------
         ii=0
-        for vv in PAR.iloc[:,0].tolist():
-            print(vv, end=',\t')
-            if ii % 9 ==0:
+        for vv in par_conf:
+            print(vv[0], end=',\t')
+            if ii % 10 ==0:
                 print()
             ii+=1
         print()
+
         if len(TOCSV)>4:
             print('Write to CSV file:',TOCSV)
-            PRA.iloc[:,0].to_csv(TOCSV,sep='\t')
-
-        if 0:
-            dict2=PAR.iloc[:,[0,2,7,8,17,36,37,38]].to_dict('split')
-            #print(dict2)
-            #print(dict2['data'])
-            for vv in dict2['data']:
-                if not isinstance(vv[7],list) or len(vv[7])<1:
-                    continue
-                print(vv)
+            if TOCSV.endswith('.gz'):
+                fp=gzip.open(TOCSV,'wt',encoding='utf8')
+            else:
+                fp=open(TOCSV,'w',encoding='utf8')
+            ii=0
+            for row in par_conf:
+                fp.write(str(ii)+'\t'+row[0]+'\n')
+                ii+=1
         return
 
     if PARAM is not None and len(PARAM)>0:
         #----------显示单个参数的配置内容-------------
         param=PARAM.upper()
-        tmp=PAR
-        tmp2=tmp[ tmp.iloc[:,0]==param ].copy() #dataframe
-        tmp=tmp.iloc[[0,]].append( tmp2,  ignore_index=False )
-        pd.set_option('display.max_columns',48)
-        pd.set_option('display.width',156)
-        print(len(tmp.columns))
-        print(tmp)
+        idx=[]
+        ii=0
+        for row in par_conf: #找出所有记录
+            if row[0] == param: idx.append(ii)
+            ii +=1
+        if len(idx)>0:
+            for ii in range(len(par_conf[0])):
+                print(ii,end=',\t')
+                for jj in idx:
+                    print(par_conf[jj][ii], end=',\t')
+                print(par_conf[0][ii])
+        else:
+            print('Parameter %s not found in Regular parameter.'%param)
+        '''
+        # 只找出第一条记录，通常par参数只会有一条记录
+        idx=0
+        for row in par_conf:
+            if row[0] == param: break
+            idx +=1
+        if idx < len(par_conf):
+            for ii  in range(len(par_conf[0])):
+                print(ii, par_conf[idx][ii], par_conf[0][ii], sep=',\t')
+        else:
+            print('Parameter %s not found in Regular parameter.'%param)
+        '''
+        print()
         return
 
-    pd.set_option('display.max_columns',18)
-    pd.set_option('display.width',156)
-    pd.set_option('display.min_row',33)
-    pd.set_option('display.min_row',330)
-    tmp=PAR[[0,2,3,4,5,6,7,8,9,17,20]]
-    tmp.iat[0,2]='1-Equip/Label/SDI'  # Source1 (Equip/Label/SDI)
-    tmp.iat[0,3]='2-Equip/Label/SDI'  # Source2 (Equip/Label/SDI)
-    tmp.iat[0,5]='S_Bit' # Sign Bit
-    tmp.iat[0,7]='D_Bits'  # Data Bits
-    tmp.iat[0,9]='FormatMode'   # Display Format Mode
-    tmp.iat[0,10]='字段长.分数部分'   # Field Length.Fractional Part
-    print(tmp)
-    #print(tmp.iat[0,9])
-    #print(tmp.iat[0,10])
-    tmp=PAR[[0,24,25,36,37,38,39,40]]
-    tmp.iat[0,2]='InternalFormat' # Internal Format (Float ,Unsigned or Signed)
-    print(tmp)
+    #loc=(0,2,3,4,5,6,7,8,9,17,20)
+    #tmp.iat[0,2]='1-Equip/Label/SDI'  # Source1 (Equip/Label/SDI)
+    #tmp.iat[0,3]='2-Equip/Label/SDI'  # Source2 (Equip/Label/SDI)
+    #tmp.iat[0,5]='S_Bit' # Sign Bit
+    #tmp.iat[0,7]='D_Bits'  # Data Bits
+    #tmp.iat[0,9]='FormatMode'   # Display Format Mode
+    #tmp.iat[0,10]='字段长.分数部分'   # Field Length.Fractional Part
+    #loc=(0,24,25,36,37,38,39,40)
 
-    '''
-    ii=0
-    for vv1 in PAR:
-        print(vv1,'\n')
-        ii +=1
-        if ii>4:
-            break
-    '''
+    loc=(0,2,3,4,5,6,7,8,9,17,20,24,25,36,37,38,39,40)
+    #tmp.iat[0,2]='InternalFormat' # Internal Format (Float ,Unsigned or Signed)
+    par_len=len(par_conf)-1
+    print('---------- recorder num:',par_len,'------------')
+    for ii in range(len(par_conf[0])):
+        print(ii,end=',')
+        for jj in range(1,6):
+            print('\t',par_conf[jj][ii], end=',')
+        print('\t',par_conf[0][ii])
 
-    print('PAR(%d):'%len(PAR))
-    print('PAR:',getsizeof(PAR))
-    print('end mem:',sysmem())
-    #print(PAR.loc[:,2].unique() ) #列出所有的Type
-    #print(PAR.loc[:,6].unique() ) #列出所有的SignBit
-    #print(PAR.loc[:,7].unique() ) #列出所有的MSB
-    #print(PAR.loc[:,8].unique() ) #列出所有的DataBit
-    #print(PAR.loc[:,12].unique() ) #列出所有的Computation:Value=Constant Value or Resol=Coef...
-    #print(PAR.loc[:,29].dropna().tolist() ) #列出所有的 Coef A(Res) ,有数组
-    #print(PAR.loc[:,30].dropna().tolist() ) #列出所有的 Coef b,有数组
-    #print(PAR.loc[:,31].dropna().tolist() ) #列出所有的 Dot,都是None
-    #print(PAR.loc[:,32].dropna().tolist() ) #列出所有的 X,都是None
-    #print(PAR.loc[:,33].dropna().tolist() ) #列出所有的 Y,都是None
-    #print(PAR.loc[:,34].unique() ) #列出所有的 Coef A,都是None
-    #print(PAR.loc[:,35].unique() ) #列出所有的 Power,都是None
-    #print(PAR.loc[0] ) #列出所有的column
-    if len(TOCSV)>0:
+
+    #----写CSV文件--------
+    if len(TOCSV)>4:
         print('Write to CSV file:',TOCSV)
-        PAR.to_csv(TOCSV)
+        if TOCSV.endswith('.gz'):
+            fp=gzip.open(TOCSV,'wt',encoding='utf8')
+        else:
+            fp=open(TOCSV,'w',encoding='utf8')
+        buf=csv.writer(fp,delimiter='\t')
+        buf.writerows(par_conf)
+        fp.close()
+    return
 
 def read_parameter_file(dataver):
+    #global PAR
+    #global DataVer
 
     dataver='%06d' % int(dataver)  #6位字符串
+    #if PAR is not None and DataVer==dataver:
+    #    return PAR
+    #else:
+    #    DataVer=dataver
+    #    PAR=None
 
     filename_zip=dataver+'.par'     #.vec压缩包内的文件名
     zip_fname=os.path.join(conf.vec,dataver+'.vec')  #.vec文件名
@@ -122,9 +131,8 @@ def read_parameter_file(dataver):
         print('ERR,FailOpenZipFile',e,zip_fname,flush=True)
         raise(Exception('ERR,FailOpenZipFile'))
     
-    PAR=[]
+    par_conf=[]
     with StringIO(fzip.read(filename_zip).decode('utf16')) as fp:
-    #with open(vec_fname,'r',encoding='utf16') as fp:
         ki=-1
         offset=0  #总偏移
         PAR_offset={}  #各行记录的，偏移和长度
@@ -141,14 +149,14 @@ def read_parameter_file(dataver):
                     #print('PAR_offset:',PAR_offset,'\n')
                 elif ki>0:
                     #print('one_par:',one_par,'\n')
-                    PAR.append( one_PAR(PAR_offset,one_par) )
+                    par_conf.append( one_PAR(PAR_offset,one_par) )
                     #if ki==1:
-                    #    print('PAR(%d):'%len(PAR), PAR,'\n')
+                    #    print('par_conf(%d):'%len(par_conf), par_conf,'\n')
                     #    print('PAR_offset:',PAR_offset,'\n')
                     #if ki>2:
                     #    break
                 one_par={}
-            #if tmp1[0] == '13': #记录的结束行。对于787xx的arinc767，13行是parameter long name。对于717来说，13行是空行。par的文件头没有说明。最终也没有使用这个字段。
+            #if tmp1[0] == '13': #记录的结束行
             #    continue
             if ki==0:  #文件头,记录的注释头
                 if tmp1[0] in PAR_offset: #文件头中不应该有重复
@@ -165,12 +173,12 @@ def read_parameter_file(dataver):
                 for jj in range( len(tmp2) ):
                     one_par[ tmp1[0] ][jj].append( tmp2[jj] )
         #最后一个参数
-        PAR.append( one_PAR(PAR_offset,one_par) )
+        par_conf.append( one_PAR(PAR_offset,one_par) )
 
     fzip.close()
 
-    return pd.DataFrame(PAR)  #返回dataframe
-    #return PAR       #返回list
+    #PAR=par_conf
+    return par_conf       #返回list
 
 def one_PAR(PAR_offset,one_par):
     '''
@@ -198,27 +206,6 @@ def one_PAR(PAR_offset,one_par):
     return ONE
 
 
-def showsize(size):
-    if size<1024.0*2:
-        return '%.0f B'%(size)
-    size /=1024.0
-    if size<1024.0*2:
-        return '%.2f K'%(size)
-    size /=1024.0
-    if size<1024.0*2:
-        return '%.2f M'%(size)
-    size /=1024.0
-    if size<1024.0*2:
-        return '%.2f G'%(size)
-def getsizeof(buf):
-    size=sys.getsizeof(buf)
-    return showsize(size)
-def sysmem():
-    size=psutil.Process(os.getpid()).memory_info().rss #实际使用的物理内存，包含共享内存
-    #size=psutil.Process(os.getpid()).memory_full_info().uss #实际使用的物理内存，不包含共享内存
-    return showsize(size)
-
-
 
 import os,sys,getopt
 def usage():
@@ -240,7 +227,7 @@ if __name__=='__main__':
         usage()
         exit()
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:],'hv:p:f:',['help','ver=','csv=','paramlist','param='])
+        opts, args = getopt.gnu_getopt(sys.argv[1:],'hvp:f:',['help','ver=','csv=','paramlist','param='])
     except getopt.GetoptError as e:
         print(e)
         usage()
@@ -271,5 +258,4 @@ if __name__=='__main__':
         exit()
 
     main()
-    print('mem:',sysmem())
 

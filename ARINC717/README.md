@@ -2,25 +2,27 @@
 
 ### 更新   
 * 整理完成。 2022-02   
-* 使用的例程是 `TEST_myqar.py`。   
-* 预计,今后不再更新了。2022-02   
-* 附加了一个arinc717的样例。样例数据经过处理，**修改/脱敏了部分内容**。包括且不限于: 机号,航班号,日期,经纬度.... 2023-04   
+* 使用的例程是 `TEST_myqar.py`。2022-02   
+* 附加了一个 arinc717 的样例。样例数据经过处理，   
+  **修改/脱敏了部分内容**。包括且不限于: 机号,航班号,日期,经纬度.... 2023-04   
+* 预计,今后不再更新了。   
 
 
 
 ### 说明   
 **此目录的程序，是用来解码 ARINC 717 Aligned 格式的文件。**   
 ARINC 717 Aligned 文件,是从 ARINC 717 文件整理而来。主要做了两件事,   
-* 把 12 bits word 找出来, 存为 16 bits(2 bytes)。补在高位的 4 bits 可以根据需要设置些状态。比如,表示当前帧是补的。   
-* 根据同步字, 如果源文件有缺帧/漏帧, 则用空帧补齐。为了在解码时,能够直接计算参数位置, 而无需扫描文件。  
+  * 把 12 bits word 找出来, 存为 16 bits(2 bytes)。补在高位的 4 bits 可以根据需要设置些状态。比如,表示当前帧是补的。   
+  * 根据同步字, 如果源文件有缺帧/漏帧, 则用空帧补齐。为了在解码时,能够直接计算参数位置, 而无需扫描文件。  
 
 
 所有python3程序用到的库   
-  * `import csv`  
-  * `from io import StringIO`  
-  * `import gzip`  
-  * `import os,sys,getopt`  
-  * `import zipfile`  
+  * import csv   
+  * from io import StringIO   
+  * import gzip   
+  * import os, sys, getopt   
+  * import struct   
+  * import zipfile   
 
 
 编写时使用的是 python-3.9.2 版本。import包都是 python-3.9.2内置或自带的包。   
@@ -29,6 +31,7 @@ ARINC 717 Aligned 文件,是从 ARINC 717 文件整理而来。主要做了两�
 
 这些程序需要 vec 目录中的配置文件。(机型编码规范, 或者参数编码规则)    
 配置文件的来源，请看 [vec目录中的README](https://github.com/osnosn/FlightDataDecode/tree/main/ARINC717/vec).    
+  * 目录中的 `aircraft.air` 和 `010888.vec` 是经过脱敏处理后的样例。2023-04   
 
 此目录中的 py 脚本，都可以作为命令行程序运行。   
 直接运行，会给出帮助。   
@@ -46,7 +49,7 @@ Usage:
    -w xxx.csv            参数写入文件"xxx.csv"
    -w xxx.csv.gz         参数写入文件"xxx.csv.gz"
 ```
-* 这几个文件，是用于修改原始数据的程序。  
+* 这几个文件，是用于修改原始数据的程序。2023-04   
   * Get_param_from_arinc717_aligned_modify.py   
   * modify_tag.py   
   * modify_TEST_myqar.py   

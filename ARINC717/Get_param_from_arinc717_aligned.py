@@ -938,7 +938,7 @@ def usage():
     print('   myQAR=A717.ARINC717(qar_file)               #创建实例,并打开一个文件')
     print('   regularlist,superlist=myQAR.paramlist()     #列出所有的常规参数和超级帧参数,的名称')
     print('   fra=myQAR.getFRA("VRTG")      #获取参数的fra配置')
-    print('   par=myQAR.getFRA("VRTG")      #获取参数的par配置')
+    print('   par=myQAR.getPAR("VRTG")      #获取参数的par配置')
     print('   dataver=myQAR.dataVer()       #已打开文件的dataVer')
     print('   myQAR.get_param("VRTG")       #解码一个参数')
     print('   myQAR.close()                 #关闭')

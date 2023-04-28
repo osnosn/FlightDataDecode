@@ -105,7 +105,12 @@ import zipfile
 import psutil   #非必须库
 from io import BytesIO
 
-def main():
+def main(move='>>', order='high'):
+    '''
+    move:
+        >>,从高位向低位 导入
+        <<,从低位向高位 导入
+    '''
     global FNAME,WFNAME,DUMPDATA
 
     print('mem:',sysmem())
@@ -115,47 +120,69 @@ def main():
     except zipfile.BadZipFile as e:
         print('ERR,FailOpenZipFile',e,FNAME,flush=True)
         raise(Exception('ERR,FailOpenZipFile'))
-    filename_zip='raw.dat'
-    buf=fzip.read(filename_zip)
+    #filename_zip='raw.dat'
+    #buf=fzip.read(filename_zip)
+    names=fzip.namelist()
+    buf=fzip.read(names[0]) #读取第一个文件内容,放入内存
     fzip.close()
 
-    word_cnt=0   #12bit字计数
-    word_cnt2=0  #上一个同步字的位置
-    ii=0      #bit位置标记
-    word=0    #12bit目标缓存
-    mark=-1   #bit起始位置标记
-    for bit in getbit(buf):
+    FFF_cnt=0    # 连续的 0xFFF 计数, 12bit word 计数
+    word_cnt=0   # 12bit 字计数
+    word_cnt2=0  # 上一个同步字的位置, 12bit word 计数
+    ii=0      # 当前 bit 位置, 0-11, 用于对齐判断
+    word=0    # 12bit 目标缓存
+    mark=-1   # 找到 sync1 时的 bit起始位置, 如果设置为 -1, 则重新寻找 sync1.
+    for bit in getbit(buf, order):
         ii +=1
         if ii>=12:
             ii=0
             word_cnt +=1
+            if word & 0xfff == 0xfff:
+                FFF_cnt +=1
+            else:
+                if FFF_cnt > 64:
+                    print('---> continue {:<5d} words 0xFFF, reset mark.'.format(FFF_cnt) )
+                    mark=-1  #重置，重新找 sync1
+                FFF_cnt  =0
             if word_cnt > 500000:  #测试用，暂时读500k就结束
+                print(' ---文件已经扫描500k, 结束---')
                 break
-        #word >>=1  #从高bit移入->低: >>
-        word <<=1  #从低bit移入->高: <<
+        if move=='>>':
+            word >>=1  #从高bit移入->低: >>
+        else:
+            word <<=1  #从低bit移入->高: <<
         if bit:
-            #word |= 0x800  #从高bit移入->低: 0x800
-            word |= 0x001  #从低bit移入->高: 0x1
+            if move=='>>':
+                word |= 0x800  #从高bit移入->低: 0x800
+            else:
+                word |= 0x001  #从低bit移入->高: 0x1
         word &= 0xfff
         #if (ii==0 or ii==8) and mark<0 and word == 0x247:
         #if mark<0 and word in (0x247,0x5B8,0xA47,0xDB8):
         if mark<0 and word == 0x247:
             mark=ii
-            print('==>Mark,%d,x%X'%(ii,word_cnt))
-        if ii==mark:
+            print('------->Mark sync1.at x{:<5X} word(12bit)+{:02d} bit'.format(word_cnt,ii))
+            #print('==>Mark,sync1,at x%X word(12bit) + %d bit'%(word_cnt,ii,))
+        if ii==mark: #12bit 对齐
+        #if True: #12bit 不对齐
             if word == 0x247:
-                print('==>Found sync1.247,%d,x%X,len:x%X'%(ii,word_cnt,word_cnt-word_cnt2))
+                print('==>Found sync1.247,at x{:<5X} word(12bit)+{:02d} bit, len:x{:<5X}'.format(word_cnt,ii,word_cnt-word_cnt2))
+                #print('==>Found sync1.247,at x%X word(12bit)+%dbit,len:x%X'%(word_cnt,ii,word_cnt-word_cnt2))
                 word_cnt2=word_cnt
             elif word == 0x5B8:
-                print('==>Found sync2.5B8,%d,x%X,len:x%X'%(ii,word_cnt,word_cnt-word_cnt2))
+                print('==>Found sync2.5B8,at x{:<5X} word(12bit)+{:02d} bit, len:x{:<5X}'.format(word_cnt,ii,word_cnt-word_cnt2))
+                #print('==>Found sync2.5B8,at x%X word(12bit)+%dbit,len:x%X'%(word_cnt,ii,word_cnt-word_cnt2))
                 word_cnt2=word_cnt
             elif word == 0xA47:
-                print('==>Found sync3.A47,%d,x%X,len:x%X'%(ii,word_cnt,word_cnt-word_cnt2))
+                print('==>Found sync3.A47,at x{:<5X} word(12bit)+{:02d} bit, len:x{:<5X}'.format(word_cnt,ii,word_cnt-word_cnt2))
+                #print('==>Found sync3.A47,at x%X word(12bit)+%dbit,len:x%X'%(word_cnt,ii,word_cnt-word_cnt2))
                 word_cnt2=word_cnt
             elif word == 0xDB8:
-                print('==>Found sync4.DB8,%d,x%X,len:x%X'%(ii,word_cnt,word_cnt-word_cnt2))
+                print('==>Found sync4.DB8,at x{:<5X} word(12bit)+{:02d} bit, len:x{:<5X}'.format(word_cnt,ii,word_cnt-word_cnt2))
+                #print('==>Found sync4.DB8,at x%X word(12bit)+%dbit,len:x%X'%(word_cnt,ii,word_cnt-word_cnt2))
                 word_cnt2=word_cnt
-        if word_cnt-word_cnt2 >0x1000:  #512=0x200,512*4=0x800, 1024=0x400, 1024*4=0x1000
+        if word_cnt-word_cnt2 >4096:  #256=0x100,512=0x200,512*4=0x800, 1024=0x400, 4096=0x1000
+            # separation > 1024 word, Reset Mark.
             mark=-1  #重置，重新找 sync1
             pass
 
@@ -163,24 +190,38 @@ def main():
     print('mem:',sysmem())
 
 
-def getbit(buf):
+def getbit(buf, order='high'):
+    '''
+    order:
+        high,从高位开始读取, 先读第 8bit
+        low, 从低位开始读取, 先读第 1bit
+    '''
     dat=BytesIO(buf)
-    dat.read(3*1024*1024) #跳过3m内容，测试用
+    if 0:
+        print(' ---跳过3m内容---')
+        dat.read(3*1024*1024) #跳过3m内容，测试用
+    else:
+        print(' ---从文件头开始---')
     while True:
         bb=dat.read(1)
         if not bb:  # when EOF, return b'', len(bb)==0
             break
         word=ord(bb)
-        #chk=0x01  #先低bit->高: 0x1
-        chk=0x80  #先高bit->低: 0x80
+        if order == 'high':
+            chk=0x80  #先高bit->低: 0x80
+        else:
+            chk=0x01  #先低bit->高: 0x1
         for ii in range(8):
             if chk & word:
                 yield True
             else:
                 yield False
-            #chk <<= 1  #先低bit->高: <<
-            chk >>= 1  #先高bit->低: >>
+            if order == 'high':
+                chk >>= 1  #先高bit->低: >>
+            else:
+                chk <<= 1  #先低bit->高: <<
     dat.close()
+    print(' ---文件扫描结束---')
     return 'done'
 
 def showsize(size):
@@ -244,5 +285,5 @@ if __name__=='__main__':
         print(FNAME,'Not a file')
         exit()
 
-    main()
+    main('<<','high')
 
