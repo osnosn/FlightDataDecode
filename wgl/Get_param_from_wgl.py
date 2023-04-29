@@ -203,7 +203,10 @@ def main():
 
         #-----------显示参数的部分内容--------------------
         pd.set_option('display.min_row',200)
-        print( df_pm['v'][1000:1200].tolist() )
+        if len(df_pm)>1200:
+            print( df_pm['v'][1000:1200].tolist() )
+        else:
+            print( df_pm['v'][30:40].tolist() )
 
     print('mem:',sysmem())
     return

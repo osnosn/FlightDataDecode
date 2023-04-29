@@ -18,7 +18,7 @@
 * [wgl 目录](https://github.com/osnosn/FlightDataDecode/tree/main/wgl), 测试程序。详细更新看 [wgl 目录中的 README](https://github.com/osnosn/FlightDataDecode/blob/main/wgl/README.md)   
   **2023-04 最后更新**   
   - 对于 ARINC 573/717 的记录格式   
-    - `Get_param_from_wgl.py` 可以正确的获取所有记录参数。包括regular,superframe参数。  
+    - `Get_param_from_wgl.py` 可以正确的获取所有记录参数。包括 regular,superframe 参数。  
     - 解码后的参数,可以存为 csv 文件。  
     - 能够处理7种: BCD, BNR LINEAR, BNR SEGMENTS, CHARACTER, DISCRETE, PACKED BITS, UTC 类型的值，并转换为使用值。  
     - 返回参数时，同时给出了对应的秒(从0开始)。  
@@ -29,7 +29,7 @@
     - 通过导出 AGS 的"配置定义"，能解码所有记录参数。   
 * [ARINC717 目录](https://github.com/osnosn/FlightDataDecode/tree/main/ARINC717), 从 wgl 整理后的程序。详细更新看 [ARINC717 目录中的 README](https://github.com/osnosn/FlightDataDecode/blob/main/ARINC717/README.md)  
   * 整理完成。2022-02更新   
-  * 附加了一个 arinc717 的样例。通常,完整的压缩数据包几 MB到几十 MB。   
+  * 附加了一个 arinc717 Aligned 的样例。通常,完整的压缩数据包几 MB到几十 MB。   
     样例数据经过处理，**修改/脱敏了部分内容**。包括且不限于: 机号,航班号,日期,经纬度.... 2023-04更新   
   * 预计,今后不再更新了。   
 * [ARINC767 目录](https://github.com/osnosn/FlightDataDecode/blob/main/wgl/README.md), 从 wgl 整理后的程序。详细更新看 [ARINC767 目录中的 README](https://github.com/osnosn/FlightDataDecode/blob/main/ARINC767/README.md)  
@@ -38,8 +38,9 @@
   * xml 定义文件，由 AGS 软件转换并保存。导出它的配置，可以完成解码。   
     解码测试程序完成。整理完成。2023-04   
   * 增加支持 "COMPUTED ON BOARD" 类型的值.    
-  * 附加了一个arinc767的样例。通常,完整的压缩数据包几十 MB到几百 MB，比较大。    
-    样例数据经过处理，只截取开始的20分钟数据。**修改/脱敏了部分内容**。包括且不限于: 机号,航班号,日期.... 2023-04更新   
+  * 附加了一个 arinc767 的样例。通常,完整的压缩数据包几十 MB到几百 MB，比较大。    
+    样例数据经过处理。**修改/脱敏了部分内容**。包括且不限于: 机号,航班号,日期....   
+    样例数据是 NZAA 机场地面滑行段。 2023-04更新   
   * 预计,今后不再更新了。   
 
 ### 其他  
