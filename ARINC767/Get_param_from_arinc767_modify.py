@@ -196,10 +196,11 @@ class ARINC767():
         '''
         frame_size=0
         while frame_pos<ttl_len -2:  #寻找frame开始位置
-            frame_size=self.getWord(buf,frame_pos+2) #size
+            frame_size=self.getWord(buf,frame_pos+2) #size,判断要使用，只能先取size
             if self.getWord(buf,frame_pos) == sync767 and \
                     (frame_pos+frame_size>=ttl_len or self.getWord(buf,frame_pos+frame_size) == sync767 ):
                 #当前位置有同步字,加上size之后的位置,也有同步字,或者是文件结尾
+                ## 应该判断trailer的 type&id 吻合，说明当前frame完整,即可返回。
                 #print('==>Mark,x%X'%(frame_pos,))
                 break
             frame_pos +=1
@@ -221,7 +222,7 @@ class ARINC767():
             frad_bits=frad[str(iid)+'_bits']
             print('{:>7}, {:8}, {:13}, {:12}  | '.format(iid, len(frad[iid]), frad_bits['ttl_bits'], frad_bits['ttl_bits']/8.0),end=' ')
             print('{:9} + {:<8}, {:10}'.format(frad_bits['dword'], frad_bits['dbits'], frad_bits['dword']*4+frad_bits['dbits']/32.0),end=' ')
-            print()
+            print(flush=True)
 
         #----------zip压缩文件内容-----------
         buf=self.qar
@@ -282,31 +283,32 @@ class ARINC767():
                     word=self.getWord(buf,frame_pos+10+num)
                     str2 += chr(word >> 8)
                     str2 += chr(word & 0xff)
-                print('Format:',str2)
+                print('    Format:    ',str2)
                 str2=''  #临时变量
                 for num in range(0,32,2):
                     word=self.getWord(buf,frame_pos+18+num)
                     str2 += chr(word >> 8)
                     str2 += chr(word & 0xff)
-                print('      :',str2)
+                print('          :    ',str2)
                 str2=''  #临时变量
                 for num in range(0,8,2):
                     word=self.getWord(buf,frame_pos+50+num)
                     str2 += chr(word >> 8)
                     str2 += chr(word & 0xff)
-                print('  Tail:',str2)
+                print('      Tail:    ',str2, '               \x1b[45m<===\x1b[0m')
                 str2=''  #临时变量
                 for num in range(0,64,2):
                     word=self.getWord(buf,frame_pos+58+num)
                     str2 += chr(word >> 8)
                     str2 += chr(word & 0xff)
-                print('  FDAU:',str2)
+                print('      FDAU:    ',str2)
                 str2=''  #临时变量
                 for num in range(0,16,2):
                     word=self.getWord(buf,frame_pos+122+num)
                     str2 += chr(word >> 8)
                     str2 += chr(word & 0xff)
-                print('UTC Time:',str2)
+                print('  UTC Time:    ',str2, '       \x1b[45m<===\x1b[0m')
+                print(flush=True)
 
             #----------trailer: type & id, 验证trailer是否正确--------
             frame_tail=self.getWord(buf,frame_pos+frame_size-2) # type & id
@@ -336,8 +338,7 @@ class ARINC767():
                 frameIDs[frame_id]['time'].append('%02d:%02d:%02d.%s'%(HH,MM,SS,MS_str) )
 
             frame_pos += frame_size
-        if frame_pos>=ttl_len -2:
-            print('-----End of file. File scan finished.----')
+        print('-----End of file. File scan finished.----')
 
         #------打印各个frame id 的 frame_size ----
         print('          (Bytes)    (Bytes)   ')
@@ -387,7 +388,7 @@ class ARINC767():
             return []
 
         frd=self.readFRD()
-        frad, param_conf=self.getFRD(param)
+        param_conf=self.getFRD(param)
 
         if param_conf == {}:
             print('Parameter "%s" not found!'% param)
@@ -460,13 +461,13 @@ class ARINC767():
             bits= (1 << param_conf['pm_blen']) -1
             move=32-bits_mod - param_conf['pm_blen']
             if move <0:
-                bits3 = bits << 32 + move
+                bits3 = bits << (32 + move)
                 bits2 = bits3 >> 32  #取 64->32 位
                 bits3 &= 0xffffffff  #取 32-> 1 位
-                valueraw=dword & bits2
-                valueraw <<=  move * -1
-                dword=self.getDWord(buf, frame_pos + 10 + pos_dword * 4 +4)  #取下一个 dword
-                valueraw |= (dword & bits3) >> 32 + move
+                valueraw=(dword & bits2)
+                valueraw <<=  (move * -1)
+                dword=self.getDWord(buf, frame_pos + 10 + (pos_dword * 4) +4)  #取下一个 dword
+                valueraw |= ((dword & bits3) >> (32 + move))
             else:
                 bits <<= move
                 valueraw=dword & bits
@@ -474,25 +475,26 @@ class ARINC767():
             value =self.arinc429_decode(valueraw ,param_conf )
 
             #------------super根据需要修改的字段，手工修改此段代码------------
+            #---需修改 ARINC767 文件的 Header 中的 机号,时间.-----
             print(type(value),value,hex(valueraw),valueraw.to_bytes(4,'big'))
             if value=='X':
             #if value==b'\x00\x00\x002':
-            #if valueraw==b'\x00\x00\x07\xe7':
+            #if valueraw==b'\x00\x00\x00\x05':
             #if valueraw==0x05:
-                new_value=b'\x00\x00\x00B'
+                new_value=b'\x00\x00\x00Y'
                 valueraw=int.from_bytes(new_value,byteorder='big',signed=False)
                 print(value,'change to:',new_value, hex(valueraw))
                 bits= (1 << param_conf['pm_blen']) -1
                 move=32-bits_mod - param_conf['pm_blen']
                 if move <0:
-                    bits3 = bits << 32 + move
+                    bits3 = bits << (32 + move)
                     bits2 = bits3 >> 32  #取 64->32 位
                     bits3 &= 0xffffffff  #取 32-> 1 位
-                    dword3 = valueraw << 32 + move
+                    dword3 = valueraw << (32 + move)
                     dword2 = dword3 >> 32  #取 64->32 位
                     dword3 &= 0xffffffff  #取 32-> 1 位
                     self.setDWord(frame_pos + 10 + pos_dword * 4, dword2, bits2)
-                    self.setDWord(frame_pos + 10 + pos_dword * 4 +4, dword3, bits3)  #set下一个 dword
+                    self.setDWord(frame_pos + 10 +(pos_dword * 4) +4, dword3, bits3)  #set下一个 dword
                 else:
                     bits <<= move
                     valueraw <<= move
@@ -502,8 +504,7 @@ class ARINC767():
             param_val.append( {'time':'%02d:%02d:%02d.%s'%(HH,MM,SS,MS_str), 'val':value } )
 
             frame_pos += frame_size
-        #if frame_pos>=ttl_len -2:
-        #    print('-----End of file. File scan finished.----')
+        #print('-----End of file. File scan finished.----')
 
         #----------改写raw.dat-----------
         if self.write_raw_dat is not None:
@@ -519,7 +520,7 @@ class ARINC767():
         读取两个WORD，拼为一个32 bit dword。高位在前。bigEndian,High-byte first.
            author:南方航空,LLGZ@csair.com
         '''
-        return self.getWord(buf, pos) << 16 | self.getWord(buf, pos+2)
+        return (self.getWord(buf, pos) << 16) | self.getWord(buf, pos+2)
 
     def getWord(self, buf,pos):
         '''
@@ -621,12 +622,12 @@ class ARINC767():
         frd=self.readFRD()
 
         if len(paramName)>0:
-            # ------在FRED中按顺序(order)，提取参数名-------
+            # ------在FRED中,找出 参数的 frame_id 和 order -------
             buf_map=list(map(lambda x: paramName==x[1] ,frd['4'])) #在['4']中查找匹配, x[1]:Parameter Name
             idx4=buf_map.count(True)
             if idx4<1 or idx4>1:
                 print('=>ERR, not find "%s" in frd_4 OR error.'%(paramName) )
-                return {},{}
+                return {}
             idx4=buf_map.index(True) #获取索引
             pm_long_name=frd['4'][idx4][0]
 
@@ -634,7 +635,7 @@ class ARINC767():
             idx3=buf_map.count(True)
             if idx3<1 or idx3>1:
                 print('=>ERR, not find "%s" in frd_3 OR error.'%(pm_long_name) )
-                return {},{}
+                return {}
             idx3=buf_map.index(True) #获取索引
             param_frame_id=frd['3'][idx3][0]
             param_order=frd['3'][idx3][1]
@@ -643,7 +644,7 @@ class ARINC767():
 
 
         conf={}
-        ii=0
+        ii=0   #测试用，可以删除
         for row in frd['2']:  #参数的rate,Nr
             #if ii>5: break
             ii+=1
@@ -655,6 +656,7 @@ class ARINC767():
                 if frame_id != param_frame_id: continue
             #print('====== %s ========' % frame_id)
 
+            #初始化参数变量
             if frame_id not in conf:
                 conf[frame_id]=[]
             if str(frame_id)+'_bits' not in conf:
@@ -664,7 +666,7 @@ class ARINC767():
                         'ttl_bits':0,
                         }
 
-            jj=0
+            jj=0   #测试用，可以删除
             for pm_id in range(1,int(row[4])+1):  #row[4]:Parameter Nr for this frame id
                 #if jj>12: break
                 jj+=1
@@ -714,27 +716,30 @@ class ARINC767():
                 conf_one['pm_blen']=pm_bits
                 conf[str(frame_id)+'_bits']['ttl_bits'] +=pm_bits
 
-                #按填满一个 dword 计算
-                if conf[str(frame_id)+'_bits']['dbits'] + pm_bits >32:
-                    #如果这个参数会超出DWORD，应该补pad，然后把这个参数写入下一个DWORD
-                    conf[str(frame_id)+'_bits']['dbits'] = pm_bits
-                    conf[str(frame_id)+'_bits']['dword'] +=1
-                else:
-                    conf[str(frame_id)+'_bits']['dbits'] += pm_bits
-
-                if par['pos'] != par['blen']:
+                if par['pos'] != par['blen']:  #看看,参数是不是从bit1开始的, 可删
                     print('==>INFO, param POS != BLEN')
-
                 conf_one.update(par)
                 conf[frame_id].append(conf_one)
-                if len(paramName)>0:
+
+                if len(paramName)<1:
+                    #按填满一个 dword 计算
+                    if conf[str(frame_id)+'_bits']['dbits'] + pm_bits >32:
+                        #如果这个参数会超出DWORD，应该补pad，然后把这个参数写入下一个DWORD
+                        conf[str(frame_id)+'_bits']['dbits'] = pm_bits
+                        conf[str(frame_id)+'_bits']['dword'] +=1
+                    else:
+                        conf[str(frame_id)+'_bits']['dbits'] += pm_bits
+
+                else: #if len(paramName)>0:
                     if pm_id == int(param_order):
-                        conf_one['frameID']=int(frame_id)
+                        conf_one['frameID']=int(frame_id)  #额外加一个内容frameID
                         param_conf=conf_one
+                        return conf_one   #找到参数的配置,就直接return,也可以
+                        #break   #找到参数的配置,就中断,也可以
 
 
         if len(paramName)>0:
-            return conf, param_conf
+            return param_conf
         else:
             return conf
 
@@ -962,7 +967,7 @@ def usage():
     print('   myQAR=A767.ARINC767(qar_file)               #创建实例,并打开一个文件')
     print('   parameter_list=myQAR.paramlist()     #列出所有的参数的名称')
     print('   frd=myQAR.getFRD()                   #获取frd配置')
-    print('   frd,pm_config=myQAR.getFRD("VRTG")   #获取参数的frd配置')
+    print('   pm_config=myQAR.getFRD("VRTG")       #获取参数的frd配置')
     print('   par=myQAR.getPAR("VRTG")      #获取参数的par配置')
     print('   dataver=myQAR.dataVer()       #已打开文件的dataVer')
     print('   myQAR.get_param("VRTG")       #解码一个参数')

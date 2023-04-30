@@ -67,6 +67,7 @@ def main():
                     fp.write('{}\t{}\t{}\n'.format(ii,row['time'],row['val']) )
                     ii+=1
                 fp.close()
+        print('需修改 ARINC767 文件的 Header 中的 机号,时间.')
 
     print('mem:',sysmem())
 

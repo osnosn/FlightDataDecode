@@ -452,13 +452,13 @@ def getOneParam(dataVer, param):
         bits= (1 << param_conf['pm_blen']) -1
         move=32-bits_mod - param_conf['pm_blen']
         if move <0:
-            bits3 = bits << 32 + move
+            bits3 = bits << (32 + move)
             bits2 = bits3 >> 32  #取 64->32 位
             bits3 &= 0xffffffff  #取 32-> 1 位
-            valueraw=dword & bits2
-            valueraw <<=  move * -1
-            dword=getDWord(buf, frame_pos + 10 + pos_dword * 4 +4)  #取下一个 dword
-            valueraw |= (dword & bits3) >> 32 + move
+            valueraw=(dword & bits2)
+            valueraw <<=  (move * -1)
+            dword=getDWord(buf, frame_pos + 10 + (pos_dword * 4) +4)  #取下一个 dword
+            valueraw |= ((dword & bits3) >> (32 + move))
         else:
             bits <<= move
             valueraw=dword & bits
@@ -506,7 +506,7 @@ def getDWord(buf,pos):
     读取两个WORD，拼为一个32 bit dword。高位在前。bigEndian,High-byte first.
        author:南方航空,LLGZ@csair.com
     '''
-    return getWord(buf, pos) << 16 | getWord(buf, pos+2)
+    return (getWord(buf, pos) << 16 ) | getWord(buf, pos+2)
 
 def getWord(buf,pos):
     '''
