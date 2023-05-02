@@ -128,7 +128,10 @@ class ARINC717():
                 print('==>ERR,FailOpenZipFile',e,qar_filename,flush=True)
                 raise(Exception('ERR,FailOpenZipFile,%s'%qar_filename))
             filename_zip='raw.dat'
-            self.qar=fzip.read(filename_zip)
+            if filename_zip in fzip.namelist():  #是否有raw.dat文件
+                self.qar=fzip.read(filename_zip)
+            else:
+                print('ERR, raw.dat NOT found.')
             fzip.close()
             self.qar_filename=qar_filename
         self.readFRA()
@@ -292,8 +295,8 @@ class ARINC717():
             for pm_set in superpm_set:
                 #获取anrinc429,第一步应该用super_set中的bout,blen设置,获取数据后,再用superpm_set中的配置取出最终bits。
                 #但是因为super_set中的内容都是12,12。所以这里就直接用了最终配置。
-                value=self.get_arinc429( frame_pos, pm_set, word_sec )  #ARINC 429 format
-                value =self.arinc429_decode(value ,par )
+                valueraw=self.get_arinc429( frame_pos, pm_set, word_sec )  #ARINC 429 format
+                value =self.arinc429_decode(valueraw ,par )
                 # superpm_set 中有个 resolution 似乎是无用的。AGS配置中,说是自动计算的,不让改。
                 # 试着乘上去，数据就不对了。
                 #if pm_set[0]['resol'] != 0.0 and pm_set[0]['resol'] != 1.0: 
@@ -416,8 +419,8 @@ class ARINC717():
 
             sec_add = 4.0 / len(param_set)  #一个frame是4秒
             for pm_set in param_set:
-                value=self.get_arinc429( frame_pos, pm_set, word_sec )  #ARINC 429 format
-                value =self.arinc429_decode(value ,par )
+                valueraw=self.get_arinc429( frame_pos, pm_set, word_sec )  #ARINC 429 format
+                value =self.arinc429_decode(valueraw ,par )
 
                 pm_list.append({'t':round(pm_sec,10),'v':value})
                 #pm_list.append({'t':round(pm_sec,10),'v':bin(value)})
@@ -701,10 +704,6 @@ class ARINC717():
         dataver=self.getAIR()[0]
         if isinstance(dataver,(str,float)):
             dataver=int(dataver)
-        if str(dataver).startswith('787'):
-            print('ERR,dataver %s not support.' % (dataver,) ,flush=True)
-            print('Use "read_frd.py instead.',flush=True)
-            return
         if self.par is None or self.par_dataver != dataver: #有了就不重复读
             self.par=PAR.read_parameter_file(dataver)
             self.par_dataver = dataver
@@ -755,10 +754,6 @@ class ARINC717():
         dataver=self.getAIR()[0]
         if isinstance(dataver,(str,float)):
             dataver=int(dataver)
-        if str(dataver).startswith('787'):
-            print('ERR,dataver %s not support.' % (dataver,) ,flush=True)
-            print('Use "read_frd.py instead.',flush=True)
-            return
         if self.fra is None or self.fra_dataver != dataver: #有了就不重复读
             self.fra=FRA.read_parameter_file(dataver)
             self.fra_dataver = dataver
@@ -771,7 +766,8 @@ class ARINC717():
         '''
         self.readFRA()
         if self.fra is None:
-            return None
+            print('Empty dataVer.',flush=True)
+            return {}
 
         ret2=[]  #for regular
         ret3=[]  #for superframe
@@ -902,6 +898,9 @@ class ARINC717():
         '''
         获取所有的记录参数名称，包括 regular 和 superframe 参数
         '''
+        if self.fra is None:
+            print('Empty dataVer.',flush=True)
+            return [],[]
         #---regular parameter
         regular_list=[]
         for vv in self.fra['2']:

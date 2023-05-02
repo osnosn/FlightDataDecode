@@ -181,9 +181,14 @@ class ARINC767():
                 print('==>ERR,FailOpenZipFile',e,qar_filename,flush=True)
                 raise(Exception('ERR,FailOpenZipFile,%s'%qar_filename))
             filename_zip=fzip.namelist()
-            self.qar=fzip.read(filename_zip[0]) #读取第一个文件内容,放入内存
-            self.qar=bytearray(self.qar)  #可以被修改
-            self.write_raw_dat=filename_zip[0]
+            cpl_map=list(map(lambda x: x.find('CPL')>=0 ,filename_zip))
+            if cpl_map.count(True)>0:
+                cpl_idx=cpl_map.index(True) #获取索引
+                self.qar=fzip.read(filename_zip[cpl_idx]) #读取 CPL文件 的内容,放入内存
+                self.qar=bytearray(self.qar)  #可以被修改
+                self.write_raw_dat=filename_zip[cpl_idx]
+            else:
+                print('ERR, arinc767 raw file NOT found')
             fzip.close()
             self.qar_filename=qar_filename
         self.readFRD()
@@ -212,6 +217,9 @@ class ARINC767():
            author:南方航空,LLGZ@csair.com
         '''
         frd=self.readFRD()
+        if frd is None:
+            print('Empty dataVer.',flush=True)
+            return
         frad=self.getFRD()
 
         print('-----根据配置文件的内容，用整体计算，或用DWORD计算,多出的bit和字节数量------')
@@ -226,6 +234,9 @@ class ARINC767():
 
         #----------zip压缩文件内容-----------
         buf=self.qar
+        if buf is None:
+            print('ERR, arinc767 raw file NOT found')
+            return []
 
         sync767=0xEB90  #同步字
         ttl_len=len(buf)
@@ -390,13 +401,16 @@ class ARINC767():
         frd=self.readFRD()
         param_conf=self.getFRD(param)
 
-        if param_conf == {}:
+        if len(param_conf)<1:
             print('Parameter "%s" not found!'% param)
             return []
         #print(param_conf)
 
         #----------zip压缩文件内容-----------
         buf=self.qar
+        if buf is None:
+            print('ERR, arinc767 raw file NOT found')
+            return []
 
         sync767=0xEB90  #同步字
         ttl_len=len(buf)
@@ -620,6 +634,9 @@ class ARINC767():
            author:南方航空,LLGZ@csair.com
         '''
         frd=self.readFRD()
+        if frd is None:
+            print('Empty dataVer.',flush=True)
+            return {}
 
         if len(paramName)>0:
             # ------在FRED中,找出 参数的 frame_id 和 order -------
@@ -750,6 +767,9 @@ class ARINC767():
         '''
         frd=self.readFRD()
         param_list={}
+        if frd is None:
+            print('Empty dataVer.',flush=True)
+            return param_list
         ii=0
         for row in frd['2']:  #参数的rate,Nr
             #if ii>5: break

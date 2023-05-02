@@ -161,7 +161,7 @@ def print_frd(frd_conf, frdkey,colwidth):
 
 def read_parameter_file(dataver):
     '''
-    fra_conf={
+    frd_conf={
          '1': [ 
             [x,x,,....],   <-- items number
             [x,x,,....],
@@ -191,10 +191,6 @@ def read_parameter_file(dataver):
     '''
     if isinstance(dataver,(str,float)):
         dataver=int(dataver)
-    if not str(dataver).startswith('787'):
-        print('ERR,dataver %s not support.' % (dataver,) )
-        print('Use "read_frd.py instead.')
-        return None
     dataver='%06d' % dataver  #6位字符串
 
     filename_zip=dataver+'.frd'     #.vec压缩包内的文件名
@@ -204,12 +200,23 @@ def read_parameter_file(dataver):
         print('ERR,ZipFileNotFound',zip_fname,flush=True)
         raise(Exception('ERR,ZipFileNotFound,%s'%(zip_fname)))
 
+    #if not zipfile.Path(zip_fname,filename_zip).exists():  #判断vec中是否有.frd文件
+    #    print('ERR,dataver %s not support.' % (dataver,) )
+    #    print('Use "read_fra.py instead.')
+    #    return None
+
     try:
         fzip=zipfile.ZipFile(zip_fname,'r') #打开zip文件
     except zipfile.BadZipFile as e:
         print('ERR,FailOpenZipFile',e,zip_fname,flush=True)
         raise(Exception('ERR,FailOpenZipFile,%s'%(zip_fname)))
-    
+
+    if filename_zip not in fzip.namelist():  #判断vec中是否有.frd文件
+        fzip.close()
+        print('ERR,dataver %s not support.' % (dataver,) )
+        print('Use "read_fra.py instead.')
+        return None
+
     frd_conf={}
     with StringIO(fzip.read(filename_zip).decode('utf16')) as fp:
         for line in fp.readlines():

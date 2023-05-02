@@ -179,6 +179,9 @@ def main():
 def data_file_info(dataVer):
     global FNAME,DUMPDATA
     frd=getFRD(dataVer)
+    if len(frd)<1:
+        print('Empty dataVer.',flush=True)
+        return
     frad=getFRAD_config(dataVer)
 
     print('-----根据配置文件的内容，用整体计算，或用DWORD计算,多出的bit和字节数量------')
@@ -207,7 +210,14 @@ def data_file_info(dataVer):
         print('ERR,FailOpenZipFile',e,FNAME,flush=True)
         raise(Exception('ERR,FailOpenZipFile'))
     names=fzip.namelist()
-    buf=fzip.read(names[0]) #读取第一个文件内容,放入内存
+    cpl_map=list(map(lambda x: x.find('CPL')>=0 ,names))
+    if cpl_map.count(True)>0:
+        cpl_idx=cpl_map.index(True) #获取索引
+        buf=fzip.read(names[cpl_idx]) #读取 CPL文件 的内容,放入内存
+    else:
+        print('ERR, arinc767 raw file NOT found')
+        fzip.close()
+        return
     fzip.close()
 
     sync767=0xEB90  #同步字
@@ -372,9 +382,12 @@ def getOneParam(dataVer, param):
         return
 
     frd=getFRD(dataVer)
+    if len(frd)<1:
+        print('Empty dataVer.',flush=True)
+        return
     frad, param_conf=getFRAD_config(dataVer, param)
 
-    if param_conf == {}:
+    if len(param_conf)<1:
         print('Parameter "%s" not found!'% param)
         return
     print(param_conf)
@@ -386,7 +399,14 @@ def getOneParam(dataVer, param):
         print('ERR,FailOpenZipFile',e,FNAME,flush=True)
         raise(Exception('ERR,FailOpenZipFile'))
     names=fzip.namelist()
-    buf=fzip.read(names[0]) #读取第一个文件内容,放入内存
+    cpl_map=list(map(lambda x: x.find('CPL')>=0 ,names))
+    if cpl_map.count(True)>0:
+        cpl_idx=cpl_map.index(True) #获取索引
+        buf=fzip.read(names[cpl_idx]) #读取 CPL文件 的内容,放入内存
+    else:
+        print('ERR, arinc767 raw file NOT found')
+        fzip.close()
+        return
     fzip.close()
 
     sync767=0xEB90  #同步字
@@ -573,6 +593,9 @@ def getFRAD_config(dataVer,paramName=''):
         return DATA.frad
 
     frd=getFRD(dataVer)
+    if len(frd)<1:
+        print('Empty dataVer.',flush=True)
+        return {},{}
     '''
     #打印内容
     print(frd.keys())
@@ -712,6 +735,9 @@ def getFRAD_config(dataVer,paramName=''):
 
 def paramlist(dataVer):
     frd=getFRD(dataVer)
+    if len(frd)<1:
+        print('Empty dataVer.',flush=True)
+        return
     ii=0
     for row in frd['2']:  #参数的rate,Nr
         #if ii>5: break

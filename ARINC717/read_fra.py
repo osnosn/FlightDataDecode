@@ -12,9 +12,6 @@ import gzip
 from io import StringIO
 import config_vec as conf
 
-#FRA=None  #保存读入的配置. 当作为模块,被调用时使用.
-#DataVer=None
-
 def main():
     global FNAME,DUMPDATA
     global TOCSV
@@ -164,21 +161,9 @@ def read_parameter_file(dataver):
 
     }
     '''
-    #global FRA
-    #global DataVer
-
     if isinstance(dataver,(str,float)):
         dataver=int(dataver)
-    if str(dataver).startswith('787'):
-        print('ERR,dataver %s not support.' % (dataver,) )
-        print('Use "read_frd.py instead.')
-        return None
     dataver='%06d' % dataver  #6位字符串
-    #if FRA is not None and DataVer==dataver:
-    #    return FRA
-    #else:
-    #    DataVer=dataver
-    #    FRA=None
 
     filename_zip=dataver+'.fra'     #.vec压缩包内的文件名
     zip_fname=os.path.join(conf.vec,dataver+'.vec')  #.vec文件名
@@ -187,12 +172,23 @@ def read_parameter_file(dataver):
         print('ERR,ZipFileNotFound',zip_fname,flush=True)
         raise(Exception('ERR,ZipFileNotFound,%s'%(zip_fname)))
 
+    #if not zipfile.Path(zip_fname,filename_zip).exists():  #判断vec中是否有.fra文件
+    #    print('ERR,dataver %s not support.' % (dataver,) )
+    #    print('Use "read_frd.py instead.')
+    #    return None
+
     try:
         fzip=zipfile.ZipFile(zip_fname,'r') #打开zip文件
     except zipfile.BadZipFile as e:
         print('ERR,FailOpenZipFile',e,zip_fname,flush=True)
         raise(Exception('ERR,FailOpenZipFile,%s'%(zip_fname)))
     
+    if filename_zip not in fzip.namelist():  #判断vec中是否有.fra文件
+        fzip.close()
+        print('ERR,dataver %s not support.' % (dataver,) )
+        print('Use "read_frd.py instead.')
+        return None
+
     fra_conf={}
     with StringIO(fzip.read(filename_zip).decode('utf16')) as fp:
         for line in fp.readlines():
@@ -212,8 +208,6 @@ def read_parameter_file(dataver):
                 fra_conf[ tmp1[0] ]=[ tmp2, ]
                 fra_conf[ tmp1[0]+'_items' ]=len(tmp2)
     fzip.close()
-    #FRA=fra_conf
-    #return FRA
     return fra_conf       #返回list
 
 

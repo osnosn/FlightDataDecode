@@ -188,6 +188,9 @@ def main():
             pm_list=get_param(fra,par) #获取一个参数,regular
         else:
             pm_list=get_super(fra,par) #获取一个参数,superframe
+        if len(pm_list)<1:
+            print('Empty param values.')
+            return
         #print(pm_list)
         print('Result[0]:',pm_list[0]) #打印第一组值
         print('DataVer:',air[0])
@@ -322,7 +325,12 @@ def get_super(fra,par):
         print('==>ERR,FailOpenZipFile',e,FNAME,flush=True)
         raise(Exception('ERR,FailOpenZipFile,%s'%FNAME))
     filename_zip='raw.dat'
-    buf=fzip.read(filename_zip)
+    if filename_zip in fzip.namelist():  #是否有raw.dat文件
+        buf=fzip.read(filename_zip)
+    else:
+        print('ERR, raw.dat NOT found.')
+        fzip.close()
+        return []
     fzip.close()
 
     #----------寻找起始位置-----------
@@ -486,7 +494,12 @@ def get_param(fra,par):
         print('==>ERR,FailOpenZipFile',e,FNAME,flush=True)
         raise(Exception('ERR,FailOpenZipFile,%s'%FNAME))
     filename_zip='raw.dat'
-    buf=fzip.read(filename_zip)
+    if filename_zip in fzip.namelist():  #是否有raw.dat文件
+        buf=fzip.read(filename_zip)
+    else:
+        print('ERR, raw.dat NOT found.')
+        fzip.close()
+        return []
     fzip.close()
 
     #----------寻找起始位置-----------

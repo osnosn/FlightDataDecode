@@ -131,8 +131,11 @@ class ARINC717():
                 print('==>ERR,FailOpenZipFile',e,qar_filename,flush=True)
                 raise(Exception('ERR,FailOpenZipFile,%s'%qar_filename))
             filename_zip='raw.dat'
-            self.qar=fzip.read(filename_zip)
-            self.qar=bytearray(self.qar)  #可以被修改
+            if filename_zip in fzip.namelist():  #是否有raw.dat文件
+                self.qar=fzip.read(filename_zip)
+                self.qar=bytearray(self.qar)  #可以被修改
+            else:
+                print('ERR, raw.dat NOT found.')
             fzip.close()
             self.qar_filename=qar_filename
         self.readFRA()
@@ -783,10 +786,6 @@ class ARINC717():
         dataver=self.getAIR()[0]
         if isinstance(dataver,(str,float)):
             dataver=int(dataver)
-        if str(dataver).startswith('787'):
-            print('ERR,dataver %s not support.' % (dataver,) ,flush=True)
-            print('Use "read_frd.py instead.',flush=True)
-            return
         if self.par is None or self.par_dataver != dataver: #有了就不重复读
             self.par=PAR.read_parameter_file(dataver)
             self.par_dataver = dataver
@@ -837,10 +836,6 @@ class ARINC717():
         dataver=self.getAIR()[0]
         if isinstance(dataver,(str,float)):
             dataver=int(dataver)
-        if str(dataver).startswith('787'):
-            print('ERR,dataver %s not support.' % (dataver,) ,flush=True)
-            print('Use "read_frd.py instead.',flush=True)
-            return
         if self.fra is None or self.fra_dataver != dataver: #有了就不重复读
             self.fra=FRA.read_parameter_file(dataver)
             self.fra_dataver = dataver
@@ -853,7 +848,8 @@ class ARINC717():
         '''
         self.readFRA()
         if self.fra is None:
-            return None
+            print('Empty dataVer.',flush=True)
+            return {}
 
         ret2=[]  #for regular
         ret3=[]  #for superframe
@@ -984,6 +980,9 @@ class ARINC717():
         '''
         获取所有的记录参数名称，包括 regular 和 superframe 参数
         '''
+        if self.fra is None:
+            print('Empty dataVer.',flush=True)
+            return [],[]
         #---regular parameter
         regular_list=[]
         for vv in self.fra['2']:
