@@ -158,8 +158,17 @@ class ARINC717():
 
         #----------改写raw.dat-----------
         if self.write_raw_dat is not None:
+            word_sec=int(fra['1'][0])
+            sync_word_len=int(fra['1'][1])//12  #整除, 同步字的字数(长度)
+            sync1=int(fra['1'][2],16)  #同步字1
+            sync2=int(fra['1'][3],16)
+            sync3=int(fra['1'][4],16)
+            sync4=int(fra['1'][5],16)
+            ttl_len=len(self.qar)
+            frame_pos1=self.find_SYNC1( ttl_len, 2100000, word_sec, sync_word_len, (sync1,sync2,sync3,sync4) )
+            frame_pos2=self.find_SYNC1( ttl_len, 2400000, word_sec, sync_word_len, (sync1,sync2,sync3,sync4) )
             wfp=open(self.write_raw_dat,'wb')
-            wfp.write(self.qar)
+            wfp.write(self.qar[frame_pos1:frame_pos2])
             wfp.close()
         return pm_list
 

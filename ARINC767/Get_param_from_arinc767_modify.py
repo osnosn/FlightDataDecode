@@ -522,8 +522,12 @@ class ARINC767():
 
         #----------改写raw.dat-----------
         if self.write_raw_dat is not None:
+            frame_pos0, frame_size0=self.find_SYNC(buf, ttl_len, 0, sync767) #第一个frame
+            frame_pos1, frame_size=self.find_SYNC(self.qar, ttl_len, 6000000, sync767)
+            frame_pos2, frame_size=self.find_SYNC(self.qar, ttl_len, 7000000, sync767)
             wfp=open(self.write_raw_dat,'wb')
-            wfp.write(self.qar)
+            wfp.write(self.qar[frame_pos0:frame_pos0+frame_size0])
+            wfp.write(self.qar[frame_pos1:frame_pos2])
             wfp.close()
 
         return param_val
