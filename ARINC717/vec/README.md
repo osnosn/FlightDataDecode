@@ -10,5 +10,9 @@ vec 和 air 配置文件，是从 AGS 软件中导出的。
 <img src="https://github.com/osnosn/FlightDataDecode/raw/main/wgl/vec/readme01.png" width="300" />   
    ----  图1  ----   
 
+如果是从airfase中导出,   
+则包含4个文件。如图:  
+<img src="https://github.com/osnosn/FlightDataDecode/raw/main/wgl/vec/airfase-FAP.png" width="500" />   
+   ----  图2  ----   
 
 
