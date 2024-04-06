@@ -131,6 +131,7 @@
    |---------------------------------------------------------------|
  --------------------------------------------------------------
   实际读文件: 每个FrameID相同的Frame的length是相同的。
+           author: osnosn@126.com OR LLGZ@csair.com
 
 """
 import struct
@@ -214,7 +215,7 @@ class ARINC767():
     def data_file_info(self, DUMPDATA=False):
         '''
         根据配置，扫描原始文件，验证格式
-           author:南方航空,LLGZ@csair.com
+           author: osnosn@126.com
         '''
         frd=self.readFRD()
         if frd is None:
@@ -392,7 +393,7 @@ class ARINC767():
     def get_param(self, param):
         '''
         解码一个参数
-           author:南方航空,LLGZ@csair.com
+           author: osnosn@126.com
         '''
         if len(param)<1:
             print('Empty parameter Name!')
@@ -536,14 +537,14 @@ class ARINC767():
     def getDWord(self, buf,pos):
         '''
         读取两个WORD，拼为一个32 bit dword。高位在前。bigEndian,High-byte first.
-           author:南方航空,LLGZ@csair.com
+           author: osnosn@126.com
         '''
         return (self.getWord(buf, pos) << 16) | self.getWord(buf, pos+2)
 
     def getWord(self, buf,pos):
         '''
         读取两个字节，拼为一个16 bit word。高位在前。bigEndian,High-byte first.
-           author:南方航空,LLGZ@csair.com
+           author: osnosn@126.com
         '''
         #print(type(buf), type(buf[pos]), type(buf[pos+1])) #bytes, int, int
 
@@ -564,7 +565,7 @@ class ARINC767():
     def setWord(self, pos, word, mask, word_len=1):
         '''
         写入两个字节，取16bit为一个word。高位在前。bigEndian,High-byte first.
-           author:南方航空,LLGZ@csair.com
+           author: osnosn@126.com
         '''
         buf=self.qar
         #print(type(buf), type(buf[pos]), type(buf[pos+1])) #bytes, int, int
@@ -594,7 +595,7 @@ class ARINC767():
         '''
         获取参数在arinc429的32bit word中的位置配置
         挑出有用的,整理一下,返回
-           author:南方航空,LLGZ@csair.com
+           author: osnosn@126.com
         '''
         self.readPAR()
         if self.par is None or len(self.par)<1:
@@ -635,7 +636,7 @@ class ARINC767():
         '''
         获取参数在arinc767的32bit word中的位置配置
         挑出有用的,整理一下,返回
-           author:南方航空,LLGZ@csair.com
+           author: osnosn@126.com
         '''
         frd=self.readFRD()
         if frd is None:
@@ -767,7 +768,7 @@ class ARINC767():
     def paramlist(self):
         '''
         获取所有的记录参数名称，按 frame_id 分类
-           author:南方航空,LLGZ@csair.com
+           author: osnosn@126.com
         '''
         frd=self.readFRD()
         param_list={}
@@ -816,7 +817,7 @@ class ARINC767():
         '''
         获取机尾号对应解码库的配置。
         挑出有用的,整理一下,返回
-           author:南方航空,LLGZ@csair.com
+           author: osnosn@126.com
         '''
         reg=self.getREG().upper()
         self.readAIR()
@@ -840,7 +841,7 @@ class ARINC767():
     def getREG(self):
         '''
         从zip文件名中，找出机尾号
-           author:南方航空,LLGZ@csair.com
+           author: osnosn@126.com
         '''
         basename=os.path.basename(self.qar_filename)
         reg=basename.strip().split('_',1)
@@ -856,7 +857,7 @@ class ARINC767():
         par可能有的 Type: 'CONSTANT' 'DISCRETE' 'PACKED BITS' 'BNR LINEAR (A*X)' 'COMPUTED ON GROUND' 'CHARACTER' 'BCD' 'BNR SEGMENTS (A*X+B)' 'UTC'
         par实际有的 Type(717): 'BNR LINEAR (A*X)' 'BNR SEGMENTS (A*X+B)' 'CHARACTER' 'BCD' 'UTC' 'PACKED BITS' 'DISCRETE'
         par实际有的 Type(767): 'BNR LINEAR (A*X)' 'CHARACTER' 'BCD' 'PACKED BITS' 'DISCRETE' 'COMPUTED ON BOARD'
-            author:南方航空,LLGZ@csair.com  
+            author: osnosn@126.com  
         '''
         if conf['type'].find('BNR')==0 or \
                 conf['type'].find('PACKED BITS')==0:
@@ -889,7 +890,7 @@ class ARINC767():
                     'Resol'   :tmp2.iat[0,12],    #Computation:Value=Constant Value or Resol=Coef A(Resolution) or ()
                     'format'  :tmp2.iat[0,25],    #Internal Format (Float ,Unsigned or Signed)
                         }]
-        author:南方航空,LLGZ@csair.com
+        author: osnosn@126.com
         '''
         if conf['type']=='CHARACTER':
             if len(conf['part'])>0:
@@ -949,7 +950,7 @@ class ARINC767():
                     'Resol'   :tmp2.iat[0,12],    #Computation:Value=Constant Value or Resol=Coef A(Resolution) or ()
                     'format'  :tmp2.iat[0,25],    #Internal Format (Float ,Unsigned or Signed)
                         }]
-        author:南方航空,LLGZ@csair.com
+        author: osnosn@126.com
         '''
         #根据blen，获取掩码值
         bits= (1 << conf['blen']) -1
@@ -998,7 +999,7 @@ def usage():
     print('   myQAR.myQAR.data_file_info()  #扫描确定文件格式是否正确')
     print('   myQAR.close()                 #关闭')
     print('   myQAR.qar_file(qar_file)      #重新打开一个文件')
-    print(u'\n               author:南方航空,LLGZ@csair.com')
+    print(u'\n               author: osnosn@126.com')
     print(u' 认为此项目对您有帮助，请发封邮件给我，让我高兴一下.')
     print(u' If you think this project is helpful to you, please send me an email to make me happy.')
     print()

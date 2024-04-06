@@ -4,7 +4,7 @@
 """
 读解码库， 787xx 的 ARINC 767 记录格式，则读 xxx.frd 文件,
    ARINC-647A-1 的xml配置文件找不到。所以可能无法解码。
-      author:南方航空,LLGZ@csair.com
+      author: osnosn@126.com OR LLGZ@csair.com
 """
 import sys
 import os
@@ -248,7 +248,7 @@ def usage():
     print('   --csv xxx.csv.gz     save to "xxx.csv.gz" file.')
     print('   --paramlist          list all param name.')
     print('   -p,--param alt_std   show "alt_std" param.')
-    print(u'\n               author:南方航空,LLGZ@csair.com')
+    print(u'\n               author: osnosn@126.com')
     print()
     return
 if __name__=='__main__':

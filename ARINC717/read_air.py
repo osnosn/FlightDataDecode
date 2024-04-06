@@ -3,7 +3,7 @@
 
 """
  读取 aircraft.air 文件。机尾号与解码库的对应表。
-    author:南方航空,LLGZ@csair.com
+    author: osnosn@126.com OR LLGZ@csair.com
 """
 import csv
 import config_vec as conf
@@ -214,7 +214,7 @@ def usage():
     print('   --allreg           list all REGistration number from "aircraft.air" file.')
     print('   --allver           list all DataVer number from "aircraft.air" file.')
     print('   --alltype          list all aircraft Type from "aircraft.air" file.')
-    print(u'\n               author:南方航空,LLGZ@csair.com')
+    print(u'\n               author: osnosn@126.com')
     print()
     return
 if __name__=='__main__':

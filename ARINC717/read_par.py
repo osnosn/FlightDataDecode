@@ -3,7 +3,7 @@
 
 """
  读解码库，参数配置文件 vec 中 xx.par 文件。比如 010XXX.par
-    author:南方航空,LLGZ@csair.com
+    author: osnosn@126.com OR LLGZ@csair.com
 """
 import os
 import zipfile
@@ -178,7 +178,7 @@ def read_parameter_file(dataver):
 def one_PAR(PAR_offset,one_par):
     '''
     拼装 一行记录. 一个参数的记录
-       author:南方航空,LLGZ@csair.com
+       author: osnosn@126.com
     '''
     ONE=[]
     for kk in PAR_offset:  #每个记录 子行
@@ -214,7 +214,7 @@ def usage():
     print('   --csv xxx.csv.gz     save to "xxx.csv.gz" file.')
     print('   --paramlist          list all param name.')
     print('   -p,--param alt_std   show "alt_std" param.')
-    print(u'\n               author:南方航空,LLGZ@csair.com')
+    print(u'\n               author: osnosn@126.com')
     print()
     return
 if __name__=='__main__':

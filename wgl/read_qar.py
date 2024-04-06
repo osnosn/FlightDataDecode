@@ -3,7 +3,7 @@
 
 """
  读取 wgl中 eofloacat.qar 。没什么用。
-    author:南方航空,LLGZ@csair.com
+    author: osnosn@126.com OR LLGZ@csair.com
 """
 import struct
 #from datetime import datetime
@@ -51,7 +51,7 @@ def usage():
     print(sys.argv[0]+' [-h|--help]')
     print('   -h, --help     print usage.')
     print('   -f, --file=    "....wgl.zip" filename')
-    print(u'\n               author:南方航空,LLGZ@csair.com')
+    print(u'\n               author: osnosn@126.com')
     print()
     return
 if __name__=='__main__':

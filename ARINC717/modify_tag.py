@@ -3,7 +3,7 @@
 
 """
  读取 wgl中 raw.tag 。可以得到机尾号，用于确定解码库。其他没什么用。
-    author:南方航空,LLGZ@csair.com
+    author: osnosn@126.com OR LLGZ@csair.com
  修改 raw.tag 中的日期,用于脱敏处理。
 """
 import struct
@@ -72,7 +72,7 @@ def usage():
     print('   -h, --help     print usage.')
     print('   -f, --file=    "....wgl.zip" filename')
     print('   -W raw.tag     write "raw.tag" ,用于脱敏处理')
-    print(u'\n               author:南方航空,LLGZ@csair.com')
+    print(u'\n               author: osnosn@126.com')
     print()
     return
 if __name__=='__main__':

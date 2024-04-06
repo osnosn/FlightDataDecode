@@ -88,7 +88,7 @@
   --------------------------------------------  
 
 根据上述的文档的描述。 理论上synchro同步字出现的顺序应该是，sync1,sync2,sync3,sync4, 间隔为 words/sec 的个数。
-   author:南方航空,LLGZ@csair.com
+    author: osnosn@126.com OR LLGZ@csair.com
   --------------------------
 '''
 
@@ -250,7 +250,7 @@ def usage():
     print('   -h, --help     print usage.')
     print('   -f, --file=    "....wgl.zip" filename')
     #print('   -w xxx.dat     写入文件"xxx.dat"')
-    print(u'\n               author:南方航空,LLGZ@csair.com')
+    print(u'\n               author: osnosn@126.com')
     print()
     return
 if __name__=='__main__':

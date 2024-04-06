@@ -4,7 +4,7 @@
 """
  把输入的整数，分别以 int,float32,float64 存储，再转为字节。
   用于在二进制(bin)文件中查找对应的值。
-     author:南方航空,LLGZ@csair.com
+    author: osnosn@126.com OR LLGZ@csair.com
 """
 import struct
 #from datetime import datetime
@@ -50,7 +50,7 @@ def usage():
     print(sys.argv[0]+' [-h|--help] [-v|--ver]  ')
     print('   -h, --help        print usage.')
     print('   -v, --ver=10234   整数')
-    print(u'\n               author:南方航空,LLGZ@csair.com')
+    print(u'\n               author: osnosn@126.com')
     print()
     return
 if __name__=='__main__':

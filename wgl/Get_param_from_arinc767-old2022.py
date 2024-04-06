@@ -130,6 +130,7 @@
    |---------------------------------------------------------------|
  --------------------------------------------------------------
   实际读文件: 每个FrameID相同的Frame的length是相同的。
+    author: osnosn@126.com OR LLGZ@csair.com
 
 """
 #import struct
@@ -322,7 +323,7 @@ def find_SYNC(buf, ttl_len, frame_pos, sync767):
 def getWord(buf,pos):
     '''
     读取两个字节，拼为一个16 bit word。高位在前。bigEndian,High-byte first.
-       author:南方航空,LLGZ@csair.com
+       author: osnosn@126.com
     '''
     #print(type(buf), type(buf[pos]), type(buf[pos+1])) #bytes, int, int
 
@@ -338,7 +339,7 @@ def getPAR(dataver,param):
     '''
     获取参数在arinc429的32bit word中的位置配置
     挑出有用的,整理一下,返回
-       author:南方航空,LLGZ@csair.com
+       author: osnosn@126.com
     '''
     global DATA
     if not hasattr(DATA,'par') or DATA.par is None:
@@ -494,7 +495,7 @@ def getFRD(dataver):
     '''
     获取参数在arinc767的32bit word中的位置配置
     挑出有用的,整理一下,返回
-       author:南方航空,LLGZ@csair.com
+       author: osnosn@126.com
     '''
     global PARAMLIST
     global DATA
@@ -510,7 +511,7 @@ def getAIR(reg):
     '''
     获取机尾号对应解码库的配置。
     挑出有用的,整理一下,返回
-       author:南方航空,LLGZ@csair.com
+       author: osnosn@126.com
     '''
     reg=reg.upper()
     df_flt=AIR.csv(conf.aircraft)
@@ -526,7 +527,7 @@ def getAIR(reg):
 def getREG(fname):
     '''
     从zip文件名中，找出机尾号
-       author:南方航空,LLGZ@csair.com
+       author: osnosn@126.com
     '''
     basename=os.path.basename(fname)
     tmp=basename.strip().split('_',1)
@@ -570,7 +571,7 @@ def usage():
     print('   -v, --ver 787151          指定DataVer')
     print('   -f, --file="....wgl.zip"     filename')
     #print('   -w xxx.dat               写入文件"xxx.dat"')
-    print(u'\n               author:南方航空,LLGZ@csair.com')
+    print(u'\n               author: osnosn@126.com')
     print(u' 认为此项目对您有帮助，请发封邮件给我，让我高兴一下.')
     print(u' If you think this project is helpful to you, please send me an email to make me happy.')
     print()

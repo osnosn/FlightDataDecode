@@ -4,7 +4,7 @@
 """
 读解码库，参数配置文件 vec 中 xx.fra 文件。比如 010XXX.fra
 仅支持 ARINC 573 PCM 格式
-   author:南方航空,LLGZ@csair.com
+   author: osnosn@126.com OR LLGZ@csair.com
 """
 import os
 import zipfile
@@ -224,7 +224,7 @@ def usage():
     print('   --csv xxx.csv.gz     save to "xxx.csv.gz" file.')
     print('   --paramlist          list all param name.')
     print('   -p,--param alt_std   show "alt_std" param.')
-    print(u'\n               author:南方航空,LLGZ@csair.com')
+    print(u'\n               author: osnosn@126.com')
     print()
     return
 if __name__=='__main__':

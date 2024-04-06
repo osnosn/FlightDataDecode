@@ -89,7 +89,7 @@
        set 0 otherwise;
        set 1 for each extra word
   --------------------------------------------  
-   author:南方航空,LLGZ@csair.com
+   author: osnosn@126.com OR LLGZ@csair.com
   --------------------------
 '''
 
@@ -182,7 +182,7 @@ class ARINC717():
         /     \    
        |parity |   
       -------------------------------------  
-        author:南方航空,LLGZ@csair.com  
+        author: osnosn@126.com  
         '''
         #初始化变量
         word_sec=int(fra['1'][0])
@@ -344,7 +344,7 @@ class ARINC717():
         '''
         判断 first frame 的位置，如果不是，则向后推 1 frame再找。
         根据 superframe_counter 的内容，找到conter的值为 first value 的frame位置
-           author:南方航空,LLGZ@csair.com  
+           author: osnosn@126.com  
         '''
         pm_sec=0.0   #参数的时间轴,秒数
         while True:
@@ -380,7 +380,7 @@ class ARINC717():
         /     \    
        |parity |   
       -------------------------------------  
-        author:南方航空,LLGZ@csair.com  
+        author: osnosn@126.com  
         '''
         #初始化变量
         word_sec=int(fra['1'][0])
@@ -495,7 +495,7 @@ class ARINC717():
         如果是 self-distant , 只有第一个位置的配置。 根据 rate, 补齐所有的位置记录，并分组。
             需要根据rate值，补齐其他的subframe, 和word位置。
             subframe的补齐同上，word的间隔是,用 word/sec除以记录数确定。在每个subframe中均匀分部的。
-            author:南方航空,LLGZ@csair.com  
+            author: osnosn@126.com  
         '''
         # ---分组---
         group_set=[]
@@ -561,7 +561,7 @@ class ARINC717():
         '''
         par可能有的 Type: 'CONSTANT' 'DISCRETE' 'PACKED BITS' 'BNR LINEAR (A*X)' 'COMPUTED ON GROUND' 'CHARACTER' 'BCD' 'BNR SEGMENTS (A*X+B)' 'UTC'
         par实际有的 Type: 'BNR LINEAR (A*X)' 'BNR SEGMENTS (A*X+B)' 'CHARACTER' 'BCD' 'UTC' 'PACKED BITS' 'DISCRETE'
-            author:南方航空,LLGZ@csair.com  
+            author: osnosn@126.com  
         '''
         if conf['type'].find('BNR')==0 or \
                 conf['type'].find('PACKED BITS')==0:
@@ -594,7 +594,7 @@ class ARINC717():
                     'Resol'   :tmp2.iat[0,12],    #Computation:Value=Constant Value or Resol=Coef A(Resolution) or ()
                     'format'  :tmp2.iat[0,25],    #Internal Format (Float ,Unsigned or Signed)
                         }]
-        author:南方航空,LLGZ@csair.com
+        author: osnosn@126.com
         '''
         if conf['type']=='CHARACTER':
             if len(conf['part'])>0:
@@ -654,7 +654,7 @@ class ARINC717():
                     'Resol'   :tmp2.iat[0,12],    #Computation:Value=Constant Value or Resol=Coef A(Resolution) or ()
                     'format'  :tmp2.iat[0,25],    #Internal Format (Float ,Unsigned or Signed)
                         }]
-        author:南方航空,LLGZ@csair.com
+        author: osnosn@126.com
         '''
         #根据blen，获取掩码值
         bits= (1 << conf['blen']) -1
@@ -687,7 +687,7 @@ class ARINC717():
         根据 fra的配置，获取arinc429格式的32bit word
           另:fra 配置中有多条不同的记录,对应多个32bit word(完成)
           bit位置，是从1开始编号。word位置也是从1开始编号。同步字位置为1，数据字是从2开始编号(假设同步字只占1word)。
-        author:南方航空,LLGZ@csair.com
+        author: osnosn@126.com
         '''
         value=0
         pre_id=0
@@ -717,7 +717,7 @@ class ARINC717():
         '''
         读取两个字节，取12bit为一个word。低位在前。littleEndian,low-byte first.
         支持取 12bits,24bits,36bits,48bits,60bits
-           author:南方航空,LLGZ@csair.com
+           author: osnosn@126.com
         '''
         buf=self.qar
         #print(type(buf), type(buf[pos]), type(buf[pos+1])) #bytes, int, int
@@ -744,7 +744,7 @@ class ARINC717():
         根据 fra的配置，写入arinc429格式的32bit word
           另:fra 配置中有多条不同的记录,对应多个32bit word(完成)
           bit位置，是从1开始编号。word位置也是从1开始编号。同步字位置为1，数据字是从2开始编号(假设同步字只占1word)。
-        author:南方航空,LLGZ@csair.com
+        author: osnosn@126.com
         '''
         mask=0
         for pm_set in param_set:
@@ -771,7 +771,7 @@ class ARINC717():
         '''
         写入两个字节，取12bit为一个word。低位在前。littleEndian,low-byte first.
         支持取 12bits,24bits,36bits,48bits,60bits
-           author:南方航空,LLGZ@csair.com
+           author: osnosn@126.com
         '''
         buf=self.qar
         #print(type(buf), type(buf[pos]), type(buf[pos+1])) #bytes, int, int
@@ -803,7 +803,7 @@ class ARINC717():
         '''
         获取参数在arinc429的32bit word中的位置配置
         挑出有用的,整理一下,返回
-           author:南方航空,LLGZ@csair.com
+           author: osnosn@126.com
         '''
         self.readPAR()
         if self.par is None or len(self.par)<1:
@@ -853,7 +853,7 @@ class ARINC717():
         '''
         获取参数在arinc717的12bit word中的位置配置
         挑出有用的,整理一下,返回
-           author:南方航空,LLGZ@csair.com
+           author: osnosn@126.com
         '''
         self.readFRA()
         if self.fra is None:
@@ -951,7 +951,7 @@ class ARINC717():
         '''
         获取机尾号对应解码库的配置。
         挑出有用的,整理一下,返回
-           author:南方航空,LLGZ@csair.com
+           author: osnosn@126.com
         '''
         reg=self.getREG().upper()
         self.readAIR()
@@ -975,7 +975,7 @@ class ARINC717():
     def getREG(self):
         '''
         从zip文件名中，找出机尾号
-           author:南方航空,LLGZ@csair.com
+           author: osnosn@126.com
         '''
         basename=os.path.basename(self.qar_filename)
         reg=basename.strip().split('_',1)
@@ -1033,7 +1033,7 @@ def usage():
     print('   myQAR.get_param("VRTG")       #解码一个参数')
     print('   myQAR.close()                 #关闭')
     print('   myQAR.qar_file(qar_file)      #重新打开一个文件')
-    print(u'\n               author:南方航空,LLGZ@csair.com')
+    print(u'\n               author: osnosn@126.com')
     print(u' 认为此项目对您有帮助，请发封邮件给我，让我高兴一下.')
     print(u' If you think this project is helpful to you, please send me an email to make me happy.')
     print()

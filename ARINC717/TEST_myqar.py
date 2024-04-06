@@ -1,6 +1,9 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
+"""
+    author: osnosn@126.com OR LLGZ@csair.com
+"""
 import pandas as pd
 import Get_param_from_arinc717_aligned as A717
 
@@ -132,7 +135,7 @@ def usage():
     print('   --paramlist                list all param name.')
     print('   -w xxx.csv            参数写入文件"xxx.csv"')
     print('   -w xxx.csv.gz         参数写入文件"xxx.csv.gz"')
-    print(u'\n               author:南方航空,LLGZ@csair.com')
+    print(u'\n               author: osnosn@126.com')
     print(u' 认为此项目对您有帮助，请发封邮件给我，让我高兴一下.')
     print(u' If you think this project is helpful to you, please send me an email to make me happy.')
     print()

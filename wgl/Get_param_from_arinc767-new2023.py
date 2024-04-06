@@ -130,6 +130,7 @@
    |---------------------------------------------------------------|
  --------------------------------------------------------------
   实际读文件: 每个FrameID相同的Frame的length是相同的。
+    author: osnosn@126.com OR LLGZ@csair.com
 
 """
 import struct
@@ -524,14 +525,14 @@ def find_SYNC(buf, ttl_len, frame_pos, sync767):
 def getDWord(buf,pos):
     '''
     读取两个WORD，拼为一个32 bit dword。高位在前。bigEndian,High-byte first.
-       author:南方航空,LLGZ@csair.com
+       author: osnosn@126.com
     '''
     return (getWord(buf, pos) << 16 ) | getWord(buf, pos+2)
 
 def getWord(buf,pos):
     '''
     读取两个字节，拼为一个16 bit word。高位在前。bigEndian,High-byte first.
-       author:南方航空,LLGZ@csair.com
+       author: osnosn@126.com
     '''
     #print(type(buf), type(buf[pos]), type(buf[pos+1])) #bytes, int, int
 
@@ -547,7 +548,7 @@ def getPAR(dataver,param):
     '''
     获取参数在arinc429的32bit word中的位置配置
     挑出有用的,整理一下,返回
-       author:南方航空,LLGZ@csair.com
+       author: osnosn@126.com
     '''
     global DATA
     if not hasattr(DATA,'par') or DATA.par is None:
@@ -771,7 +772,7 @@ def getFRD(dataver):
     '''
     获取参数在arinc767的32bit word中的位置配置
     挑出有用的,整理一下,返回
-       author:南方航空,LLGZ@csair.com
+       author: osnosn@126.com
     '''
     global PARAMLIST
     global DATA
@@ -787,7 +788,7 @@ def getAIR(reg):
     '''
     获取机尾号对应解码库的配置。
     挑出有用的,整理一下,返回
-       author:南方航空,LLGZ@csair.com
+       author: osnosn@126.com
     '''
     reg=reg.upper()
     df_flt=AIR.csv(conf.aircraft)
@@ -803,7 +804,7 @@ def getAIR(reg):
 def getREG(fname):
     '''
     从zip文件名中，找出机尾号
-       author:南方航空,LLGZ@csair.com
+       author: osnosn@126.com
     '''
     basename=os.path.basename(fname)
     tmp=basename.strip().split('_',1)
@@ -841,7 +842,7 @@ def arinc429_decode(word,conf):
     par可能有的 Type: 'CONSTANT' 'DISCRETE' 'PACKED BITS' 'BNR LINEAR (A*X)' 'COMPUTED ON GROUND' 'CHARACTER' 'BCD' 'BNR SEGMENTS (A*X+B)' 'UTC'
     par实际有的 Type(717): 'BNR LINEAR (A*X)' 'BNR SEGMENTS (A*X+B)' 'CHARACTER' 'BCD' 'UTC' 'PACKED BITS' 'DISCRETE'
     par实际有的 Type(767): 'BNR LINEAR (A*X)' 'CHARACTER' 'BCD' 'PACKED BITS' 'DISCRETE' 'COMPUTED ON BOARD'
-        author:南方航空,LLGZ@csair.com  
+        author: osnosn@126.com  
     '''
     if conf['type'].find('BNR')==0 or \
             conf['type'].find('PACKED BITS')==0:
@@ -874,7 +875,7 @@ def arinc429_BCD_decode(word,conf):
                 'Resol'   :tmp2.iat[0,12],    #Computation:Value=Constant Value or Resol=Coef A(Resolution) or ()
                 'format'  :tmp2.iat[0,25],    #Internal Format (Float ,Unsigned or Signed)
                     }]
-    author:南方航空,LLGZ@csair.com
+    author: osnosn@126.com
     '''
     if conf['type']=='CHARACTER':
         if len(conf['part'])>0:
@@ -934,7 +935,7 @@ def arinc429_BNR_decode( word,conf):
                 'Resol'   :tmp2.iat[0,12],    #Computation:Value=Constant Value or Resol=Coef A(Resolution) or ()
                 'format'  :tmp2.iat[0,25],    #Internal Format (Float ,Unsigned or Signed)
                     }]
-    author:南方航空,LLGZ@csair.com
+    author: osnosn@126.com
     '''
     #根据blen，获取掩码值
     bits= (1 << conf['blen']) -1
@@ -979,7 +980,7 @@ def usage():
     print('   --paramlist               list all param name.')
     print('   -w xxx.csv                参数写入文件"xxx.csv"')
     print('   -w xxx.csv.gz             参数写入文件"xxx.csv.gz"')
-    print(u'\n               author:南方航空,LLGZ@csair.com')
+    print(u'\n               author: osnosn@126.com')
     print(u' 认为此项目对您有帮助，请发封邮件给我，让我高兴一下.')
     print(u' If you think this project is helpful to you, please send me an email to make me happy.')
     print()

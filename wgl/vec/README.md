@@ -12,9 +12,10 @@ vec 和 air 配置文件，是从 AGS 软件中导出的。
 
 ----
 
-从airfase中，可以导出4中文件。FAP, Frame, PRM, FRED.   
+从airfase中，可以导出4种文件。FAP, Frame, PRM, FRED.   
 * FAP, Frame 文件是加密的，无法解开。   
 * PRM 是个文本文件。从 PRM 看，配置文件不相同，本程序不适合使用。原理相同,也许你可以自己重写一个程序。   
+  参考另一个项目 【[osnosn/FlightDataDecode2/](https://github.com/osnosn/FlightDataDecode2/)】   
 * FRED 没见过, 不知道内容。   
 
 其他文件，如图:   
