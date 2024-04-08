@@ -285,5 +285,6 @@ if __name__=='__main__':
         print(FNAME,'Not a file')
         exit()
 
-    main('<<','high')
+    #main('<<','high')
+    main('>>','low')   #通常是这个处理顺序'>>',low.
 
