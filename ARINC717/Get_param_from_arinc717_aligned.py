@@ -631,8 +631,17 @@ class ARINC717():
             if conf['Resol'].find('Resol=')==0:
                 value *= float(conf['Resol'][6:])
         elif conf['type'].find('BNR SEGMENTS (A*X+B)')==0:
+            #print(conf['A'],conf['B'])
+            if isinstance(conf['A'], list):
+                print('ERR.需要分段处理,简单粗暴的取第二个吧')
+                #针对conf A 有多个记录的情况，需要重写这段代码。我就懒得改了。
+                conf['A']=conf['A'][1]
             if len(conf['A'])>0:
                 value *= float(conf['A'])
+            if isinstance(conf['B'], list):
+                print('ERR.需要分段处理,简单粗暴的取第二个吧')
+                #针对conf B 有多个记录的情况，需要重写这段代码。我就懒得改了。
+                conf['B']=conf['B'][1]
             if len(conf['B'])>0:
                 value += float(conf['B'])
         else:

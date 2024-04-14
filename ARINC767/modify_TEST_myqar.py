@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
-'''
+"""
            author: osnosn@126.com OR LLGZ@csair.com
-'''
+"""
 #import pandas as pd
 import Get_param_from_arinc767_modify as A767
 
