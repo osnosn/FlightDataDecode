@@ -4,7 +4,7 @@
 """
 读解码库，参数配置文件 vec 中 xx.fra 文件。比如 010XXX.fra
 仅支持 ARINC 573 PCM 格式
-    author: osnosn@126.com OR LLGZ@csair.com
+    author: osnosn@126.com
 """
 import sys
 import os

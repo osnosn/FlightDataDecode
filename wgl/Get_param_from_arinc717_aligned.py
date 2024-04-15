@@ -93,7 +93,7 @@ https://github.com/KindVador/A429Library  #C++
   --------------------------------------------  
 
  根据上述的文档的描述。 理论上synchro同步字出现的顺序应该是，sync1,sync2,sync3,sync4, 间隔为 words/sec 的个数。
-    author: osnosn@126.com OR LLGZ@csair.com
+    author: osnosn@126.com
   --------------------------
 '''
 

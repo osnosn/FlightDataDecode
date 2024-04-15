@@ -11,7 +11,7 @@
         解所有参数，写入目录,  gz文件              92MB，耗时2m58s.
         解所有参数，写入目录,  csv文件不压缩,     397MB，耗时2m18s.
         sysmem()显示，内存占用不超过 230MB.
-    author: osnosn@126.com OR LLGZ@csair.com
+    author: osnosn@126.com
 """
 import pandas as pd
 import zipfile

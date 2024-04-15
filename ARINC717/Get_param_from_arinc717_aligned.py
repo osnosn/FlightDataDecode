@@ -88,7 +88,7 @@
        set 0 otherwise;
        set 1 for each extra word
   --------------------------------------------  
-   author: osnosn@126.com OR LLGZ@csair.com
+   author: osnosn@126.com
   --------------------------
 '''
 

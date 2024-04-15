@@ -3,7 +3,7 @@
 
 """
 配置文件
-   author: osnosn@126.com OR LLGZ@csair.com
+   author: osnosn@126.com
 """
 import os
 selfpath=os.path.dirname(os.path.realpath(__file__)) #本脚本自身所在的目录

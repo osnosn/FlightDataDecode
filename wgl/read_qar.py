@@ -3,7 +3,7 @@
 
 """
  读取 wgl中 eofloacat.qar 。没什么用。
-    author: osnosn@126.com OR LLGZ@csair.com
+    author: osnosn@126.com
 """
 import struct
 #from datetime import datetime

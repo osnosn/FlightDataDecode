@@ -3,7 +3,7 @@
 
 """
  读取 wgl中 raw.tag 。可以得到机尾号，用于确定解码库。其他没什么用。
-    author: osnosn@126.com OR LLGZ@csair.com
+    author: osnosn@126.com
 """
 import struct
 from datetime import datetime  #非必须库

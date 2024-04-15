@@ -3,7 +3,7 @@
 
 """
  读解码库，参数配置文件 vec 中 xx.par 文件。比如 010XXX.par
-      author: osnosn@126.com OR LLGZ@csair.com
+      author: osnosn@126.com
 """
 import os
 import zipfile

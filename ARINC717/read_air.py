@@ -3,7 +3,7 @@
 
 """
  读取 aircraft.air 文件。机尾号与解码库的对应表。
-    author: osnosn@126.com OR LLGZ@csair.com
+    author: osnosn@126.com
 """
 import csv
 import config_vec as conf

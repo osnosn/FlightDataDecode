@@ -3,7 +3,7 @@
 
 '''
 输出修改后的 raw.dat ,用于脱敏处理
-    author: osnosn@126.com OR LLGZ@csair.com
+    author: osnosn@126.com
 '''
 
 import pandas as pd

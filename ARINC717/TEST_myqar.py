@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-    author: osnosn@126.com OR LLGZ@csair.com
+    author: osnosn@126.com
 """
 import pandas as pd
 import Get_param_from_arinc717_aligned as A717

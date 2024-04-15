@@ -4,7 +4,7 @@
 """
  把输入的整数，分别以 int,float32,float64 存储，再转为字节。
   用于在二进制(bin)文件中查找对应的值。
-    author: osnosn@126.com OR LLGZ@csair.com
+    author: osnosn@126.com
 """
 import struct
 #from datetime import datetime
