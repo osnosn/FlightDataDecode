@@ -154,8 +154,8 @@ def read_parameter_file(dataver):
             [x,x,,....],
              ...
             ]
-         '1_items': xx,
-         '2_items': xx,
+         '1_items': xx, //对应的数据，有多少列, len(fra_conf['1'][0])
+         '2_items': xx, //len(fra_conf['2'][0])
          '3_items': xx,
          '4_items': xx,
 
@@ -197,7 +197,7 @@ def read_parameter_file(dataver):
             if line.startswith('//') and tmp1[0] == '3':     # "3|..." 的标题比较特殊，末尾少了一个tab
                 tmp1[1] += '\t'
             if line.startswith('//') and tmp1[0] == '7':     # "7|..." 的标题比较特殊，起始多了一个tab
-                tmp1[1]=tmp1[0].lstrip()
+                tmp1[1]=tmp1[1].lstrip()
             tmp2=tmp1[1].split('\t')
             if tmp1[0] in fra_conf:
                 if fra_conf[ tmp1[0]+'_items' ] != len(tmp2):
