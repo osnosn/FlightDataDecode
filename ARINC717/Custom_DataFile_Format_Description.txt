@@ -12,12 +12,12 @@
      u16; ->Parameter01描述的byte数,size;Little-Endion;
      u64; ->从文件头0byte开始，指向Parameter01_DATA的起始位置; 
      u32; ->Parameter01_DATA的byte数,size;
+     u16;   ->单个值占用的byte数;
+     i16;   ->rate,每秒记录个数;负值表示1/x;
+     i32;   ->start_frameID, 通常是0;
      str_utf8;  ->参数名称; 以'\0'结尾;
      str_utf8;  ->压缩算法,或不压缩; 以'\0'结尾; lzma,deflated,gzip,bzip2,none,
      str_utf8;  ->值的类型; 以'\0'结尾; float,int,str,csv,json;
-     u16;       ->单个值占用的byte数;
-     i16;       ->rate,每秒记录个数;负值表示1/x;
-     i32;       ->start_frameID, 通常是0;
    };
    ...
  };

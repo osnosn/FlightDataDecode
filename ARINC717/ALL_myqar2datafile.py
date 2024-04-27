@@ -49,16 +49,16 @@ def main():
         #---regular parameter
         ii=0
         for vv in regularlist:
-            one_param_table=bytearray(b"\0\0") #Parameter01 size
+            one_param_table=bytearray(b"\0\0")  #Parameter01 size
             one_param_table.extend(b"\0\0\0\0\0\0\0\0") #Parameter01_DATA 指针
             one_param_table.extend(b"\0\0\0\0") #Parameter01_DATA size
-            one_param_table.extend(bytes(vv,'utf8')+b'\0')  #参数名称
-            one_param_table.extend(b'xz\0')       #压缩算法
-            #one_param_table.extend(b'lzma\0')    #压缩算法
-            one_param_table.extend(b'json\0')      #数据类型
             one_param_table.extend(b"\0\0")       #value size
             one_param_table.extend(b"\0\0")       #rate
             one_param_table.extend(b"\0\0\0\0")   #start FrameID
+            one_param_table.extend(bytes(vv,'utf8')+b'\0')  #参数名称
+            one_param_table.extend(b'xz\0')         #压缩算法
+            #one_param_table.extend(b'lzma\0')       #压缩算法
+            one_param_table.extend(b'json\0')       #数据类型
             #填入 Parameter01 size
             one_param_table[0:2]=struct.pack('<H',len(one_param_table)) #short,2byte,Little-Endion
 
@@ -82,16 +82,16 @@ def main():
         #---superframe parameter
         ii=0
         for vv in superlist:
-            one_param_table=bytearray(b"\0\0") #Parameter01 size
+            one_param_table=bytearray(b"\0\0")  #Parameter01 size
             one_param_table.extend(b"\0\0\0\0\0\0\0\0") #Parameter01_DATA 指针
             one_param_table.extend(b"\0\0\0\0") #Parameter01_DATA size
-            one_param_table.extend(bytes(vv,'utf8')+b'\0')  #参数名称
-            one_param_table.extend(b'xz\0')       #压缩算法
-            #one_param_table.extend(b'lzma\0')    #压缩算法
-            one_param_table.extend(b'json\0')      #数据类型
             one_param_table.extend(b"\0\0")       #value size
             one_param_table.extend(b"\0\0")       #rate
             one_param_table.extend(b"\0\0\0\0")   #start FrameID
+            one_param_table.extend(bytes(vv,'utf8')+b'\0')  #参数名称
+            one_param_table.extend(b'xz\0')         #压缩算法
+            #one_param_table.extend(b'lzma\0')       #压缩算法
+            one_param_table.extend(b'json\0')       #数据类型
             #填入 Parameter01 size
             one_param_table[0:2]=struct.pack('<H',len(one_param_table)) #short,2byte,Little-Endion
 
