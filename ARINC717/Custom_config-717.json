@@ -1,0 +1,535 @@
+//尝试定义一个 统一的配置格式。2024-04
+//  alpha, 未完成。2024-04
+{
+   "Dataframe": {
+      //ARINC717配置,fra配置
+      "RegularFrame": {
+         //Frame的全局配置
+         "SyncWord1": "247",
+         "SyncWord2": "5B8",
+         "SyncWord3": "A47",
+         "SyncWord4": "DB8",
+         "WordsPerSubFrame": 1024,
+         "SubFrameNumber": 1,
+         "SyncLen": 12,
+         "SynchroType": 0,
+         "Counter1": {
+            //SuperFrameCounter1 的位置
+            "SubFrameNumber": 1,
+            "Word": 499,
+            "BitOut": 12,
+            "Bits": 4,
+            "DataFrameCounter2_1Val": null,
+            "ValueInFirstFrame": null
+         },
+         "Counter2": null,
+         "SecondsPerSubFrame": 1,
+         "SubframesPerFrame": 4,
+         "Type": {
+            "Id": 1,
+            "Description": "ARINC 717"
+         },
+         "CreationDate": "2022-06-23T08:16:43.120223Z",
+		 "RegularParametersPosArray": [
+			 "外层;多个独立的值配置;对应Rate;",
+			 "内层;多个位置;拼接为一次的值;"
+		 ],
+		 "RegularParametersPos": [
+			 "Part",     //1-3,最多由3个部分拼接
+			 "Rate",     //每秒记录次数4
+			 "SubFrame", //1-4,subframe
+			 "Word",     //subframe中的word位置,sync_word为1
+			 "BitIn",    //对应32bit的arinc429的msb
+			 "Bits",     //bitLength
+			 "BitOut",   //12bit中的bit MSB
+			 "RangeMax",
+			 "RangeMin",
+			 "Resolution",
+			 "Occurence"
+		 ]
+      },
+      "RegularParameters": [
+         //普通参数,包含多个存储位置
+         {
+            "Id": 70149,
+            "ParameterId": 97802,
+            "ParameterName": "参数名称",
+			"Pos": [  //参数的顺序和含义，见"RegularParametersPos"
+				//外层;多个独立的值配置;对应Rate;
+				[
+					//内层;多个位置;拼接为一次的值;
+					[
+						1,     //1-3,最多由3个部分拼接
+						"1/4", //每秒记录次数4
+						1,     //1-4,subframe
+						189,   //subframe中的word位置,sync_word为1
+						11,    //对应32bit的arinc429的msb
+						1,     //bitLength
+						1,     //12bit中的bit MSB
+						1.0,
+						0.0,
+						1.0,
+						null
+					]
+				]
+			],
+            "UpdateDate": "2022-06-23T08:17:55.633717Z",
+            "Number": 79786
+         }
+      ],
+      "SuperFrames": [
+         //罗列出在Frame中,所有超级帧参数的存储位置
+         {
+            "Number": 19,  //SuperFrameNumber,编号
+            "Counter": 1,  //1-2,用那个counter定位,通常是1
+            "SubFrame": 3, //1-4,Sf,
+            "Word": 61,    //subframe中的word位置,sync_word为1
+            "Bitout": 12,  //12bit中的bit MSB
+            "Bits": 12,    //bitLength
+            "SuperFrameId": 194
+         }
+      ],
+      "SuperParameters": [
+         //超级帧参数,存储位置,指向SuperFrames位置
+         {
+            "Number": 2180,
+            "ParameterName": "参数名称",
+            "Pos": [
+               {
+                  "Part": 1,  //1-3,最多由3个部分拼接; 可能有两组1-3
+                  "SuperFrameNumber": 14, //SuperFrameNumber,编号
+                  "Period": 16, //周期,每几个frame出现一次,通常为16
+                  "BitIn": 12,   //对应32bit的arinc429的msb
+                  "Bits": 12,    //bitLength
+                  "Frame": 3,    //位于第几个Frame,对应counter的值
+                  "BitOut": 12,  //12bit中的bit MSB
+                  "RangeMax": 4095.0,
+                  "RangeMin": 0.0,
+                  "Resolution": 1.0
+               }
+            ],
+            "UpdateDate": "2022-06-23T08:17:56.491302Z",
+            "Id": 1680,
+            "ParameterId": 97803,
+            "SuperframeId": 199
+         }
+      ],
+      "Type": "Arinc717"
+   },
+   "Parameters": [
+      //ARINC429配置,par配置
+        {
+            "Segments": [
+                {
+                    "Id": 655,
+                    "Number": 1,
+                    "From": 0,
+                    "A": 80.0,
+                    "B": 0.0
+                }
+            ],
+            "Name": "ZFW",
+            "Description": "ZERO FULE WEIGHT",
+            "Type": {
+                "Id": 4,
+                "Name": "BNR SEGMENTS (A*X+B)"
+            },
+            "SsmRule": -1,
+            "SignBit": null,
+            "MostSignificantBit": 26, //MSB
+            "LessSignificantBit": 15, //LSB
+            "DataBits": 12,  //bitLength
+            "Complement2": 2,
+            "OffsetValue": null,  //有取值100的，比如 VOR频率, BCDG格式，可以通过 A*X+B 的方式乘以100.
+            "IsAngle": false,
+            "Units": "",
+            "PositiveSign": "",
+            "NegativeSign": "",
+            "ConstantValue": 0.0,
+            "OperationalMaxValue": 4095.0,
+            "OperationalMinValue": 0.0,
+            "Linear": null,
+            "WordRangeMax": 4095.0,
+            "WordRangeMin": 0.0,
+            "LongName": ""
+        },
+        {
+            "Digits": [ 4, 4, 4, 4, 3 ], // 从MSB->LSB的顺序，每个BCD数字占用的bitLength
+            "Name": "DEST_HR_MIN",
+            "Description": "Destination ETA Hours & Minutes",
+            "Type": {
+                "Id": 8,
+                "Name": "BCD"
+            },
+            "SsmRule": 7,
+            "SignBit": null,
+            "MostSignificantBit": 29,
+            "LessSignificantBit": 11,
+            "DataBits": 19, //bitLength
+            "Complement2": null,
+            "Units": "",
+            "PositiveSign": "",
+            "NegativeSign": "",
+            "ConstantValue": 0.0,
+            "OperationalMaxValue": 23595.0,
+            "OperationalMinValue": 0.0,
+            "WordRangeMax": 999999.0,
+            "WordRangeMin": 0.0,
+            "LongName": ""
+        },
+        {
+           "Options": {  //离散值,枚举值
+              "0": "MODE 0",
+              "1": "MODE1OR2",
+              "2": "MODE12",
+              "3": "3,4OR14"
+           },
+            "Name": "STALL_MOD_ST_2",
+            "Description": "STALL MODE STATUS #2",
+            "Type": {
+                "Id": 1,
+                "Name": "PACKED BITS"  //离散值,超过2个option
+            },
+            "SsmRule": 0,
+            "SignBit": null,
+            "MostSignificantBit": 27,
+            "LessSignificantBit": 26,
+            "DataBits": 2,
+            "Complement2": null,
+            "OffsetValue": null,
+            "IsAngle": false,
+            "FieldLength": 10,
+            "FractionalPart": 0,
+            "Units": "",
+            "PositiveSign": "",
+            "NegativeSign": "",
+            "ConstantValue": 0.0,
+            "OperationalMaxValue": 3.0,
+            "OperationalMinValue": 0.0,
+            "Linear": null,
+            "DisplayMode": {
+                "Id": 6,
+                "Description": "OPTION"
+            },
+            "InternalFormat": 0,
+            "UpdateRate": 1,
+            "WordRangeMax": 3.0,
+            "WordRangeMin": 0.0,
+            "IsSystem": false,
+            "ManufacturerReference": "D16",
+            "SignMeaning": null,
+            "ValidityCategory": "0",
+            "ValidityFlightPhases": 0,
+            "AtaCode": null,
+            "LongName": "",
+            "Sources": null,
+            "IsA429": true
+        },
+        {
+            "Options": {  //离散值,枚举值
+               "0": "PASS",
+               "1": "FAIL"
+            },
+            "Name": "ARL27626",
+            "Description": "BARO 2 DATA INVALID                     ",
+            "Type": {
+                "Id": 2,
+                "Name": "DISCRETE" //离散值,只有2个option
+            },
+            "SsmRule": -1,
+            "SignBit": null,
+            "MostSignificantBit": 27,
+            "LessSignificantBit": 26,
+            "DataBits": 2,
+            "Complement2": null,
+            "OffsetValue": null,
+            "IsAngle": false,
+            "FieldLength": 7,
+            "FractionalPart": 0,
+            "Units": "",
+            "PositiveSign": "",
+            "NegativeSign": "",
+            "ConstantValue": 0.0,
+            "OperationalMaxValue": 1.0,
+            "OperationalMinValue": 0.0,
+            "Linear": null,
+            "DisplayMode": {
+                "Id": 6,
+                "Description": "OPTION"
+            },
+            "InternalFormat": 0,
+            "UpdateRate": 1,
+            "WordRangeMax": 1.0,
+            "WordRangeMin": 0.0,
+            "IsSystem": false,
+            "ManufacturerReference": null,
+            "SignMeaning": null,
+            "ValidityCategory": "0",
+            "ValidityFlightPhases": 0,
+            "AtaCode": null,
+            "LongName": "",
+            "Sources": null,
+            "IsA429": false
+        },
+        {
+            "Options": null,
+            "Points": [
+                {
+                    "Number": 1,
+                    "X": 0.0,
+                    "Y": 0.0,
+                    "Id": 1596
+                },
+                {
+                    "Number": 2,
+                    "X": 34.0,
+                    "Y": 1.72,
+                    "Id": 1597
+                },
+                {
+                    "Number": 3,
+                    "X": 68.0,
+                    "Y": 3.47,
+                    "Id": 1598
+                },
+                {
+                    "Number": 4,
+                    "X": 102.0,
+                    "Y": 5.25,
+                    "Id": 1599
+                },
+                {
+                    "Number": 5,
+                    "X": 136.0,
+                    "Y": 7.06,
+                    "Id": 1600
+                },
+                {
+                    "Number": 6,
+                    "X": 170.0,
+                    "Y": 8.89,
+                    "Id": 1601
+                },
+                {
+                    "Number": 7,
+                    "X": 204.0,
+                    "Y": 10.75,
+                    "Id": 1602
+                },
+                {
+                    "Number": 8,
+                    "X": 239.0,
+                    "Y": 12.64,
+                    "Id": 1603
+                },
+                {
+                    "Number": 9,
+                    "X": 273.0,
+                    "Y": 14.55,
+                    "Id": 1604
+                },
+                {
+                    "Number": 10,
+                    "X": 307.0,
+                    "Y": 16.49,
+                    "Id": 1605
+                },
+                {
+                    "Number": 11,
+                    "X": 341.0,
+                    "Y": 18.46,
+                    "Id": 1606
+                },
+                {
+                    "Number": 12,
+                    "X": 375.0,
+                    "Y": 20.46,
+                    "Id": 1607
+                },
+                {
+                    "Number": 13,
+                    "X": 443.0,
+                    "Y": 24.54,
+                    "Id": 1608
+                },
+                {
+                    "Number": 14,
+                    "X": 478.0,
+                    "Y": 26.62,
+                    "Id": 1609
+                },
+                {
+                    "Number": 15,
+                    "X": 512.0,
+                    "Y": 28.73,
+                    "Id": 1610
+                },
+                {
+                    "Number": 16,
+                    "X": 546.0,
+                    "Y": 30.86,
+                    "Id": 1611
+                },
+                {
+                    "Number": 17,
+                    "X": 580.0,
+                    "Y": 33.03,
+                    "Id": 1612
+                },
+                {
+                    "Number": 18,
+                    "X": 614.0,
+                    "Y": 35.23,
+                    "Id": 1613
+                },
+                {
+                    "Number": 19,
+                    "X": 648.0,
+                    "Y": 37.45,
+                    "Id": 1614
+                },
+                {
+                    "Number": 20,
+                    "X": 682.0,
+                    "Y": 39.71,
+                    "Id": 1615
+                }
+            ],
+            "Name": "SPOIL_POS_NO3",
+            "Description": "Spoiler # 3 Position",
+            "Type": {
+                "Id": 5,
+                "Name": "BNR COUPLE OF VALUES"
+            },
+            "SsmRule": 4,
+            "SignBit": null,
+            "MostSignificantBit": 28,
+            "LessSignificantBit": 17,
+            "DataBits": 12,
+            "Complement2": 2,
+            "OffsetValue": null,
+            "IsAngle": false,
+            "FieldLength": 5,
+            "FractionalPart": 2,
+            "Units": "deg",
+            "PositiveSign": "",
+            "NegativeSign": "",
+            "ConstantValue": 0.0,
+            "OperationalMaxValue": 40.0,
+            "OperationalMinValue": 0.0,
+            "Linear": null,
+            "DisplayMode": {
+                "Id": 3,
+                "Description": "DECIMAL"
+            },
+            "InternalFormat": 2,
+            "UpdateRate": 8,
+            "WordRangeMax": 266.5741176,
+            "WordRangeMin": 0.0,
+            "IsSystem": false,
+            "ManufacturerReference": "A17",
+            "SignMeaning": "+=UP",
+            "ValidityCategory": "0",
+            "ValidityFlightPhases": 0,
+            "AtaCode": {
+                "Id": "27",
+                "Description": "Flight controls"
+            },
+            "LongName": "",
+            "Sources": null,
+            "IsA429": true
+        },
+        {
+            "Options": null,
+            "Points": null,
+            "Polys": null,
+            "Segments": null,
+            "Digits": [ 7, 7, 7, 7 ], // 从MSB->LSB的顺序，每个CHARACTER占用的bitLength
+            "Formula": null,
+            "Dits": null,
+            "Afdx": null,
+            "Name": "CITY_TO_R",
+            "Description": "City Pair To   char #4 to #2:/063/  char #1:/062/ ",
+            "Type": {
+                "Id": 9,
+                "Name": "CHARACTER"
+            },
+            "SsmRule": 0,
+            "SignBit": null,
+            "MostSignificantBit": 32,
+            "LessSignificantBit": 5,
+            "DataBits": 28,
+            "Complement2": null,
+            "OffsetValue": null,
+            "IsAngle": false,
+            "FieldLength": 4,
+            "FractionalPart": 0,
+            "Units": "",
+            "PositiveSign": "",
+            "NegativeSign": "",
+            "ConstantValue": 0.0,
+            "OperationalMaxValue": 9999.0,
+            "OperationalMinValue": 0.0,
+            "Linear": null,
+            "DisplayMode": {
+                "Id": 5,
+                "Description": "ASCII"
+            },
+            "InternalFormat": 0,
+            "UpdateRate": 1,
+            "WordRangeMax": 9999.0,
+            "WordRangeMin": 0.0,
+            "IsSystem": false,
+            "ManufacturerReference": "D2",
+            "SignMeaning": null,
+            "ValidityCategory": "0",
+            "ValidityFlightPhases": 0,
+            "AtaCode": null,
+            "LongName": "",
+            "Sources": null,
+            "IsA429": true
+        },
+        {
+            "Id": 98693,
+            "Name": "EARTH_RADIUS",
+            "Description": "Earth radius in feet",
+            "Type": {
+                "Id": 14,
+                "Name": "CONSTANT"
+            },
+            "SsmRule": null,
+            "SignBit": null,
+            "MostSignificantBit": null,
+            "LessSignificantBit": null,
+            "DataBits": null,
+            "Complement2": null,
+            "OffsetValue": null,
+            "IsAngle": false,
+            "FieldLength": null,
+            "FractionalPart": null,
+            "Units": "",
+            "PositiveSign": "",
+            "NegativeSign": "",
+            "ConstantValue": 21200000.0,  //常数值
+            "OperationalMaxValue": 1.0,
+            "OperationalMinValue": 0.0,
+            "Linear": null,
+            "DisplayMode": {
+                "Id": 3,
+                "Description": "DECIMAL"
+            },
+            "InternalFormat": 1,
+            "UpdateRate": null,
+            "WordRangeMax": 0.0,
+            "WordRangeMin": 0.0,
+            "IsSystem": false,
+            "ManufacturerReference": null,
+            "SignMeaning": null,
+            "ValidityCategory": "0",
+            "ValidityFlightPhases": 0,
+            "AtaCode": null,
+            "LongName": ""
+        }
+   ]
+}
+
