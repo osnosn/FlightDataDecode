@@ -5,11 +5,15 @@
   解码所有参数，写入DataFile文件。压缩或者不压缩。
     我的测试 Intel CPU i9,x64,主频3.3GHz, BogoMIPS:6600。
     原始文件 raw 20MB，压缩包为5.5MB。有参数 2600 个, 航段170分钟。
-        解所有参数，写入单文件,XZ压缩,    24MB，耗时3m51s. 最大内存占用216MB.
-        解所有参数，写入单文件,LZMA压缩,  24MB，耗时3m45s. 最大内存占用216MB.
-        解所有参数，写入单文件,bzip2压缩, 48MB，耗时2m11s. 最大内存占用205MB.
-        解所有参数，写入单文件,gzip压缩,  85MB，耗时2m21s. 最大内存占用196MB.
-        sysmem()显示，内存占用不超过 220MB.
+      174行,同时写入t,v:
+            pm_data=[struct.pack('<fl',vv['t'],vv['v']) for vv in pm_list]
+          解所有参数，写入单文件,LZMA压缩,  18MB，耗时2m50s.
+          解所有参数，写入单文件,bzip2压缩, 46MB，耗时1m51s.
+
+      174行,仅写入v:
+            pm_data=[struct.pack('<l',vv['v']) for vv in pm_list]
+          解所有参数，写入单文件,LZMA压缩,  3.6MB，耗时1m51s.
+          解所有参数，写入单文件,bzip2压缩, 3.9MB，耗时1m46s.
     author: osnosn@126.com
 """
 import pandas as pd
@@ -52,23 +56,30 @@ def main():
             one_param_table=bytearray(b"\0\0")  #Parameter01 size
             one_param_table.extend(b"\0\0\0\0\0\0\0\0") #Parameter01_DATA 指针
             one_param_table.extend(b"\0\0\0\0") #Parameter01_DATA size
-            one_param_table.extend(b"\0\0")       #value size
-            one_param_table.extend(b"\0\0")       #rate
-            one_param_table.extend(b"\0\0\0\0")   #start FrameID
-            one_param_table.extend(bytes(vv,'utf8')+b'\0')  #参数名称
-            one_param_table.extend(b'xz\0')         #压缩算法
-            #one_param_table.extend(b'lzma\0')       #压缩算法
-            one_param_table.extend(b'json\0')       #数据类型
-            #填入 Parameter01 size
-            one_param_table[0:2]=struct.pack('<H',len(one_param_table)) #short,2byte,Little-Endion
 
             print(vv,flush=True)
             ii +=1
             if ii==1: continue  #第一个不是参数
             pm_list=myQAR.get_param(vv)
             pm_name="{}.{}".format(ii,vv)
-            data_len=write_datafile(mydatafile,pm_name,pm_list)
+            data_len, data_type=write_datafile(mydatafile,pm_name,pm_list)
+            data_rate=pm_list[1]['t']-pm_list[0]['t']
+            #print(pm_list[1]['t'],pm_list[0]['t'],data_rate,flush=True)
+            if data_rate<=1:
+                data_rate= 1/data_rate
+            else:
+                data_rate *= -1
+            #print(data_rate,flush=True)
 
+            one_param_table.extend(b"\0\0")       #value size
+            one_param_table.extend(struct.pack('<h',int(data_rate)))   #rate
+            one_param_table.extend(b"\0\0\0\0")   #start FrameID
+            one_param_table.extend(bytes(vv,'utf8')+b'\0')  #参数名称
+            one_param_table.extend(b'xz\0')         #压缩算法
+            #one_param_table.extend(b'lzma\0')       #压缩算法
+            one_param_table.extend(data_type)       #数据类型
+            #填入 Parameter01 size
+            one_param_table[0:2]=struct.pack('<H',len(one_param_table)) #short,2byte,Little-Endion
             #填入Parameter01_DATA size
             one_param_table[10:14]=struct.pack('<L',data_len) #long,4byte,Little-Endion
 
@@ -84,23 +95,28 @@ def main():
             one_param_table=bytearray(b"\0\0")  #Parameter01 size
             one_param_table.extend(b"\0\0\0\0\0\0\0\0") #Parameter01_DATA 指针
             one_param_table.extend(b"\0\0\0\0") #Parameter01_DATA size
-            one_param_table.extend(b"\0\0")       #value size
-            one_param_table.extend(b"\0\0")       #rate
-            one_param_table.extend(b"\0\0\0\0")   #start FrameID
-            one_param_table.extend(bytes(vv,'utf8')+b'\0')  #参数名称
-            one_param_table.extend(b'xz\0')         #压缩算法
-            #one_param_table.extend(b'lzma\0')       #压缩算法
-            one_param_table.extend(b'json\0')       #数据类型
-            #填入 Parameter01 size
-            one_param_table[0:2]=struct.pack('<H',len(one_param_table)) #short,2byte,Little-Endion
 
             print(vv,flush=True)
             ii +=1
             if ii==1: continue  #第一个不是参数
             pm_list=myQAR.get_param(vv)
             pm_name="{}.{}".format(ii,vv)
-            data_len=write_datafile(mydatafile,pm_name,pm_list)
+            data_len, data_type=write_datafile(mydatafile,pm_name,pm_list)
+            if data_rate<1:
+                data_rate= 1/data_rate
+            else:
+                data_rate *= -1
+            #print(data_rate,flush=True)
 
+            one_param_table.extend(b"\0\0")       #value size
+            one_param_table.extend(struct.pack('<h',int(data_rate)))   #rate
+            one_param_table.extend(b"\0\0\0\0")   #start FrameID
+            one_param_table.extend(bytes(vv,'utf8')+b'\0')  #参数名称
+            one_param_table.extend(b'xz\0')         #压缩算法
+            #one_param_table.extend(b'lzma\0')       #压缩算法
+            one_param_table.extend(data_type)       #数据类型
+            #填入 Parameter01 size
+            one_param_table[0:2]=struct.pack('<H',len(one_param_table)) #short,2byte,Little-Endion
             #填入Parameter01_DATA size
             one_param_table[10:14]=struct.pack('<L',data_len) #long,4byte,Little-Endion
 
@@ -142,31 +158,45 @@ import lzma
 import bz2
 import gzip
 def write_datafile(mydatafile,pm_name, pm_list):
-    df_pm=pd.DataFrame(pm_list)
     #-----------参数写入data文件--------------------
     data_len=0
     if mydatafile is None:
-        if len(df_pm)>0:
-            print(df_pm['v'][0:10].tolist())
+        if len(pm_list)>0:
+            print([vv['v'] for vv in pm_list[0:10] ])
     else:
-        ### 获取解码参数的 json 数据
-        #tmp_str=df_pm.to_csv(None,sep='\t',index=False)
-        #tmp_str=df_pm.to_json(None,orient='split',index=False)
-        #tmp_str=df_pm.to_json(None,orient='records')
-        #tmp_str=df_pm.to_json(None,orient='index')
-        tmp_str=df_pm.to_json(None,orient='values')
-        #tmp_str=df_pm.to_json(None,orient='table',index=False)
+        if isinstance(pm_list[0]['v'], int) :
+            #pm_data=[struct.pack('<fl',vv['t'],vv['v']) for vv in pm_list]
+            pm_data=[struct.pack('<l',vv['v']) for vv in pm_list]
+            tmp_str=b"".join(pm_data)
+            data_type=b'int\0'
+        elif isinstance(pm_list[0]['v'], float) :
+            #pm_data=[struct.pack('<ff',vv['t'],vv['v']) for vv in pm_list]
+            pm_data=[struct.pack('<f',vv['v']) for vv in pm_list]
+            tmp_str=b"".join(pm_data)
+            data_type=b'float\0'
+        else:
+            ### 获取解码参数的 json 数据
+            df_pm=pd.DataFrame(pm_list)
+            #tmp_str=df_pm.to_csv(None,sep='\t',index=False)
+            #tmp_str=df_pm.to_json(None,orient='split',index=False)
+            #tmp_str=df_pm.to_json(None,orient='records')
+            #tmp_str=df_pm.to_json(None,orient='index')
+            tmp_str=df_pm.to_json(None,orient='values')
+            #tmp_str=df_pm.to_json(None,orient='table',index=False)
+
+            tmp_str=bytes(tmp_str,'utf8')
+            data_type=b'json\0'
 
         ### 解码数据的压缩
-        #tmp_b=lzma.compress(bytes(tmp_str,'utf8'),format=lzma.FORMAT_XZ)    #有完整性检查
-        tmp_b=lzma.compress(bytes(tmp_str,'utf8'),format=lzma.FORMAT_ALONE)  #无完整性检查
-        #tmp_b=bz2.compress(bytes(tmp_str,'utf8'),compresslevel=9)
-        #tmp_b=gzip.compress(bytes(tmp_str,'utf8'),compresslevel=9)
+        #tmp_b=lzma.compress(tmp_str,format=lzma.FORMAT_XZ)    #有完整性检查
+        tmp_b=lzma.compress(tmp_str,format=lzma.FORMAT_ALONE)  #无完整性检查
+        #tmp_b=bz2.compress(tmp_str,compresslevel=9)
+        #tmp_b=gzip.compress(tmp_str,compresslevel=9)
 
         data_len=len(tmp_b)
         mydatafile.write(tmp_b)
         print('mem:',sysmem())
-    return data_len
+    return data_len, data_type
 
 def showsize(size):
     '''

@@ -13,7 +13,7 @@
      u64; ->从文件头0byte开始，指向Parameter01_DATA的起始位置; 
      u32; ->Parameter01_DATA的byte数,size;
      u16;   ->单个值占用的byte数;
-     i16;   ->rate,每秒记录个数;负值表示1/x;
+     i16;   ->rate,每秒记录 X次;负值表示每 X秒记录一次;
      i32;   ->start_frameID, 通常是0;
      str_utf8;  ->参数名称; 以'\0'结尾;
      str_utf8;  ->压缩算法,或不压缩; 以'\0'结尾; lzma,deflated,gzip,bzip2,none,
