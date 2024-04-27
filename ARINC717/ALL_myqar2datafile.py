@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-  解码所有参数，写入DataFile文件。压缩或者不压缩。
+  解码所有参数，写入DataFile文件。压缩或者不压缩。解码的值,以json写入。早期的方式。
     我的测试 Intel CPU i9,x64,主频3.3GHz, BogoMIPS:6600。
     原始文件 raw 20MB，压缩包为5.5MB。有参数 2600 个, 航段170分钟。
         解所有参数，写入单文件,XZ压缩,    24MB，耗时3m51s. 最大内存占用216MB.
@@ -13,7 +13,6 @@
     author: osnosn@126.com
 """
 import pandas as pd
-import zipfile
 import Get_param_from_arinc717_aligned as A717
 import struct
 
@@ -56,19 +55,18 @@ def main():
             one_param_table.extend(b"\0\0")       #rate
             one_param_table.extend(b"\0\0\0\0")   #start FrameID
             one_param_table.extend(bytes(vv,'utf8')+b'\0')  #参数名称
-            one_param_table.extend(b'xz\0')         #压缩算法
-            #one_param_table.extend(b'lzma\0')       #压缩算法
-            one_param_table.extend(b'json\0')       #数据类型
-            #填入 Parameter01 size
-            one_param_table[0:2]=struct.pack('<H',len(one_param_table)) #short,2byte,Little-Endion
 
             print(vv,flush=True)
             ii +=1
             if ii==1: continue  #第一个不是参数
             pm_list=myQAR.get_param(vv)
             pm_name="{}.{}".format(ii,vv)
-            data_len=write_datafile(mydatafile,pm_name,pm_list)
+            data_len, compress_type=write_datafile(mydatafile,pm_name,pm_list)
 
+            one_param_table.extend(compress_type)   #压缩算法
+            one_param_table.extend(b'json\0')       #数据类型
+            #填入 Parameter01 size
+            one_param_table[0:2]=struct.pack('<H',len(one_param_table)) #short,2byte,Little-Endion
             #填入Parameter01_DATA size
             one_param_table[10:14]=struct.pack('<L',data_len) #long,4byte,Little-Endion
 
@@ -88,19 +86,18 @@ def main():
             one_param_table.extend(b"\0\0")       #rate
             one_param_table.extend(b"\0\0\0\0")   #start FrameID
             one_param_table.extend(bytes(vv,'utf8')+b'\0')  #参数名称
-            one_param_table.extend(b'xz\0')         #压缩算法
-            #one_param_table.extend(b'lzma\0')       #压缩算法
-            one_param_table.extend(b'json\0')       #数据类型
-            #填入 Parameter01 size
-            one_param_table[0:2]=struct.pack('<H',len(one_param_table)) #short,2byte,Little-Endion
 
             print(vv,flush=True)
             ii +=1
             if ii==1: continue  #第一个不是参数
             pm_list=myQAR.get_param(vv)
             pm_name="{}.{}".format(ii,vv)
-            data_len=write_datafile(mydatafile,pm_name,pm_list)
+            data_len, compress_type=write_datafile(mydatafile,pm_name,pm_list)
 
+            one_param_table.extend(compress_type)   #压缩算法
+            one_param_table.extend(b'json\0')       #数据类型
+            #填入 Parameter01 size
+            one_param_table[0:2]=struct.pack('<H',len(one_param_table)) #short,2byte,Little-Endion
             #填入Parameter01_DATA size
             one_param_table[10:14]=struct.pack('<L',data_len) #long,4byte,Little-Endion
 
@@ -145,6 +142,7 @@ def write_datafile(mydatafile,pm_name, pm_list):
     df_pm=pd.DataFrame(pm_list)
     #-----------参数写入data文件--------------------
     data_len=0
+    compress_type=b'none\0'
     if mydatafile is None:
         if len(df_pm)>0:
             print(df_pm['v'][0:10].tolist())
@@ -159,14 +157,18 @@ def write_datafile(mydatafile,pm_name, pm_list):
 
         ### 解码数据的压缩
         #tmp_b=lzma.compress(bytes(tmp_str,'utf8'),format=lzma.FORMAT_XZ)    #有完整性检查
+        #compress_type=b'xz\0'
         tmp_b=lzma.compress(bytes(tmp_str,'utf8'),format=lzma.FORMAT_ALONE)  #无完整性检查
+        compress_type=b'lzma\0'
         #tmp_b=bz2.compress(bytes(tmp_str,'utf8'),compresslevel=9)
+        #compress_type=b'bzip2\0'
         #tmp_b=gzip.compress(bytes(tmp_str,'utf8'),compresslevel=9)
+        #compress_type=b'gzip\0'
 
         data_len=len(tmp_b)
         mydatafile.write(tmp_b)
         print('mem:',sysmem())
-    return data_len
+    return data_len, compress_type
 
 def showsize(size):
     '''

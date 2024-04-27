@@ -4,7 +4,9 @@
 * 整理完成。 2022-02   
 * 使用的例程是 `TEST_myqar.py`。2022-02   
 * 解码所有参数写入压缩文件 `ALL_myqar.py`。2024-04   
-* 解码所有参数写入单文件,自定义格式 `ALL_myqar2datafile.py`。2024-04   
+* 解码所有参数写入单文件,自定义格式。json方式写。`ALL_myqar2datafile.py`。2024-04   
+* 解码所有参数写入单文件,自定义格式。二进制方式写。 `ALL_myqar2datafile_bin.py`。2024-04   
+* 读取单文件(自定义格式)中的参数,导入pandas.DataFrame()中。支持 二进制/json方式。 `ALL_read_datafile.py`。2024-04   
 * `Custom_DataFile_Format_Description.txt` 自定义单文件的描述。2024-04   
 * `Custom_config-717.json` 解码配置(未完成)。2024-04   
 * 附加了一个 arinc717 Aligned 的样例。样例数据经过处理，   

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-  解码所有参数，写入DataFile文件。压缩或者不压缩。
+  解码所有参数，写入DataFile文件。压缩或者不压缩。解码的值,以二进制写入。改进的方式。
     我的测试 Intel CPU i9,x64,主频3.3GHz, BogoMIPS:6600。
     原始文件 raw 20MB，压缩包为5.5MB。有参数 2600 个, 航段170分钟。
       174行,同时写入t,v:
@@ -17,7 +17,6 @@
     author: osnosn@126.com
 """
 import pandas as pd
-import zipfile
 import Get_param_from_arinc717_aligned as A717
 import struct
 
@@ -62,7 +61,7 @@ def main():
             if ii==1: continue  #第一个不是参数
             pm_list=myQAR.get_param(vv)
             pm_name="{}.{}".format(ii,vv)
-            data_len, data_type=write_datafile(mydatafile,pm_name,pm_list)
+            data_len, data_type, value_size, compress_type=write_datafile(mydatafile,pm_name,pm_list)
             data_rate=pm_list[1]['t']-pm_list[0]['t']
             #print(pm_list[1]['t'],pm_list[0]['t'],data_rate,flush=True)
             if data_rate<=1:
@@ -71,12 +70,11 @@ def main():
                 data_rate *= -1
             #print(data_rate,flush=True)
 
-            one_param_table.extend(b"\0\0")       #value size
-            one_param_table.extend(struct.pack('<h',int(data_rate)))   #rate
-            one_param_table.extend(b"\0\0\0\0")   #start FrameID
+            one_param_table.extend(struct.pack('<h',value_size))     #value size
+            one_param_table.extend(struct.pack('<h',int(data_rate))) #rate
+            one_param_table.extend(b"\0\0\0\0")           #start FrameID
             one_param_table.extend(bytes(vv,'utf8')+b'\0')  #参数名称
-            one_param_table.extend(b'xz\0')         #压缩算法
-            #one_param_table.extend(b'lzma\0')       #压缩算法
+            one_param_table.extend(compress_type)           #压缩算法
             one_param_table.extend(data_type)       #数据类型
             #填入 Parameter01 size
             one_param_table[0:2]=struct.pack('<H',len(one_param_table)) #short,2byte,Little-Endion
@@ -101,19 +99,18 @@ def main():
             if ii==1: continue  #第一个不是参数
             pm_list=myQAR.get_param(vv)
             pm_name="{}.{}".format(ii,vv)
-            data_len, data_type=write_datafile(mydatafile,pm_name,pm_list)
+            data_len, data_type, value_size, compress_type=write_datafile(mydatafile,pm_name,pm_list)
             if data_rate<1:
                 data_rate= 1/data_rate
             else:
                 data_rate *= -1
             #print(data_rate,flush=True)
 
-            one_param_table.extend(b"\0\0")       #value size
-            one_param_table.extend(struct.pack('<h',int(data_rate)))   #rate
-            one_param_table.extend(b"\0\0\0\0")   #start FrameID
+            one_param_table.extend(struct.pack('<h',value_size))     #value size
+            one_param_table.extend(struct.pack('<h',int(data_rate))) #rate
+            one_param_table.extend(b"\0\0\0\0")           #start FrameID
             one_param_table.extend(bytes(vv,'utf8')+b'\0')  #参数名称
-            one_param_table.extend(b'xz\0')         #压缩算法
-            #one_param_table.extend(b'lzma\0')       #压缩算法
+            one_param_table.extend(compress_type)           #压缩算法
             one_param_table.extend(data_type)       #数据类型
             #填入 Parameter01 size
             one_param_table[0:2]=struct.pack('<H',len(one_param_table)) #short,2byte,Little-Endion
@@ -160,6 +157,8 @@ import gzip
 def write_datafile(mydatafile,pm_name, pm_list):
     #-----------参数写入data文件--------------------
     data_len=0
+    data_type=b'txt\0'
+    value_size=0
     if mydatafile is None:
         if len(pm_list)>0:
             print([vv['v'] for vv in pm_list[0:10] ])
@@ -169,11 +168,13 @@ def write_datafile(mydatafile,pm_name, pm_list):
             pm_data=[struct.pack('<l',vv['v']) for vv in pm_list]
             tmp_str=b"".join(pm_data)
             data_type=b'int\0'
+            value_size=4
         elif isinstance(pm_list[0]['v'], float) :
             #pm_data=[struct.pack('<ff',vv['t'],vv['v']) for vv in pm_list]
             pm_data=[struct.pack('<f',vv['v']) for vv in pm_list]
             tmp_str=b"".join(pm_data)
             data_type=b'float\0'
+            value_size=4
         else:
             ### 获取解码参数的 json 数据
             df_pm=pd.DataFrame(pm_list)
@@ -186,17 +187,22 @@ def write_datafile(mydatafile,pm_name, pm_list):
 
             tmp_str=bytes(tmp_str,'utf8')
             data_type=b'json\0'
+            value_size=0
 
         ### 解码数据的压缩
         #tmp_b=lzma.compress(tmp_str,format=lzma.FORMAT_XZ)    #有完整性检查
+        #compress_type=b'xz\0'
         tmp_b=lzma.compress(tmp_str,format=lzma.FORMAT_ALONE)  #无完整性检查
+        compress_type=b'lzma\0'
         #tmp_b=bz2.compress(tmp_str,compresslevel=9)
+        #compress_type=b'bzip2\0'
         #tmp_b=gzip.compress(tmp_str,compresslevel=9)
+        #compress_type=b'gzip\0'
 
         data_len=len(tmp_b)
         mydatafile.write(tmp_b)
         print('mem:',sysmem())
-    return data_len, data_type
+    return data_len, data_type, value_size, compress_type
 
 def showsize(size):
     '''
