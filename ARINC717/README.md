@@ -2,13 +2,17 @@
 
 ### 更新   
 * 整理完成。 2022-02   
-* 使用的例程是 `TEST_myqar.py`。2022-02   
-* 解码所有参数写入压缩文件 `ALL_myqar.py`。2024-04   
-* 解码所有参数写入单文件,自定义格式。json方式写。`ALL_myqar2datafile.py`。2024-04   
-* 解码所有参数写入单文件,自定义格式。二进制方式写。 `ALL_myqar2datafile_bin.py`。2024-04   
-* 读取单文件(自定义格式)中的参数,导入pandas.DataFrame()中。支持 二进制/json方式。 `ALL_read_datafile.py`。2024-04   
+* 使用的例程是 `TEST_myqar.py`。一次解码一个参数。2022-02   
+* 解码所有参数, 以csv格式写入压缩文件 `ALL_myqar.py`。2024-04   
+* 解码所有参数写入单文件,自定义格式。`ALL_myqar2datafile.py`。2024-04   
+  - json方式写。最早的测试程序。   
+* 解码所有参数写入单文件,自定义格式。`ALL_myqar2datafile_bin.py`。2024-04   
+  - 二进制 (binary)方式写。文件更小。   
+* 读取单文件(自定义格式)中的参数,导入pandas.DataFrame()中。`ALL_read_datafile.py`。2024-04   
+  - 支持 二进制格式，json格式。 
+  - 选取一个或多个参数，导出到"自定义单文件"，或导出到 csv文件。   
 * `Custom_DataFile_Format_Description.txt` 自定义单文件的描述。2024-04   
-* `Custom_config-717.json` 解码配置(未完成)。2024-04   
+* `Custom_config-717.json` 解码配置 (未完成)。2024-04   
 * 附加了一个 arinc717 Aligned 的样例。样例数据经过处理，   
   **修改/脱敏了部分内容**。包括且不限于: 机号,航班号,日期,经纬度.... 2023-04   
 * 预计,今后不再更新了。   
@@ -29,6 +33,7 @@ ARINC 717 Aligned 文件,是从 ARINC 717 文件整理而来。主要做了两�
   * import os, sys, getopt   
   * import struct   
   * import zipfile   
+  * 其他: datetime, pandas, lzma, bz2, json, psutil,   
 
 
 编写时使用的是 python-3.9.2 版本。import包都是 python-3.9.2内置或自带的包。   

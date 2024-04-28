@@ -26,6 +26,7 @@
   * import os, sys, getopt   
   * import struct   
   * import zipfile   
+  * 其他: psutil,   
 
 
 编写时使用的是 python-3.9.2 版本。import包都是 python-3.9.2内置或自带的包。   

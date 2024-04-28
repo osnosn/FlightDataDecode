@@ -31,6 +31,7 @@ def main():
     print('mem:',sysmem())
 
     if ALLPARAM:
+        #准备Header
         datafile_header=bytearray(b"QAR_Decoded_DATA_V1.0\0")
         point=len(datafile_header)
         datafile_header.extend(b"\0\0\0\0")
@@ -41,6 +42,7 @@ def main():
         #填入 Header size
         datafile_header[point:point+4]=struct.pack('<L',len(datafile_header)) #long,4byte,Little-Endion
 
+        #准备Parameter_Table
         parameter_table=bytearray(b"\0\0\0\0") #Parameter_Table size
 
         mydatafile=None
@@ -81,6 +83,7 @@ def main():
             #填入Parameter01_DATA size
             one_param_table[10:14]=struct.pack('<L',data_len) #long,4byte,Little-Endion
 
+            #加入Parameter_Table
             parameter_table.extend(one_param_table)
 
         print("ragular:{}".format(ii))
@@ -117,6 +120,7 @@ def main():
             #填入Parameter01_DATA size
             one_param_table[10:14]=struct.pack('<L',data_len) #long,4byte,Little-Endion
 
+            #加入Parameter_Table
             parameter_table.extend(one_param_table)
         print("super:{}".format(ii))
         total_pm += ii-1
