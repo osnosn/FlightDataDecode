@@ -3,7 +3,7 @@
  Header{
    str"QAR_Decoded_DATA_V1.0\0" ->文件tag标记; 以'\0'结尾;固定值,不变;
    u32; ->Header的byte数,size;Little-Endion;
-   str_utf8;  ->自定义描述字符串,比如机号,解码日期,...; 以'\0'结尾;
+   str_utf8;  ->自定义描述字符串,包含Meta信息,比如机号,解码日期,...; 以'\0'结尾;
    str_utf8;  ->File_Format_Description,文件格式描述; 以'\0'结尾;
  };
  Parameter_Table{

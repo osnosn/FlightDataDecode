@@ -15,6 +15,7 @@
 import pandas as pd
 import Get_param_from_arinc717_aligned as A717
 import struct
+import json
 
 def main():
     global FNAME,WFNAME
@@ -27,16 +28,41 @@ def main():
     print('mem:',sysmem())
 
     if ALLPARAM:
+        #准备Header
         datafile_header=bytearray(b"QAR_Decoded_DATA_V1.0\0")
         point=len(datafile_header)
         datafile_header.extend(b"\0\0\0\0")
-        datafile_header.extend(b"This is a test.\0")
+        meta={
+                "MetaData": {
+                    "DataVersion":8888,
+                    "Tail":".B-8888",
+                    "Type":"A320",
+                    "FlightNum":"CXX8888",
+                    "DepICAO":"ZGGL",
+                    "DepRunway":"01",
+                    "ArrICAO":"ZGSZ",
+                    "ArrRunway":"15L",
+                    "DepDateTime":"20240102T160555Z",
+                    "ArrDateTime":"20240102T170922Z",
+                    "TakeOffDateTime":"20240102T162359Z",
+                    "LandingDateTime":"20240102T170101Z",
+                    "AirborneDuration":161,
+                    "FlightDuration":173,
+                    "DecodeDateTime":"20240401T122359Z",
+                    "FileName":"B-8888_20010102171005-10888.wgl",
+                    },
+                "other":123,
+                "info":"This is a test.",
+                }
+        datafile_header.extend(json.dumps(meta,separators=(',',':'),ensure_ascii=False).encode())
+        datafile_header.append(0)  #补'\0'
         with open('Custom_DataFile_Format_Description.txt','rb') as fp:
             datafile_header.extend(fp.read())
         datafile_header.append(0)  #补'\0'
         #填入 Header size
         datafile_header[point:point+4]=struct.pack('<L',len(datafile_header)) #long,4byte,Little-Endion
 
+        #准备Parameter_Table
         parameter_table=bytearray(b"\0\0\0\0") #Parameter_Table size
 
         mydatafile=None
