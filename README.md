@@ -32,6 +32,7 @@
   * 整理完成。2022-02更新   
   * 附加了一个 arinc717 Aligned 的样例。通常,完整的压缩数据包几 MB到几十 MB。   
     样例数据经过处理，**修改/脱敏了部分内容**。包括且不限于: 机号,航班号,日期,经纬度.... 2023-04更新   
+  * 一次解码所有参数，写入自定义格式文件。从自定义格式文件，读入pd.DataFrame中。(2024-05)   
   * 预计,今后不再更新了。   
 * [ARINC767 目录](https://github.com/osnosn/FlightDataDecode/blob/main/wgl/README.md), 从 wgl 整理后的程序。详细更新看 [ARINC767 目录中的 README](https://github.com/osnosn/FlightDataDecode/blob/main/ARINC767/README.md)  
   * ~~等测试程序完成后，再整理。2022-02~~   

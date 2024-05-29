@@ -35,6 +35,7 @@ def main():
         meta={
                 "MetaData": {
                     "DataVersion":8888,
+                    "ParamConfigFile":"",
                     "Tail":".B-8888",
                     "Type":"A320",
                     "FlightNum":"CXX8888",
@@ -87,10 +88,11 @@ def main():
             if ii==1: continue  #第一个不是参数
             pm_list=myQAR.get_param(vv)
             pm_name="{}.{}".format(ii,vv)
-            data_len, compress_type=write_datafile(mydatafile,pm_name,pm_list)
+            data_len, compress_type, other_info=write_datafile(mydatafile,pm_name,pm_list)
 
             one_param_table.extend(compress_type)   #压缩算法
             one_param_table.extend(b'json\0')       #数据类型
+            one_param_table.extend(other_info)         #其他信息
             #填入 Parameter01 size
             one_param_table[0:2]=struct.pack('<H',len(one_param_table)) #short,2byte,Little-Endion
             #填入Parameter01_DATA size
@@ -118,10 +120,11 @@ def main():
             if ii==1: continue  #第一个不是参数
             pm_list=myQAR.get_param(vv)
             pm_name="{}.{}".format(ii,vv)
-            data_len, compress_type=write_datafile(mydatafile,pm_name,pm_list)
+            data_len, compress_type, other_info=write_datafile(mydatafile,pm_name,pm_list)
 
             one_param_table.extend(compress_type)   #压缩算法
             one_param_table.extend(b'json\0')       #数据类型
+            one_param_table.extend(other_info)         #其他信息
             #填入 Parameter01 size
             one_param_table[0:2]=struct.pack('<H',len(one_param_table)) #short,2byte,Little-Endion
             #填入Parameter01_DATA size
@@ -180,6 +183,7 @@ def write_datafile(mydatafile,pm_name, pm_list):
         #tmp_str=df_pm.to_json(None,orient='index')
         tmp_str=df_pm.to_json(None,orient='values')
         #tmp_str=df_pm.to_json(None,orient='table',index=False)
+        other_info=b'{"other":"other msg"}\0'
 
         ### 解码数据的压缩
         #tmp_b=lzma.compress(bytes(tmp_str,'utf8'),format=lzma.FORMAT_XZ)    #有完整性检查
@@ -194,7 +198,7 @@ def write_datafile(mydatafile,pm_name, pm_list):
         data_len=len(tmp_b)
         mydatafile.write(tmp_b)
         print('mem:',sysmem())
-    return data_len, compress_type
+    return data_len, compress_type, other_info
 
 def showsize(size):
     '''

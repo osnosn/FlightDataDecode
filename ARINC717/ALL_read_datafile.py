@@ -222,6 +222,7 @@ def main():
                 #取一个参数的DATA
                 one_pm = datafile.getparam(pm)
                 if one_pm is None:
+                    print('  "{}" 没找到.'.format(pm))
                     continue
                 if isinstance(one_pm, tuple):
                     #非文本格式, 即 int,float格式
@@ -284,7 +285,7 @@ def usage():
     print(sys.argv[0]+' [-h|--help]')
     print('   * (必要参数)')
     print('   -h, --help                 print usage.')
-    print(' * -f, --file xxx.wgl.zip     "....wgl.zip" filename')
+    print(' * -f, --file  param.dat     解码结果,自定义数据格式')
     print('   -l, --paramlist           列出所有的参数。')
     print(' * -p, --param  VRTG,GW      获取指定的参数内容。多个参数用逗号分隔,中间不要有空格。')
     print('   -w out/xxx.dat            把 -p 挑选的参数,压缩/不压缩写入单文件"out/xxx.dat"')

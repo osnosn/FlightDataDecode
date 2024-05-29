@@ -18,6 +18,7 @@
      str_utf8;  ->参数名称; 以'\0'结尾;
      str_utf8;  ->压缩算法,或不压缩; 以'\0'结尾; lzma,deflated,gzip,bzip2,none,
      str_utf8;  ->值的类型; 以'\0'结尾; float,int,str,csv,json;
+     str_utf8;  ->其他信息,json格式; 以'\0'结尾;
    };
    ...
  };
