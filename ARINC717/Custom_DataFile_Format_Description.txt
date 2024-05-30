@@ -3,8 +3,8 @@
  Header{
    str"QAR_Decoded_DATA_V1.0\0" ->文件tag标记; 以'\0'结尾;固定值,不变;
    u32; ->Header的byte数,size;Little-Endion;
-   str_utf8;  ->自定义描述字符串,包含Meta信息,比如机号,解码日期,...; 以'\0'结尾;
-   str_utf8;  ->File_Format_Description,文件格式描述; 以'\0'结尾;
+   str_utf8; ->自定义描述字符串,包含Meta信息,比如机号,解码日期,...; 以'\0'结尾;
+   str_utf8; ->File_Format_Description,文件格式描述; 以'\0'结尾;
  };
  Parameter_Table{
    u32; ->Parameter_Table的byte数,size;
@@ -12,13 +12,13 @@
      u16; ->Parameter01描述的byte数,size;Little-Endion;
      u64; ->从文件头0byte开始，指向Parameter01_DATA的起始位置; 
      u32; ->Parameter01_DATA的byte数,size;
-     u16;   ->单个值占用的byte数;
-     i16;   ->rate,每秒记录 X次;负值表示每 X秒记录一次;
-     i32;   ->start_frameID, 通常是0;
-     str_utf8;  ->参数名称; 以'\0'结尾;
-     str_utf8;  ->压缩算法,或不压缩; 以'\0'结尾; lzma,deflated,gzip,bzip2,none,
-     str_utf8;  ->值的类型; 以'\0'结尾; float,int,str,csv,json;
-     str_utf8;  ->其他信息,json格式; 以'\0'结尾;
+     u16; ->单个值占用的byte数;
+     i16; ->rate,每秒记录 X次;负值表示每 X秒记录一次;
+     i32; ->start_frameID, 通常是0;
+     str_utf8; ->参数名称; 以'\0'结尾;
+     str_utf8; ->压缩算法,或不压缩; 以'\0'结尾; xz,lzma,deflated,gzip,bzip2,none,
+     str_utf8; ->值的类型; 以'\0'结尾; float,int,str,csv,json;
+     str_utf8; ->其他信息,json格式; 以'\0'结尾; 比如,离散枚举值Options;
    };
    ...
  };

@@ -55,7 +55,7 @@ class DATAFILE():
         point=4
         while point < len(self.data_paramtable):
             size=struct.unpack('<H',self.data_paramtable[point:point+2])[0]
-            tmp = self.data_paramtable[point+22:point+size].split(b'\0',3)
+            tmp = self.data_paramtable[point+22:point+size].split(b'\0',5)
             if len(tmp)<3:
                 print('Parameter Table ERROR.',tmp)
                 return header,param
@@ -74,7 +74,7 @@ class DATAFILE():
         found=False
         while point < len(self.data_paramtable):
             size=struct.unpack('<H',self.data_paramtable[point:point+2])[0]
-            tmp = self.data_paramtable[point+22:point+size].split(b'\0',3)
+            tmp = self.data_paramtable[point+22:point+size].split(b'\0',5)
             if len(tmp)<3:
                 print('Parameter Table ERROR.',tmp)
                 return data
@@ -145,7 +145,7 @@ class DATAFILE():
         point=4
         while point < len(self.data_paramtable):
             size=struct.unpack('<H',self.data_paramtable[point:point+2])[0]
-            tmp = self.data_paramtable[point+22:point+size].split(b'\0',3)
+            tmp = self.data_paramtable[point+22:point+size].split(b'\0',5)
             if len(tmp)<3:
                 print('Parameter Table ERROR.',tmp)
                 return
