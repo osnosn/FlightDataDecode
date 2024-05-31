@@ -68,21 +68,24 @@ class DATAFILE():
         取出,解压,单个参数
         '''
         data=None
+        info=None
         if self.data_paramtable is None:
-            return data
+            return data,info
         point=4
-        found=False
+        found=0
         while point < len(self.data_paramtable):
             size=struct.unpack('<H',self.data_paramtable[point:point+2])[0]
             tmp = self.data_paramtable[point+22:point+size].split(b'\0',5)
             if len(tmp)<3:
                 print('Parameter Table ERROR.',tmp)
-                return data
+                return data,info
             elif pm.encode() == tmp[0]:
-                found=True
+                # 发现,某个参数名,有多个相同的解码记录(202405)
+                info=tmp[3].decode()  #参数的info
+                found+=1
                 break
             point += size
-        if found:
+        if found>0:
             data_point=struct.unpack('<Q',self.data_paramtable[point+2:point+10])[0]
             data_len=struct.unpack('<L',self.data_paramtable[point+10:point+14])[0]
             value_size=struct.unpack('<H',self.data_paramtable[point+14:point+16])[0]
@@ -128,8 +131,8 @@ class DATAFILE():
                 else:
                     data_t=[vv*(-1*float(rate)) for vv in range(0,len(data_v)) ]
                 #data=list(zip(data_t,data_v))
-                return (data_t,data_v)
-        return data
+                return (data_t,data_v),info
+        return data,info
     def pick_param(self,PARAM):
         '''
         挑出选取的参数, 单独写入,自定义格式的单文件
@@ -220,10 +223,12 @@ def main():
             df_all=pd.DataFrame()
             for pm in PARAM:
                 #取一个参数的DATA
-                one_pm = datafile.getparam(pm)
+                one_pm,info_pm = datafile.getparam(pm)
                 if one_pm is None:
                     print('  "{}" 没找到.'.format(pm))
                     continue
+                #print(pm,info_pm)  #参数的info
+                print(pm,json.loads(info_pm))  #参数的info
                 if isinstance(one_pm, tuple):
                     #非文本格式, 即 int,float格式
                     #导入DataFrame,多个参数合并

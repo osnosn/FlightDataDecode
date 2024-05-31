@@ -107,7 +107,7 @@ def usage():
     print('   -h, --help                print usage.')
     print('   -f, --file="....wgl.zip"     filename')
     print('   -p, --param ALT_STD       show "ALT_STD" param. 大小写敏感。')
-    print('   --paramlist               list all param name.')
+    print('   -l, --paramlist           list all param name.')
     print('   -w xxx.csv                参数写入文件"xxx.csv"')
     print('   -w xxx.csv.gz             参数写入文件"xxx.csv.gz"')
     print(u'\n               author: osnosn@126.com')
@@ -120,7 +120,7 @@ if __name__=='__main__':
         usage()
         exit()
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:],'hw:df:p:',['help','file=','paramlist','param=',])
+        opts, args = getopt.gnu_getopt(sys.argv[1:],'hw:df:p:l',['help','file=','paramlist','param=',])
     except getopt.GetoptError as e:
         print(e)
         usage()
@@ -140,7 +140,7 @@ if __name__=='__main__':
             WFNAME=value
         elif op in('-d',):
             DUMPDATA=True
-        elif op in('--paramlist',):
+        elif op in('-l','--paramlist',):
             PARAMLIST=True
         elif op in('-p','--param',):
             PARAM=value

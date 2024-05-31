@@ -14,6 +14,7 @@ import config_vec as conf
 import read_fra as FRA
 import read_par as PAR
 import json
+#import pandas as pd
 
 class ARINC717():
     '''
@@ -335,8 +336,9 @@ class ARINC717():
                     }
                 }
         regularlist,superlist=self.paramlist()
+        regularlist.pop(0) #去除第一项 "Regular Parameter Name"
         for param in regularlist:
-            param='VRTG'
+            #param='VRTG'  #测试用,只取一个参数
             #---find regular parameter----
             tmp=self.fra['2']
             idx=[]
@@ -362,14 +364,14 @@ class ARINC717():
                     #res: 系数 A,B,C; 转换公式, A+B*X+C*X*X
                     #res: [MinValue, MaxValue, resolutionA, resolutionB, resolutionC]
                     "res": [],
-                    "signed": True if int(par[6])>0 else False, #signBit
-                    "signRecType": True if int(par[6])>0 else False, #signBit
+                    "signed": True if len(par[6])>0 and int(par[6])>0 else False, #signBit
+                    "signRecType": True if len(par[6])>0 and int(par[6])>0 else False, #signBit
                     "superframe": 0,
                     "RecFormat": par[2], #Type (BCD,CHARACTER)
                     #ConvConfig: 类型为BCD/ISO，每一位"数字/字符"占用的bit数
                     "ConvConfig": [],
                     "Unit": '',
-                    "LongName": par[1],
+                    "LongName": par[1].strip(),
 
                     "rate": 0,
                     "FlagType": 0,
@@ -390,10 +392,14 @@ class ARINC717():
                     #如果有多个部分的bits的配置, 组合一下
                     for ii in range(len(par[36])):
                         VecConf["param"][param]['ConvConfig'].append(int(par[38][ii]))
+            #print()
+            #print(par)
+            #break #regularlist:
 
-            print()
-            print(par)
-            break #regularlist:
+        print('------- superlist 部分，还没有写 ----------')
+        superlist.pop(0) #去除第一项 "Superframe Parameter Name"
+        for param in superlist:
+            pass #没写完
 
         #print(regularlist)
         #print(superlist)
@@ -428,14 +434,24 @@ def main():
         #-----------参数写入csv文件--------------------
         if WFNAME is not None and len(WFNAME)>0:
             print('Write into file "%s".' % WFNAME)
-            df_pm=pd.concat([pd.DataFrame(regularlist),pd.DataFrame(superlist)])
-            df_pm.to_csv(WFNAME,sep='\t',index=False)
+            with open(WFNAME,'w') as wfp:
+                for vv in regularlist:
+                    wfp.write(vv+'\n')
+                for vv in superlist:
+                    wfp.write(vv+'\n')
+            #df_pm=pd.concat([pd.DataFrame(regularlist),pd.DataFrame(superlist)])
+            #df_pm.to_csv(WFNAME,sep='\t',index=False)
             return
         return
 
     if TOJSON:
         VecConf=myQAR.to_dict()
-        print(json.dumps(VecConf, ensure_ascii=False, indent=3))
+        if WFNAME is not None and len(WFNAME)>0:
+            print('Write into file "%s".' % WFNAME)
+            with open(WFNAME,'w') as wfp:
+                wfp.write(json.dumps(VecConf, ensure_ascii=False))
+        else:
+            print(json.dumps(VecConf, ensure_ascii=False, indent=3))
         return
 
     if PARAM is None:
@@ -452,9 +468,9 @@ def main():
                 print('Part:{0[0]:<5}, recordRate:{0[1]:<5}, subframe:{0[2]:<5}, word:{0[3]:<5}, bitOut:{0[4]:<5}, bitLen:{0[5]:<5}, bitIn:{0[6]:<5}, type:{0[7]:<5}, '.format(vv) )
             print()
         print('DataVer:',myQAR.dataVer())
-        print(myQAR.fra)
-        print()
-        print(myQAR.par)
+        #print(myQAR.fra)
+        #print()
+        #print(myQAR.par)
     else:
         #-----------获取一个参数的配置--------------------
         fra,par =myQAR.get_param(PARAM)
@@ -476,7 +492,8 @@ def usage():
     print(' * -p, --param alt_std        show "ALT_STD" param. 自动全部大写。')
     print('   -l, --paramlist   列出所有的参数名。')
     print('   -j                生成json格式的配置。')
-    print('   -w out/xxx.json   输出json格式的配置')
+    print('   -w out/xxx.json   -j 输出json格式的配置到文件')
+    print('   -w out/out.txt    -l 输出所有的参数名到文件')
     print(u'\n               author: osnosn@126.com')
     print(u' 认为此项目对您有帮助，请发封邮件给我，让我高兴一下.')
     print(u' If you think this project is helpful to you, please send me an email to make me happy.')

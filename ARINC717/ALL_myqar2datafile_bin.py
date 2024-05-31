@@ -87,8 +87,10 @@ def main():
             ii +=1
             if ii==1: continue  #第一个不是参数
             pm_list=myQAR.get_param(vv)
+            pm_par=getPAR(vv,myQAR.par)
+            other_info=json.dumps(pm_par,separators=(',',':'),ensure_ascii=False).encode()+b'\0'
             pm_name="{}.{}".format(ii,vv)
-            data_len, data_type, value_size, compress_type, other_info=write_datafile(mydatafile,pm_name,pm_list)
+            data_len, data_type, value_size, compress_type=write_datafile(mydatafile,pm_name,pm_list)
             data_rate=pm_list[1]['t']-pm_list[0]['t']
             #print(pm_list[1]['t'],pm_list[0]['t'],data_rate,flush=True)
             if data_rate<=1:
@@ -127,8 +129,10 @@ def main():
             ii +=1
             if ii==1: continue  #第一个不是参数
             pm_list=myQAR.get_param(vv)
+            pm_par=getPAR(vv,myQAR.par)
+            other_info=json.dumps(pm_par,separators=(',',':'),ensure_ascii=False).encode()+b'\0'
             pm_name="{}.{}".format(ii,vv)
-            data_len, data_type, value_size, compress_type, other_info=write_datafile(mydatafile,pm_name,pm_list)
+            data_len, data_type, value_size, compress_type=write_datafile(mydatafile,pm_name,pm_list)
             if data_rate<1:
                 data_rate= 1/data_rate
             else:
@@ -191,6 +195,7 @@ def write_datafile(mydatafile,pm_name, pm_list):
     data_type=b'txt\0'
     value_size=0
     if mydatafile is None:
+        #不写文件,就打印到终端
         if len(pm_list)>0:
             print([vv['v'] for vv in pm_list[0:10] ])
     else:
@@ -220,7 +225,6 @@ def write_datafile(mydatafile,pm_name, pm_list):
             data_type=b'json\0'
             value_size=0
 
-        other_info=b'{"other":"other msg"}\0'
 
         ### 解码数据的压缩
         #tmp_b=lzma.compress(tmp_str,format=lzma.FORMAT_XZ)    #有完整性检查
@@ -235,7 +239,50 @@ def write_datafile(mydatafile,pm_name, pm_list):
         data_len=len(tmp_b)
         mydatafile.write(tmp_b)
         print('mem:',sysmem())
-    return data_len, data_type, value_size, compress_type, other_info
+    return data_len, data_type, value_size, compress_type
+
+def getPAR(param,par):
+    param=param.upper()  #改大写
+    pm_find=None  #临时变量
+    for row in par:  #找出第一条匹配的记录, par中只会有一条记录
+        if row[0] == param:
+            pm_find=row
+            break
+    if pm_find is None:
+        return {}
+    else:
+        tmp_part=[]
+        if isinstance(pm_find[39], list):
+            #DISCRETE Options
+            for ii in range(len(pm_find[39])):
+                tmp_part.append([
+                    int(pm_find[39][ii]),
+                    pm_find[40][ii],
+                    ])
+    #print(pm_find)
+    info={}
+    info["RecFormat"]= pm_find[2]
+    info["Offset"]=pm_find[11]
+    info["Resol"]=pm_find[12]
+    info["Mode"]=pm_find[17]
+    info["显示位数"]=pm_find[20]
+    info["unit"]=pm_find[21]
+    info["Type"]=pm_find[25]
+    if pm_find[29] is not None:
+        info["Ares"]=pm_find[29]
+    if pm_find[30] is not None:
+        info["B"]=pm_find[30]
+    if pm_find[32] is not None:
+        info["X"]=pm_find[32]
+    if pm_find[33] is not None:
+        info["Y"]=pm_find[33]
+    if pm_find[34] is not None:
+        info["A"]=pm_find[34]
+    if pm_find[35] is not None:
+        info["Power"]=pm_find[35]
+    if len(tmp_part)>0:
+        info["Options"]= tmp_part
+    return info
 
 def showsize(size):
     '''

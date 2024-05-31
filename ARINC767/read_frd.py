@@ -247,7 +247,7 @@ def usage():
     print('   -v, --ver=78727      dataver 中的参数配置表')
     print('   --csv xxx.csv        save to "xxx.csv" file.')
     print('   --csv xxx.csv.gz     save to "xxx.csv.gz" file.')
-    print('   --paramlist          list all param name.')
+    print('   -l, --paramlist      list all param name.')
     print('   -p,--param alt_std   show "alt_std" param.')
     print(u'\n               author: osnosn@126.com')
     print()
@@ -257,7 +257,7 @@ if __name__=='__main__':
         usage()
         exit()
     try:
-        opts, args = getopt.gnu_getopt(sys.argv[1:],'hv:p:f:',['help','ver=','csv=','paramlist','param='])
+        opts, args = getopt.gnu_getopt(sys.argv[1:],'hv:p:f:l',['help','ver=','csv=','paramlist','param='])
     except getopt.GetoptError as e:
         print(e)
         usage()
@@ -277,7 +277,7 @@ if __name__=='__main__':
             DUMPDATA=True
         elif op in('--csv',):
             TOCSV=value
-        elif op in('--paramlist',):
+        elif op in('-l','--paramlist',):
             PARAMLIST=True
         elif op in('--param','-p',):
             PARAM=value
