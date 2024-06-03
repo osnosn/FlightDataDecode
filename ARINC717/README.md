@@ -12,8 +12,8 @@
   - 支持 二进制格式，json格式。 
   - 选取一个或多个参数，导出到"自定义单文件"，或导出到 csv文件。   
 * `Custom_DataFile_Format_Description.txt` 自定义单文件的描述。2024-04   
-* `Custom_config-717.json` 解码配置 (未完成)。2024-04   
-* `VEC717_to_json.py` 把VEC的配置,转换为json格式, 给FlightDataDecode2项目中rust程序用。(未完成,202405)   
+* `Custom_config-717.json` 自定义解码配置的格式 (未完成)。2024-04   
+* `VEC717_to_json.py` 把VEC的配置,转换为json格式, 给FlightDataDecode2项目中rust程序用。(未测试,202405)   
 * 附加了一个 arinc717 Aligned 的样例。样例数据经过处理，   
   **修改/脱敏了部分内容**。包括且不限于: 机号,航班号,日期,经纬度.... 2023-04   
 * 预计,今后不再更新了。   

@@ -596,6 +596,8 @@ class ARINC717():
                 bits= (1 << conf['blen']) -1
                 #把值移到最右(移动到bit0)，并获取值
                 value = ( word >> (conf['pos'] - conf['blen']) ) & bits
+            #部分的 BCD 也需要做系数转换,应该与这个配置有关(Offset=0或100), 比如:ILS1_FRQ,VOR1_FRQ,ADF1_FRQ
+            # 这个系数转换，这里没写。
             return value * sign
 
     def arinc429_BNR_decode(self, word,conf):
