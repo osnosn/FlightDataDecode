@@ -189,12 +189,13 @@ def write_datafile(mydatafile,pm_name, pm_list):
         #tmp_str=df_pm.to_json(None,orient='table',index=False)
 
         ### 解码数据的压缩
+        ### lzma占用内存大,bzip2占用内存小,bzip2速度快,两者压缩率在此场景下相差约一倍
         #tmp_b=lzma.compress(bytes(tmp_str,'utf8'),format=lzma.FORMAT_XZ)    #有完整性检查
         #compress_type=b'xz\0'
-        tmp_b=lzma.compress(bytes(tmp_str,'utf8'),format=lzma.FORMAT_ALONE)  #无完整性检查
-        compress_type=b'lzma\0'
-        #tmp_b=bz2.compress(bytes(tmp_str,'utf8'),compresslevel=9)
-        #compress_type=b'bzip2\0'
+        #tmp_b=lzma.compress(bytes(tmp_str,'utf8'),format=lzma.FORMAT_ALONE)  #无完整性检查
+        #compress_type=b'lzma\0'
+        tmp_b=bz2.compress(bytes(tmp_str,'utf8'),compresslevel=9)
+        compress_type=b'bzip2\0'
         #tmp_b=gzip.compress(bytes(tmp_str,'utf8'),compresslevel=9)
         #compress_type=b'gzip\0'
 

@@ -70,9 +70,7 @@ def main():
         #准备Parameter_Table
         parameter_table=bytearray(b"\0\0\0\0") #Parameter_Table size
 
-        mydatafile=None
-        if WFNAME is not None and len(WFNAME)>0:
-            mydatafile=open(WFNAME+'.tmp','wb')
+        parameter_data=bytearray() #存放 压缩/未压缩 的解码数据
         #-----------列出记录中的所有参数名称--------------
         regularlist,superlist=myQAR.paramlist()
         total_pm=0
@@ -90,7 +88,7 @@ def main():
             pm_par=getPAR(vv,myQAR.par)
             other_info=json.dumps(pm_par,separators=(',',':'),ensure_ascii=False).encode()+b'\0'
             pm_name="{}.{}".format(ii,vv)
-            data_len, data_type, value_size, compress_type=write_datafile(mydatafile,pm_name,pm_list)
+            data_len, data_type, value_size, compress_type=write_datafile(parameter_data,pm_name,pm_list)
             data_rate=pm_list[1]['t']-pm_list[0]['t']
             #print(pm_list[1]['t'],pm_list[0]['t'],data_rate,flush=True)
             if data_rate<=1:
@@ -132,7 +130,7 @@ def main():
             pm_par=getPAR(vv,myQAR.par)
             other_info=json.dumps(pm_par,separators=(',',':'),ensure_ascii=False).encode()+b'\0'
             pm_name="{}.{}".format(ii,vv)
-            data_len, data_type, value_size, compress_type=write_datafile(mydatafile,pm_name,pm_list)
+            data_len, data_type, value_size, compress_type=write_datafile(parameter_data,pm_name,pm_list)
             if data_rate<1:
                 data_rate= 1/data_rate
             else:
@@ -160,25 +158,20 @@ def main():
         print('mem:',sysmem())
         #填入 Parameter_Table 的 size
         parameter_table[0:4]=struct.pack('<L',len(parameter_table)) #long,4byte,Little-Endion
-        if mydatafile is not None:
-            mydatafile.close()
+        point=4
+        data_point=len(datafile_header)+len(parameter_table)
+        while point < len(parameter_table)-8:
+            #填入 Parameter01_DATA 的起始位置
+            parameter_table[point+2:point+10] = struct.pack('<Q',data_point)   #long long,8byte,Little-Endion
+            data_point += struct.unpack('<L',parameter_table[point+10:point+14])[0]  #long,4byte
+            one_param_size = struct.unpack('<H',parameter_table[point:point+2])[0]   #short,2byte
+            point += one_param_size
 
-            point=4
-            data_point=len(datafile_header)+len(parameter_table)
-            while point < len(parameter_table)-8:
-                #填入 Parameter01_DATA 的起始位置
-                parameter_table[point+2:point+10] = struct.pack('<Q',data_point)   #long long,8byte,Little-Endion
-                data_point += struct.unpack('<L',parameter_table[point+10:point+14])[0]  #long,4byte
-                one_param_size = struct.unpack('<H',parameter_table[point:point+2])[0]   #short,2byte
-                point += one_param_size
-
-            with open(WFNAME,'wb') as fp:
-                fp.write(datafile_header)
-                fp.write(parameter_table)
-                with open(WFNAME+'.tmp','rb') as ftmp:
-                    fp.write(ftmp.read())
-            # rm WFNAME+'.tmp'
-            os.remove(WFNAME+'.tmp')
+        if WFNAME is not None and len(WFNAME)>0:
+            with open(WFNAME,'wb') as mydatafile:
+                mydatafile.write(datafile_header)
+                mydatafile.write(parameter_table)
+                mydatafile.write(parameter_data)
 
     print('mem:',sysmem())
     myQAR.close()
@@ -189,12 +182,12 @@ def main():
 import lzma
 import bz2
 import gzip
-def write_datafile(mydatafile,pm_name, pm_list):
+def write_datafile(parameter_data,pm_name, pm_list):
     #-----------参数写入data文件--------------------
     data_len=0
     data_type=b'txt\0'
     value_size=0
-    if mydatafile is None:
+    if parameter_data is None:
         #不写文件,就打印到终端
         if len(pm_list)>0:
             print([vv['v'] for vv in pm_list[0:10] ])
@@ -227,17 +220,18 @@ def write_datafile(mydatafile,pm_name, pm_list):
 
 
         ### 解码数据的压缩
+        ### lzma占用内存大,bzip2占用内存小,bzip2速度快,两者压缩率在此场景下差不多
         #tmp_b=lzma.compress(tmp_str,format=lzma.FORMAT_XZ)    #有完整性检查
         #compress_type=b'xz\0'
-        tmp_b=lzma.compress(tmp_str,format=lzma.FORMAT_ALONE)  #无完整性检查
-        compress_type=b'lzma\0'
-        #tmp_b=bz2.compress(tmp_str,compresslevel=9)
-        #compress_type=b'bzip2\0'
+        #tmp_b=lzma.compress(tmp_str,format=lzma.FORMAT_ALONE)  #无完整性检查
+        #compress_type=b'lzma\0'
+        tmp_b=bz2.compress(tmp_str,compresslevel=9)
+        compress_type=b'bzip2\0'
         #tmp_b=gzip.compress(tmp_str,compresslevel=9)
         #compress_type=b'gzip\0'
 
         data_len=len(tmp_b)
-        mydatafile.write(tmp_b)
+        parameter_data.extend(tmp_b)
         print('mem:',sysmem())
     return data_len, data_type, value_size, compress_type
 
