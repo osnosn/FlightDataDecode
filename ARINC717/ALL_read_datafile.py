@@ -227,8 +227,8 @@ def main():
                 if one_pm is None:
                     print('  "{}" 没找到.'.format(pm))
                     continue
-                #print(pm,info_pm)  #参数的info
-                print(pm,json.loads(info_pm))  #参数的info
+                print(pm,info_pm)  #参数的info
+                #print(pm,json.loads(info_pm))  #参数的info
                 if isinstance(one_pm, tuple):
                     #非文本格式, 即 int,float格式
                     #导入DataFrame,多个参数合并
@@ -236,11 +236,17 @@ def main():
                     df_all=pd.concat([df_all,df],axis=1, ignore_index=False)
                 else:
                     #文本格式
-                    data=json.loads(one_pm)
-                    data_t,data_v=zip(*data)
-                    #导入DataFrame,多个参数合并
-                    df = pd.DataFrame(data_v,index=data_t,columns=[pm,])
-                    df_all=pd.concat([df_all,df],axis=1, ignore_index=False)
+                    try:
+                        data=json.loads(one_pm)
+                    except json.decoder.JSONDecodeError as e:
+                        print("=>INFO, data value is Not a json STRING")
+                        print(one_pm)
+                        print()
+                    else:
+                        data_t,data_v=zip(*data)
+                        #导入DataFrame,多个参数合并
+                        df = pd.DataFrame(data_v,index=data_t,columns=[pm,])
+                        df_all=pd.concat([df_all,df],axis=1, ignore_index=False)
             if WFNAME is not None and len(WFNAME) >0:  
                 #写csv文件
                 df_all.to_csv(WFNAME)
