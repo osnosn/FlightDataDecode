@@ -1,6 +1,6 @@
 # ARINC767 目录  
 
-### 更新  
+## 更新  
   * ~~等 wgl 目录中的测试程序完成后，再做。2022-02~~   
   * 格式不复杂, xml定义文件, 本应该随着原始记录文件,打包在一起的。可惜我拿到的原始记录文件中, xml被摘除了。所以无法通过 xml 定义文件解码。2022-02   
   * xml 定义文件，由 AGS 软件转换并保存。导出它的配置，可以完成解码。   
@@ -13,7 +13,7 @@
   * 预计,今后不再更新了。   
 
 
-### 说明  
+## 说明  
 **此目录的程序，是用来解码 ARINC 767 格式的文件。**   
   * `647a-1.zip` XML 样例, 来源 https://www.aviation-ia.com/support-files/647a-1
   * 能找出每帧的开始和结束。找出帧头,和帧尾的格式。   
@@ -52,12 +52,12 @@ Usage:
    -w xxx.csv                参数写入文件"xxx.csv"
    -w xxx.csv.gz             参数写入文件"xxx.csv.gz"
 ```
-* 这几个文件，是用于修改原始数据的程序。2023-04   
+* 这几个文件，是用于脱敏/修改原始数据的程序。2023-04   
   * Get_param_from_arinc767_modify.py   
   * modify_TEST_myqar.py   
 
 
-### 其他  
+## 其他  
 * 认为此项目对您有帮助，请点个星星，或留个言，或发封邮件给我，让我高兴一下.  
   If you think this project is helpful to you, click a Star, or leave a message, or send me an Email to make me happy.
 

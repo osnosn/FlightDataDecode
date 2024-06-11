@@ -13,9 +13,11 @@ vec 和 air 配置文件，是从 AGS 软件中导出的。
 ----
 
 从airfase中，可以导出4中文件。FAP, Frame, PRM, FRED.   
-* FRED 没见过, 不知道内容。可能是FRED。   
+* 可能是FRED. FRED 没见过, 不知道内容。   
+
 如图:   
 <img src="https://github.com/osnosn/FlightDataDecode/raw/main/wgl/vec/airfase-app.jpg" width="300" />   
    ----  图2  ----   
+
 
 

@@ -1,18 +1,18 @@
 # ARINC717 目录   
 
-### 更新   
+## 更新   
 * 整理完成。 2022-02   
 * 使用的例程是 `TEST_myqar.py`。一次解码一个参数。2022-02   
 * 解码所有参数, 以csv格式写入压缩文件 `ALL_myqar.py`。2024-04   
 * 解码所有参数写入单文件,自定义格式。`ALL_myqar2datafile.py`。2024-04   
-  - json方式写。最早的测试程序。   
+  - json方式写。早期的测试程序。   
 * 解码所有参数写入单文件,自定义格式。`ALL_myqar2datafile_bin.py`。2024-04   
   - 二进制 (binary)方式写。文件更小。   
 * 读取单文件(自定义格式)中的参数,导入pandas.DataFrame()中。`ALL_read_datafile.py`。2024-04   
   - 支持 二进制格式，json格式。 
   - 选取一个或多个参数，导出到"自定义单文件"，或导出到 csv文件。   
 * `Custom_DataFile_Format_Description.txt` 自定义单文件的描述。2024-04   
-* `Custom_config-717.json` 自定义解码配置的格式 (未完成)。2024-04   
+* `Custom_config-717.json` 自定义解码配置的格式 (未完成,放弃了)。2024-04   
 * `VEC717_to_json.py` 把VEC的配置,转换为json格式, 给[FlightDataDecode2](https://github.com/osnosn/FlightDataDecode2)项目中rust程序用。(未测试,202405)   
 * 附加了一个 arinc717 Aligned 的样例。样例数据经过处理，   
   **修改/脱敏了部分内容**。包括且不限于: 机号,航班号,日期,经纬度.... 2023-04   
@@ -20,7 +20,7 @@
 
 
 
-### 说明   
+## 说明   
 **此目录的程序，是用来解码 ARINC 717 Aligned 格式的文件。**   
 ARINC 717 Aligned 文件,是从 ARINC 717 文件整理而来。主要做了两件事,   
   * 把 12 bits word 找出来, 存为 16 bits(2 bytes)。补在高位的 4 bits 可以根据需要设置些状态。比如,表示当前帧是补的。   
@@ -61,13 +61,13 @@ Usage:
    -w xxx.csv            参数写入文件"xxx.csv"
    -w xxx.csv.gz         参数写入文件"xxx.csv.gz"
 ```
-* 这几个文件，是用于修改原始数据的程序。2023-04   
+* 这几个文件，是用于脱敏/修改原始数据的程序。2023-04   
   * Get_param_from_arinc717_aligned_modify.py   
   * modify_tag.py   
   * modify_TEST_myqar.py   
 
 
-### 其他  
+## 其他  
 * 认为此项目对您有帮助，请点个星星，或留个言，或发封邮件给我，让我高兴一下.  
   If you think this project is helpful to you, click a Star, or leave a message, or send me an Email to make me happy.
 
