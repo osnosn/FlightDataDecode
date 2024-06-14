@@ -275,6 +275,7 @@ class ARINC717():
     def paramlist(self):
         '''
         获取所有的记录参数名称，包括 regular 和 superframe 参数
+        这里需要对这两个列表, 去重. 因为有重复的参数名
         '''
         if self.fra is None:
             print('Empty dataVer.',flush=True)
@@ -303,8 +304,9 @@ class ARINC717():
         self.par_dataver=-1
     def to_dict(self):
         fra=self.fra
+        WordPerSec=int(fra['1'][1][1])
         VecConf={
-                "WordPerSec": int(fra['1'][1][1]),
+                "WordPerSec": WordPerSec,
                 "SyncBitLen":int(fra['1'][1][2]),
                 "SyncWords": [
                     int(fra['1'][1][3],16),
@@ -315,12 +317,13 @@ class ARINC717():
                 "SuperFramePerCycle": 0, #没有这个值
                 "param": {
                     "SuperFrameCounter": {
-                        #words: [ subframe,word,lsb,msb,targetBit]
+                        #words: [ superFrame,subframe,word,lsb,msb,targetBit]
                         "words": [[
+                            0, #为0, superFrame
                             int(fra['1'][1][7]),
                             int(fra['1'][1][8]),
-                            int(fra['1'][1][9]),
                             int(fra['1'][1][9])-int(fra['1'][1][10])+1,
+                            int(fra['1'][1][9]),
                             0,
                             ]],
                         "FirstValue": int(fra['1'][1][11]),
@@ -335,240 +338,285 @@ class ARINC717():
                         }
                     }
                 }
-        regularlist,superlist=self.paramlist()
+        regularlist,superlist=self.paramlist() #已经去重
         print('------- regularlist 部分 ----------',file=sys.stderr)
         regularlist.pop(0) #去除第一项 "Regular Parameter Name"
+        fra_2=self.fra['2']
         for param in regularlist:
             #---find regular parameter----
-            tmp=self.fra['2']
             idx=[]
             ii=0
-            for row in tmp: #找出所有记录,一个参数会有多条记录
+            for row in fra_2: #找出所有记录,一个参数会有多条记录
                 if row[0] == param: idx.append(ii)
                 ii +=1
+            pm_fra=self.getFRA(param)
+            if len(idx)<1 or len(pm_fra['2'])<1:
+                #通常,不会找不到
+                print('ERROR,',param,'NotFound',file=sys.stderr)
+                continue
+            pmset=self.getDataFrameSet(pm_fra['2'],WordPerSec)
 
-            if len(idx)>0:  #找到记录
-                #---从par中找到记录---
-                par=None
-                for row in self.par:  #找出第一条匹配的记录, par中只会有一条记录
-                    if row[0] == param:
-                        par=row
-                        break
-                if par is None:
-                    print("ERROR, par中没找到记录",param,file=sys.stderr)
-                    #continue #regularlist:
+            #---从par中找到记录---
+            #par=self.getPAR(param) #没使用这个函数
+            par=None
+            for row in self.par:  #找出第一条匹配的记录, par中只会有一条记录
+                if row[0] == param:
+                    par=row
                     break
-                VecConf["param"][param]={
-                    #words: [ subframe,word,lsb,msb,targetBit]
-                    "words": [],
-                    #res: 系数 A,B,C; 转换公式, A+B*X+C*X*X
-                    #res: [MinValue, MaxValue, resolutionA, resolutionB, resolutionC]
-                    "res": [],
-                    "signed": True if len(par[6])>0 and int(par[6])>0 else False, #signBit
-                    "signRecType": True if len(par[6])>0 and int(par[6])>0 else False, #signBit
-                    "superframe": 0,
-                    "RecFormat": par[2], #Type (BCD,CHARACTER)
-                    #ConvConfig: 类型为BCD/ISO，每一位"数字/字符"占用的bit数
-                    "ConvConfig": [],
-                    "Unit": '',
-                    "LongName": par[1].strip(),
+            if par is None:
+                print("ERROR, NotFound par中没找到记录",param,file=sys.stderr)
+                continue #regularlist:
+                #break
+            VecConf["param"][param]={
+                #words: [ superFrame,subframe,word,lsb,msb,targetBit]
+                "words": [],
+                #res: 系数 A,B,C; 转换公式, A+B*X+C*X*X
+                #res: [MinValue, MaxValue, resolutionA, resolutionB, resolutionC]
+                "res": [],
+                "signed":      True if len(par[6])>0 and int(par[6])>0 else False, #signBit
+                #不用了"signRecType": True if len(par[6])>0 and int(par[6])>0 else False, #signBit
+                "superframe": 0,
+                "RecFormat": par[2], #Type (BCD,CHARACTER)
+                #ConvConfig: 类型为BCD/ISO，每一位"数字/字符"占用的bit数
+                "ConvConfig": [],
+                "Unit": '',
+                "LongName": par[1].strip(),
 
-                    "rate": 0,
-                    "FlagType": 0,
-                    "range": [],
-                    "rawRes": [],
-                    #Options: 类型为DIS，枚举值
-                    "Options": [],
-                    }
-                VecConf["param"][param]['range'].append([
-                    float(par[15]),
-                    float(par[16]),
-                    ]) #operational range(Min,Max)
-                resol=par[12]
-                if len(resol)<1:
-                    resol=1.0
-                elif resol.find('Resol=')==0:
-                    resol=float(resol[6:])
+                "rate": 0,
+                "FlagType": 0,
+                "range": [],
+                "rawRes": [],
+                #Options: 类型为DIS，枚举值
+                "Options": [],
+                }
+            VecConf["param"][param]['range'].append([
+                float(par[15]),
+                float(par[16]),
+                ]) #operational range(Min,Max)
+            resol=par[12]
+            if len(resol)<1:
+                resol=1.0
+            elif resol.find('Resol=')==0:
+                resol=float(resol[6:])
+            else:
+                print('resol:',resol,file=sys.stderr)
+            #要根据fra中bitLen, 和par中MSB,bitLen调整系数，通常需要调整为原系数的2,4,8倍
+            offset=0.0
+            if par[11]=='0':
+                pass
+            elif par[11]=='100':
+                offset=100.0
+                if resol==1.0:
+                    resol=0.01
                 else:
-                    print('resol:',resol,file=sys.stderr)
-                offset=0.0
-                if par[11]=='0':
-                    pass
-                elif par[11]=='100':
-                    offset=100.0
-                    if resol==1.0:
-                        resol=0.01
-                    else:
-                        print('offset=100; resol=',resol,file=sys.stderr)
-                        #resol *=0.01
-                elif len(par[11])>0:
-                    print('offset:',par[11],file=sys.stderr)
-                    offset=float(par[11])
-                VecConf["param"][param]['res'].append([
-                    float(par[13]),
-                    float(par[14]),
-                    offset,
-                    resol,
-                    0.0,
-                    ]) #[WordMin,WordMax,Offset,Resol,0 ]
-                for ii in idx:
-                    VecConf["param"][param]['words'].append([
-                        int(tmp[ii][3]),   #subframe, 位于哪个subframe(1-4)
-                        int(tmp[ii][4]),   #word, 在subframe中第几个word(sync word编号为1)
-                        int(tmp[ii][5]),   #bitOut, 在12bit中,第几个bit开始
-                        int(tmp[ii][5])-int(tmp[ii][6])+1,  #bitLen
-                        int(tmp[ii][7]),   #bitIn,  写入arinc429的32bits word中,从第几个bits开始写
+                    print('offset=100; resol=',resol,file=sys.stderr)
+                    #resol *=0.01
+            elif len(par[11])>0:
+                print('offset:',par[11],file=sys.stderr)
+                offset=float(par[11])
+            VecConf["param"][param]['res'].append([
+                float(par[13]),
+                float(par[14]),
+                offset,
+                resol,
+                0.0,
+                ]) #[WordMin,WordMax,Offset,Resol,0 ]
+            ## 需要用 fra中的bitIn,对比 par中MSB,bitLen 重新计算target值，
+            # 因为fra中同一组的多个部分,bit会有重叠, 放入arinc429后,按par取值,会有错位
+            # target值经过重新计算后,按需调整resol的值
+            for group in pmset:
+                #group.reverse() #倒序
+                group.sort(key=lambda x:x['bin']) #按bin排序
+                one_set=[]
+                for Iset in group:
+                    one_set.extend([
+                        0, #superFrame, 对于普通参数,为0
+                        int(Iset['sub']),   #subframe, 位于哪个subframe(1-4)
+                        int(Iset['word']),   #word, 在subframe中第几个word(sync word编号为1)
+                        int(Iset['bout'])-int(Iset['blen'])+1,  #bitLen
+                        int(Iset['bout']),   #bitOut,MSB 在12bit中,第几个bit开始
+                        int(Iset['bin']),   #bitIn,  写入arinc429的32bits word中,从第几个bits开始写
                         ])
-                    # rawRes取值位置，ragula与super不同,一个是8,9,10一个是 9,10,11
-                    VecConf["param"][param]['rawRes'].append([
-                        float(tmp[ii][9]) if len(tmp[ii][9])>0 else 0,
-                        float(tmp[ii][10]) if len(tmp[ii][10])>0 else 0,
-                        float(tmp[ii][11])
-                        ]) #[min,max,resolution]
-                    VecConf["param"][param]['rate']=int(tmp[ii][2])
-                if isinstance(par[38], list):
-                    #如果有多个部分的bits的配置, 组合一下
-                    for ii in range(len(par[36])):
-                        VecConf["param"][param]['ConvConfig'].append(int(par[38][ii]))
-                elif isinstance(par[38], str) and len(par[38])>0:
-                    VecConf["param"][param]['ConvConfig'].append(int(par[38]))
-                if isinstance(par[39], list):
-                    #如果有多个Option的配置, 组合一下
-                    for ii in range(len(par[39])):
-                        VecConf["param"][param]['Options'].append(( int(par[39][ii]),par[40][ii] ))
-                #检查一下
-                if VecConf["param"][param]['RecFormat'].find('BCD')>=0 and len(VecConf["param"][param]['ConvConfig'])<1:
-                    print(' =>ERROR, {}, BCD has no ConvConfig'.format(param),file=sys.stderr)
-                elif VecConf["param"][param]['RecFormat'].find('DIS')>=0 and len(VecConf["param"][param]['Options'])<1:
-                    print(' =>ERROR, {}, DISCRETE has no Options'.format(param),file=sys.stderr)
+                VecConf["param"][param]['words'].append(one_set)
+            for ii in idx:
+                # rawRes取值位置，ragula与super不同,一个是8,9,10一个是 9,10,11
+                VecConf["param"][param]['rawRes'].append([
+                    float(fra_2[ii][9]) if len(fra_2[ii][9])>0 else 0,
+                    float(fra_2[ii][10]) if len(fra_2[ii][10])>0 else 0,
+                    float(fra_2[ii][11])
+                    ]) #[min,max,resolution]
+                VecConf["param"][param]['rate']=int(fra_2[ii][2])
+            if isinstance(par[38], list):
+                #如果有多个部分的bits的配置, 组合一下
+                for ii in range(len(par[36])):
+                    VecConf["param"][param]['ConvConfig'].append(int(par[38][ii]))
+            elif isinstance(par[38], str) and len(par[38])>0:
+                VecConf["param"][param]['ConvConfig'].append(int(par[38]))
+            if isinstance(par[39], list):
+                #如果有多个Option的配置, 组合一下
+                for ii in range(len(par[39])):
+                    VecConf["param"][param]['Options'].append(( int(par[39][ii]),par[40][ii] ))
+            #检查一下
+            if VecConf["param"][param]['RecFormat'].find('BCD')>=0 and len(VecConf["param"][param]['ConvConfig'])<1:
+                print(' =>ERROR, {}, BCD has no ConvConfig'.format(param),file=sys.stderr)
+            elif VecConf["param"][param]['RecFormat'].find('DIS')>=0 and len(VecConf["param"][param]['Options'])<1:
+                print(' =>ERROR, {}, DISCRETE has no Options'.format(param),file=sys.stderr)
             #pass #regularlist:
 
-        tmp=self.fra['3']
-        VecConf["param"]['SuperFramePosInfo']=tmp.pop(0) #第一行是说明
-        SuperFramePos=[]
-        for vv in tmp:
-            SuperFramePos.append([int(xx) for xx in vv])
-        VecConf["param"]['SuperFramePos']=SuperFramePos
+        fra_3=self.fra['3']
+        VecConf['SuperFramePosInfo']=fra_3.pop(0) #第一行是说明,保存在json中
+        #SuperFramePos 的编号不是连续的
+        SuperFramePos={}
+        for vv in fra_3:
+            SuperFramePos[int(vv[0])]=[int(xx) for xx in vv]
+        VecConf['SuperFramePos']=SuperFramePos
 
         print('------- superlist 部分 ----------',file=sys.stderr)
         superlist.pop(0) #去除第一项 "Superframe Parameter Name"
+        fra_4=self.fra['4']
         for param in superlist:
             #---find superframe parameter----
-            tmp=self.fra['4']
             idx=[]
             ii=0
-            for row in tmp: #找出所有记录,一个参数会有多条记录
+            for row in fra_4: #找出所有记录,一个参数会有多条记录
                 if row[0] == param: idx.append(ii)
                 ii +=1
 
-            if len(idx)>0:  #找到记录
-                if len(idx)>1:
-                    #有多条记录的
-                    print(param,idx,file=sys.stderr)
-                #---从par中找到记录---
-                par=None
-                for row in self.par:  #找出第一条匹配的记录, par中只会有一条记录
-                    if row[0] == param:
-                        par=row
-                        break
-                if par is None:
-                    print("ERROR, par中没找到记录",param,file=sys.stderr)
-                    #continue #superlist:
-                    break
-                VecConf["param"][param]={
-                    #words: [ subframe,word,lsb,msb,targetBit]
-                    "words": [],
-                    #res: 系数 A,B,C; 转换公式, A+B*X+C*X*X
-                    #res: [MinValue, MaxValue, resolutionA, resolutionB, resolutionC]
-                    "res": [],
-                    "signed": True if len(par[6])>0 and int(par[6])>0 else False, #signBit
-                    "signRecType": True if len(par[6])>0 and int(par[6])>0 else False, #signBit
-                    "superframe": 0,
-                    "RecFormat": par[2], #Type (BCD,CHARACTER)
-                    #ConvConfig: 类型为BCD/ISO，每一位"数字/字符"占用的bit数
-                    "ConvConfig": [],
-                    "Unit": '',
-                    "LongName": par[1].strip(),
+            pm_fra=self.getFRA(param)
+            if len(idx)<1 or len(pm_fra['4'])<1:
+                #通常,不会找不到
+                print('ERROR,',param,'NotFound',file=sys.stderr)
+                continue
+            if len(idx)>1:
+                #有多条记录的
+                print(param,idx,file=sys.stderr)
 
-                    "rate": 0,
-                    "FlagType": 0,
-                    "range": [],
-                    "rawRes": [],
-                    #Options: 类型为DIS，枚举值
-                    "Options": [],
-                    }
-                VecConf["param"][param]['range'].append([
-                    float(par[15]),
-                    float(par[16]),
-                    ]) #operational range(Min,Max)
-                resol=par[12]
-                if len(resol)<1:
-                    resol=1.0
-                elif resol.find('Resol=')==0:
-                    resol=float(resol[6:])
+            #---从par中找到记录---
+            #par=self.getPAR(param) #没有使用此函数
+            par=None
+            for row in self.par:  #找出第一条匹配的记录, par中只会有一条记录
+                if row[0] == param:
+                    par=row
+                    break
+            if par is None:
+                print("ERROR, NotFound par中没找到记录",param,file=sys.stderr)
+                continue #superlist:
+                #break
+            VecConf["param"][param]={
+                #words: [ superFrame,subframe,word,lsb,msb,targetBit]
+                "words": [],
+                #res: 系数 A,B,C; 转换公式, A+B*X+C*X*X
+                #res: [MinValue, MaxValue, resolutionA, resolutionB, resolutionC]
+                "res": [],
+                "signed":      True if len(par[6])>0 and int(par[6])>0 else False, #signBit
+                #不用了"signRecType": True if len(par[6])>0 and int(par[6])>0 else False, #signBit
+                "superframe": 0,
+                "RecFormat": par[2], #Type (BCD,CHARACTER)
+                #ConvConfig: 类型为BCD/ISO，每一位"数字/字符"占用的bit数
+                "ConvConfig": [],
+                "Unit": '',
+                "LongName": par[1].strip(),
+
+                "rate": 0,
+                "FlagType": 0,
+                "range": [],
+                "rawRes": [],
+                #Options: 类型为DIS，枚举值
+                "Options": [],
+                }
+            VecConf["param"][param]['range'].append([
+                float(par[15]),
+                float(par[16]),
+                ]) #operational range(Min,Max)
+            resol=par[12]
+            if len(resol)<1:
+                resol=1.0
+            elif resol.find('Resol=')==0:
+                resol=float(resol[6:])
+            else:
+                print('resol:',resol,file=sys.stderr)
+            offset=0.0
+            if par[11]=='0':
+                pass
+            elif par[11]=='100':
+                offset=100.0
+                if resol==1.0:
+                    resol=0.01
                 else:
-                    print('resol:',resol,file=sys.stderr)
-                offset=0.0
-                if par[11]=='0':
-                    pass
-                elif par[11]=='100':
-                    offset=100.0
-                    if resol==1.0:
-                        resol=0.01
-                    else:
-                        print('offset=100; resol=',resol,file=sys.stderr)
-                        #resol *=0.01
-                elif len(par[11])>0:
-                    print('offset:',par[11],file=sys.stderr)
-                    offset=float(par[11])
-                VecConf["param"][param]['res'].append([
-                    float(par[13]),
-                    float(par[14]),
-                    offset,
-                    resol,
-                    0,
-                    ]) #[WordMin,WordMax,Offset,Resol,0 ]
-                superframe_old=0
-                for ii in idx:
-                    VecConf["param"][param]['words'].append([
-                        #int(tmp[ii][3]),   #SuperframeNo
-                        SuperFramePos[int(tmp[ii][3])-1][1], #subframe, 位于哪个subframe(1-4)
-                        SuperFramePos[int(tmp[ii][3])-1][2], #word, 在subframe中第几个word(sync word编号为1)
-                        int(tmp[ii][5]),   #bitOut, 在12bit中,第几个bit开始
-                        int(tmp[ii][5])-int(tmp[ii][6])+1, #bitLen
-                        int(tmp[ii][7]),   #bitIn,  写入arinc429的32bits word中,从第几个bits开始写
-                        #SuperFramePos[int(tmp[ii][3])-1][3], #BitOut
-                        #SuperFramePos[int(tmp[ii][3])-1][4], #DataBits=bitLen
-                        #SuperFramePos[int(tmp[ii][3])-1][5], #??target??
-                        ])
-                    # rawRes取值位置，ragula与super不同,一个是8,9,10一个是 9,10,11
-                    VecConf["param"][param]['rawRes'].append([
-                        float(tmp[ii][8]) if len(tmp[ii][8])>0 else 0,
-                        float(tmp[ii][9]) if len(tmp[ii][9])>0 else 0,
-                        float(tmp[ii][10])
-                        ]) #[min,max,resolution]
-                    VecConf["param"][param]['rate']=int(tmp[ii][1]) * -1 #Period of
-                    VecConf["param"][param]['superframe']=int(tmp[ii][4]) #Frame
-                    if superframe_old<=0:
-                        superframe_old=int(tmp[ii][4])
-                    elif superframe_old != int(tmp[ii][4]):
-                        print(' =>ERROR,{},多个取值不在同一个SuperFrame中,{}->{}'.format(param,superframe_old,int(tmp[ii][4])),file=sys.stderr)
-                        superframe_old=int(tmp[ii][4])
-                if isinstance(par[38], list):
-                    #如果有多个部分的bits的配置, 组合一下
-                    for ii in range(len(par[36])):
-                        VecConf["param"][param]['ConvConfig'].append(int(par[38][ii]))
-                elif isinstance(par[38], str) and len(par[38])>0:
-                    VecConf["param"][param]['ConvConfig'].append(int(par[38]))
-                if isinstance(par[39], list):
-                    #如果有多个Option的配置, 组合一下
-                    for ii in range(len(par[39])):
-                        VecConf["param"][param]['Options'].append(( int(par[39][ii]),par[40][ii] ))
-                #检查一下
-                if VecConf["param"][param]['RecFormat'].find('BCD')>=0 and len(VecConf["param"][param]['ConvConfig'])<1:
-                    print(' =>ERROR, {}, BCD has no ConvConfig'.format(param),file=sys.stderr)
-                elif VecConf["param"][param]['RecFormat'].find('DIS')>=0 and len(VecConf["param"][param]['Options'])<1:
-                    print(' =>ERROR, {}, DISCRETE has no Options'.format(param),file=sys.stderr)
+                    print('offset=100; resol=',resol,file=sys.stderr)
+                    #resol *=0.01
+            elif len(par[11])>0:
+                print('offset:',par[11],file=sys.stderr)
+                offset=float(par[11])
+            VecConf["param"][param]['res'].append([
+                float(par[13]),
+                float(par[14]),
+                offset,
+                resol,
+                0,
+                ]) #[WordMin,WordMax,Offset,Resol,0 ]
+            superframe_old=0
+            pm_fra4=pm_fra['4']
+            one_set=[]
+            last_part=0
+            #对于super参数,应该都放入同一组中, 通常super参数, 在一个循环中只记录一次
+            # super参数, 如果有多个部分，通常都不在同一个superFrameCounter中, 也不在相同的subFrame中
+            for Iset in pm_fra4:
+                Iset[0]=int(Iset[0])
+                if Iset[0]<=last_part:
+                    #part=1,2,3 根据part分组
+                    one_set.sort(key=lambda x:x[5]) #6个一组,按bitIn排序
+                    #展开one_set到一维数组, 两种方法
+                    #VecConf["param"][param]['words'].append([i for j in one_set for i in j])
+                    VecConf["param"][param]['words'].append(sum(one_set, []))
+                    one_set=[]
+                last_part=Iset[0]
+                one_set.append([
+                    #int(Iset[2]),   #SuperframeNo
+                    int(Iset[3]), #superFrame
+                    SuperFramePos[int(Iset[2])][1], #subframe, 位于哪个subframe(1-4)
+                    SuperFramePos[int(Iset[2])][2], #word, 在subframe中第几个word(sync word编号为1)
+                    int(Iset[4])-int(Iset[5])+1, #bitLen
+                    int(Iset[4]),   #bitOut,MSB 在12bit中,第几个bit开始
+                    int(Iset[6]),   #bitIn,  写入arinc429的32bits word中,从第几个bits开始写
+                    #SuperFramePos[int(Iset[2])][3], #BitOut
+                    #SuperFramePos[int(Iset[2])][4], #DataBits=bitLen
+                    ])
+            if len(one_set)>0: #最后一组
+                one_set.sort(key=lambda x:x[5]) #6个一组,按bitIn排序
+                VecConf["param"][param]['words'].append(sum(one_set, []))
+
+            for ii in idx:
+                # rawRes取值位置，ragula与super不同,一个是8,9,10一个是 9,10,11
+                VecConf["param"][param]['rawRes'].append([
+                    float(fra_4[ii][8]) if len(fra_4[ii][8])>0 else 0,
+                    float(fra_4[ii][9]) if len(fra_4[ii][9])>0 else 0,
+                    float(fra_4[ii][10])
+                    ]) #[min,max,resolution]
+                VecConf["param"][param]['rate']=int(fra_4[ii][1]) * -1 #Period of
+                VecConf["param"][param]['superframe']=int(fra_4[ii][4]) #superFrame
+                if superframe_old<=0:
+                    superframe_old=int(fra_4[ii][4])
+                elif superframe_old != int(fra_4[ii][4]):
+                    print(' =>ERROR,多个取值不在同一个SuperFrame中,{}->{}, {}'.format(superframe_old,int(fra_4[ii][4]),param,),file=sys.stderr)
+                    superframe_old=int(fra_4[ii][4])
+                if int(fra_4[ii][4])<1:
+                    print(' =>ERROR,{},SuperFrame=0,{}->{}'.format(param,superframe_old,int(fra_4[ii][4])),file=sys.stderr)
+            if isinstance(par[38], list):
+                #如果有多个部分的bits的配置, 组合一下
+                for ii in range(len(par[36])):
+                    VecConf["param"][param]['ConvConfig'].append(int(par[38][ii]))
+            elif isinstance(par[38], str) and len(par[38])>0:
+                VecConf["param"][param]['ConvConfig'].append(int(par[38]))
+            if isinstance(par[39], list):
+                #如果有多个Option的配置, 组合一下
+                for ii in range(len(par[39])):
+                    VecConf["param"][param]['Options'].append(( int(par[39][ii]),par[40][ii] ))
+            #检查一下
+            if VecConf["param"][param]['RecFormat'].find('BCD')>=0 and len(VecConf["param"][param]['ConvConfig'])<1:
+                print(' =>ERROR, {}, BCD has no ConvConfig'.format(param),file=sys.stderr)
+            elif VecConf["param"][param]['RecFormat'].find('DIS')>=0 and len(VecConf["param"][param]['Options'])<1:
+                print(' =>ERROR, {}, DISCRETE has no Options'.format(param),file=sys.stderr)
             #pass #superlist:
 
         #print(regularlist)

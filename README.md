@@ -58,7 +58,7 @@
    如果发现有帧损坏, 则用空白数据补齐这个损坏的帧。如果有缺帧, 则补空白帧。   
 4. 两种办法继续处理。   
    1. 用`read_prm717.py`把PRM配置,改写为json配置文件。   
-      或, 用`VEC717_to_json.py`把VEC配置, 改写为json配置文件。   
+      或用`VEC717_to_json.py`(没写完)把VEC配置, 改写为json配置文件。   
       跳去另一个项目[FlightDataDecode2](https://github.com/osnosn/FlightDataDecode2/), 用那边的程序继续处理。   
    1. 用ARINC717目录中的程序。直接使用VEC的配置。   
       - `TEST_myqar.py`一次解一个参数。   

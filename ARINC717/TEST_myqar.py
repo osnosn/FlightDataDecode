@@ -20,7 +20,8 @@ def main():
 
     if PARAMLIST:
         #-----------列出记录中的所有参数名称--------------
-        regularlist,superlist=myQAR.paramlist()
+        regularlist,superlist=myQAR.paramlist()  #已经去重
+        #这里需要对这两个列表, 去重. 因为有重复的参数名
         #---regular parameter
         ii=0
         for vv in regularlist:

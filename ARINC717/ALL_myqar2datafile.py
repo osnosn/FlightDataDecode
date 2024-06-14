@@ -70,7 +70,8 @@ def main():
         if WFNAME is not None and len(WFNAME)>0:
             mydatafile=open(WFNAME+'.tmp','wb')
         #-----------列出记录中的所有参数名称--------------
-        regularlist,superlist=myQAR.paramlist()
+        regularlist,superlist=myQAR.paramlist()  #已经去重
+        #这里需要对这两个列表, 去重. 因为有重复的参数名
         total_pm=0
         #---regular parameter
         ii=0

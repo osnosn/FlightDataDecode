@@ -908,6 +908,7 @@ class ARINC717():
     def paramlist(self):
         '''
         获取所有的记录参数名称，包括 regular 和 superframe 参数
+        这里需要对这两个列表, 去重. 因为有重复的参数名
         '''
         if self.fra is None:
             print('Empty dataVer.',flush=True)
@@ -915,11 +916,13 @@ class ARINC717():
         #---regular parameter
         regular_list=[]
         for vv in self.fra['2']:
-            regular_list.append(vv[0])
+            if vv[0] not in regular_list: #去重
+                regular_list.append(vv[0])
         #---superframe parameter
         super_list=[]
         for vv in self.fra['4']:
-            super_list.append(vv[0])
+            if vv[0] not in super_list: #去重
+                super_list.append(vv[0])
         return regular_list,super_list
     def dataVer(self):
         '''

@@ -243,10 +243,13 @@ def main():
                         print(one_pm)
                         print()
                     else:
-                        data_t,data_v=zip(*data)
-                        #导入DataFrame,多个参数合并
-                        df = pd.DataFrame(data_v,index=data_t,columns=[pm,])
-                        df_all=pd.concat([df_all,df],axis=1, ignore_index=False)
+                        if len(data)>0:
+                            data_t,data_v=zip(*data)
+                            #导入DataFrame,多个参数合并
+                            df = pd.DataFrame(data_v,index=data_t,columns=[pm,])
+                            df_all=pd.concat([df_all,df],axis=1, ignore_index=False)
+                        else:
+                            print("=>INFO, data value is Empty.")
             if WFNAME is not None and len(WFNAME) >0:  
                 #写csv文件
                 df_all.to_csv(WFNAME)

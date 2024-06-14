@@ -14,6 +14,10 @@
             pm_data=[struct.pack('<l',vv['v']) for vv in pm_list]
           解所有参数，写入单文件,LZMA压缩,  3.6MB，耗时1m51s.
           解所有参数，写入单文件,bzip2压缩, 3.9MB，耗时1m46s.
+        原始文件 raw 115MB，压缩包为23MB。有参数 2770 个, 航段960分钟。
+          解所有参数，写入单文件,bzip2压缩, 8.3MB，耗时8m13s. 内存占用320-520MB.
+        原始文件 raw 21MB，压缩包为5.5MB。有参数 2270 个, 航段170分钟。
+          解所有参数，写入单文件,bzip2压缩, 2.3MB，耗时1m19s. 内存占用160-210MB.
     author: osnosn@126.com
 """
 import pandas as pd
@@ -72,7 +76,8 @@ def main():
 
         parameter_data=bytearray() #存放 压缩/未压缩 的解码数据
         #-----------列出记录中的所有参数名称--------------
-        regularlist,superlist=myQAR.paramlist()
+        regularlist,superlist=myQAR.paramlist()  #已经去重
+        #这里需要对这两个列表, 去重. 因为有重复的参数名
         total_pm=0
         #---regular parameter
         ii=0
