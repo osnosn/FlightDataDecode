@@ -54,7 +54,7 @@
 2. 判断格式，Bitstream OR Aligned. 用wgl目录中的程序。    
    `dump_rawdat_bitstream.py`,`dump_rawdat_aligned.py`分别扫描原始数据。   
    如果是bitstream则下一步，如果是aligned则跳过下一步。   
-3. 用程序(没写), 把bitstream格式转换为aligned格式, 并把数据帧对齐。   
+3. 用`bitstream2aligned.py`, 把bitstream格式转换为aligned格式, 并把数据帧对齐。(补帧未实现)   
    如果发现有帧损坏, 则用空白数据补齐这个损坏的帧。如果有缺帧, 则补空白帧。   
 4. 两种办法继续处理。   
    1. 用`read_prm717.py`把PRM配置,改写为json配置文件。   

@@ -15,6 +15,7 @@
 * `Custom_config-717.json` 自定义解码配置的格式 (未完成,放弃了)。2024-04   
 * `VEC717_to_json.py` 把VEC的配置,转换为json格式, 给[FlightDataDecode2](https://github.com/osnosn/FlightDataDecode2)项目中rust程序用。   
   VEC 配置比较复杂, bit位有重叠的, 转换逻辑复杂。(没写完,202406)   
+* `bitstream2aligned.py`, 把bitstream格式转换为aligned格式, 并把数据帧对齐。(补帧未实现)   
 * 附加了一个 arinc717 Aligned 的样例。样例数据经过处理，   
   **修改/脱敏了部分内容**。包括且不限于: 机号,航班号,日期,经纬度.... 2023-04   
 * 预计,今后不再更新了。   
