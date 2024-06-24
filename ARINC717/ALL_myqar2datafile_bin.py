@@ -96,7 +96,7 @@ def main():
             data_len, data_type, value_size, compress_type=write_datafile(parameter_data,pm_name,pm_list)
             data_rate=pm_list[1]['t']-pm_list[0]['t']
             #print(pm_list[1]['t'],pm_list[0]['t'],data_rate,flush=True)
-            if data_rate<=1:
+            if data_rate<=1 and data_rate !=0:
                 data_rate= 1/data_rate
             else:
                 data_rate *= -1
@@ -104,7 +104,8 @@ def main():
 
             one_param_table.extend(struct.pack('<h',value_size))     #value size
             one_param_table.extend(struct.pack('<h',int(data_rate))) #rate
-            one_param_table.extend(b"\0\0\0\0")           #start FrameID
+            #start_frameID一定是个整数, 0.0, 1.0
+            one_param_table.extend(struct.pack('<f',pm_list[0]['t']))  #start FrameID, f32
             one_param_table.extend(bytes(vv,'utf8')+b'\0')  #参数名称
             one_param_table.extend(compress_type)           #压缩算法
             one_param_table.extend(data_type)          #数据类型
@@ -136,7 +137,8 @@ def main():
             other_info=json.dumps(pm_par,separators=(',',':'),ensure_ascii=False).encode()+b'\0'
             pm_name="{}.{}".format(ii,vv)
             data_len, data_type, value_size, compress_type=write_datafile(parameter_data,pm_name,pm_list)
-            if data_rate<1:
+            data_rate=pm_list[1]['t']-pm_list[0]['t']
+            if data_rate<=1 and data_rate !=0:
                 data_rate= 1/data_rate
             else:
                 data_rate *= -1
@@ -144,7 +146,8 @@ def main():
 
             one_param_table.extend(struct.pack('<h',value_size))     #value size
             one_param_table.extend(struct.pack('<h',int(data_rate))) #rate
-            one_param_table.extend(b"\0\0\0\0")           #start FrameID
+            #start_frameID一定是个整数, 0.0, 1.0
+            one_param_table.extend(struct.pack('<f',pm_list[0]['t']))  #start FrameID, f32
             one_param_table.extend(bytes(vv,'utf8')+b'\0')  #参数名称
             one_param_table.extend(compress_type)           #压缩算法
             one_param_table.extend(data_type)          #数据类型

@@ -90,7 +90,7 @@ class DATAFILE():
             data_len=struct.unpack('<L',self.data_paramtable[point+10:point+14])[0]
             value_size=struct.unpack('<H',self.data_paramtable[point+14:point+16])[0]
             rate=struct.unpack('<h',self.data_paramtable[point+16:point+18])[0]
-            frameID=struct.unpack('<l',self.data_paramtable[point+18:point+22])[0]
+            frameID=struct.unpack('<f',self.data_paramtable[point+18:point+22])[0]  #f32, start frameID
             #print(tmp)
             #print(data_point,data_len,value_size,rate,frameID)
             with open(self.data_filename,'rb') as fp:
@@ -127,9 +127,9 @@ class DATAFILE():
             ### FrameID
             if tmp[2] == b'int'or tmp[2] == b'float':
                 if rate >0:
-                    data_t=[vv*(1/float(rate)) for vv in range(0,len(data_v)) ]
+                    data_t=[frameID + vv*(1/float(rate)) for vv in range(0,len(data_v)) ]
                 else:
-                    data_t=[vv*(-1*float(rate)) for vv in range(0,len(data_v)) ]
+                    data_t=[frameID + vv*(-1*float(rate)) for vv in range(0,len(data_v)) ]
                 #data=list(zip(data_t,data_v))
                 return (data_t,data_v),info
         return data,info

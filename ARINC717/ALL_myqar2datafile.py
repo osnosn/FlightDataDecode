@@ -81,7 +81,7 @@ def main():
             one_param_table.extend(b"\0\0\0\0") #Parameter01_DATA size
             one_param_table.extend(b"\0\0")       #value size
             one_param_table.extend(b"\0\0")       #rate
-            one_param_table.extend(b"\0\0\0\0")   #start FrameID
+            one_param_table.extend(b"\0\0\0\0")   #start FrameID, f32
             one_param_table.extend(bytes(vv,'utf8')+b'\0')  #参数名称
 
             print(vv,flush=True)
@@ -115,7 +115,7 @@ def main():
             one_param_table.extend(b"\0\0\0\0") #Parameter01_DATA size
             one_param_table.extend(b"\0\0")       #value size
             one_param_table.extend(b"\0\0")       #rate
-            one_param_table.extend(b"\0\0\0\0")   #start FrameID
+            one_param_table.extend(b"\0\0\0\0")   #start FrameID, f32
             one_param_table.extend(bytes(vv,'utf8')+b'\0')  #参数名称
 
             print(vv,flush=True)
