@@ -760,6 +760,7 @@ class ARINC767():
                     self.air[idx][16], #recorderType
                     self.air[idx][17]] #recorderType2
         else:
+            print('\nERROR, 机尾号"{}",查询"{}",没找到对应的解码库编号.\n'.format(reg,conf.aircraft,),file=sys.stderr,flush=True)
             return [0,0,'','']  #没找到
     def readAIR(self):
         '读 air 配置'

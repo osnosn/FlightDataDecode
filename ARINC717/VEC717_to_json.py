@@ -107,7 +107,7 @@ class ARINC717():
                         p_set.append({
                             'part':vv['part'],
                             'rate':vv['rate'],
-                            'sub' :vv['sub']+subf,
+                            'sub' :0 if subf_sep==1 else vv['sub']+subf , #4个subframe都有,则设subframe=0
                             'word':vv['word']+word_rate*word_sep,
                             'bout':vv['bout'],
                             'blen':vv['blen'],
@@ -115,6 +115,9 @@ class ARINC717():
                             'occur':vv['occur'],
                             })
                     param_set.append(p_set)
+            if subf_sep ==1:
+                #4个subframe都有,则设subframe=0,无需继续填写其他subframe
+                break
         return param_set
 
     def readPAR(self,dataver):
@@ -304,6 +307,15 @@ class ARINC717():
         self.par_dataver=-1
     def to_dict(self):
         fra=self.fra
+        SFperCycle=0
+        if len(fra['4'])>1:
+            tmp=[int(xx[2]) if xx[2].isdigit() else -1 for xx in fra['4'] ]  #超级参数的period值
+            tmp2={}  #分别统计值出现的次数
+            for key in tmp:
+                tmp2[key]=tmp2.get(key,0)+1
+            #print(tmp2,max(tmp2,key=tmp2.get), max(tmp2,key=lambda x:tmp2[x]))
+            SFperCycle=max(tmp2,key=tmp2.get)  #取最多的值
+            #SFperCycle=max(tmp)  #取最大值
         WordPerSec=int(fra['1'][1][1])
         VecConf={
                 "WordPerSec": WordPerSec,
@@ -314,7 +326,7 @@ class ARINC717():
                     int(fra['1'][1][5],16),
                     int(fra['1'][1][6],16),
                     ],
-                "SuperFramePerCycle": 0, #没有这个值
+                "SuperFramePerCycle": SFperCycle,
                 "param": {
                     "SuperFrameCounter": {
                         #words: [ superFrame,subframe,word,lsb,msb,targetBit]
@@ -557,10 +569,12 @@ class ARINC717():
                 ]) #[WordMin,WordMax,Offset,Resol,0 ]
             superframe_old=0
             pm_fra4=pm_fra['4']
+            #对于super参数,应该都放入同一组中, 通常super参数, 在一个循环中只记录一次
+            '''
+            #分组 words
+            # super参数, 如果有多个部分，通常都不在同一个superFrameCounter中, 也不在相同的subFrame中
             one_set=[]
             last_part=0
-            #对于super参数,应该都放入同一组中, 通常super参数, 在一个循环中只记录一次
-            # super参数, 如果有多个部分，通常都不在同一个superFrameCounter中, 也不在相同的subFrame中
             for Iset in pm_fra4:
                 Iset[0]=int(Iset[0])
                 if Iset[0]<=last_part:
@@ -585,6 +599,27 @@ class ARINC717():
             if len(one_set)>0: #最后一组
                 one_set.sort(key=lambda x:x[5]) #6个一组,按bitIn排序
                 VecConf["param"][param]['words'].append(sum(one_set, []))
+            '''
+            #不分组 words
+            # super参数, 如果有多个部分，通常都不在同一个superFrameCounter中, 也不在相同的subFrame中
+            one_set=[]
+            for Iset in pm_fra4:
+                one_set.append([
+                    #int(Iset[2]),   #SuperframeNo
+                    int(Iset[3]), #superFrame
+                    SuperFramePos[int(Iset[2])][1], #subframe, 位于哪个subframe(1-4)
+                    SuperFramePos[int(Iset[2])][2], #word, 在subframe中第几个word(sync word编号为1)
+                    int(Iset[4])-int(Iset[5])+1, #bitLen
+                    int(Iset[4]),   #bitOut,MSB 在12bit中,第几个bit开始
+                    int(Iset[6]),   #bitIn,  写入arinc429的32bits word中,从第几个bits开始写
+                    #SuperFramePos[int(Iset[2])][3], #BitOut
+                    #SuperFramePos[int(Iset[2])][4], #DataBits=bitLen
+                    ])
+            #part=1,2,3 根据part分组
+            one_set.sort(key=lambda x:x[5]) #6个一组,按bitIn排序
+            #展开one_set到一维数组, 两种方法
+            #VecConf["param"][param]['words'].append([i for j in one_set for i in j])
+            VecConf["param"][param]['words'].append(sum(one_set, []))
 
             for ii in idx:
                 # rawRes取值位置，ragula与super不同,一个是8,9,10一个是 9,10,11
@@ -594,6 +629,7 @@ class ARINC717():
                     float(fra_4[ii][10])
                     ]) #[min,max,resolution]
                 VecConf["param"][param]['rate']=int(fra_4[ii][1]) * -1 #Period of
+                VecConf["param"][param]['period']=int(fra_4[ii][1]) #Period of
                 VecConf["param"][param]['superframe']=int(fra_4[ii][4]) #superFrame
                 if superframe_old<=0:
                     superframe_old=int(fra_4[ii][4])

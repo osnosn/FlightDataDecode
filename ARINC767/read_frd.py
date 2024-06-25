@@ -197,7 +197,8 @@ def read_parameter_file(dataver):
     zip_fname=os.path.join(conf.vec,dataver+'.vec')  #.vec文件名
 
     if os.path.isfile(zip_fname)==False:
-        print('ERR,ZipFileNotFound',zip_fname,flush=True)
+        print('ERROR,ZipFileNotFound',zip_fname,file=sys.stderr,flush=True)
+        print('  VEC 配置文件没找到. {}\n'.format(zip_fname),file=sys.stderr,flush=True)
         raise(Exception('ERR,ZipFileNotFound,%s'%(zip_fname)))
 
     #if not zipfile.Path(zip_fname,filename_zip).exists():  #判断vec中是否有.frd文件
