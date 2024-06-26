@@ -134,6 +134,7 @@ def main():
             if ii==1: continue  #第一个不是参数
             pm_list=myQAR.get_param(vv)
             pm_par=getPAR(vv,myQAR.par)
+            pm_par['Super']=1 #这是个超级帧参数
             other_info=json.dumps(pm_par,separators=(',',':'),ensure_ascii=False).encode()+b'\0'
             pm_name="{}.{}".format(ii,vv)
             data_len, data_type, value_size, compress_type=write_datafile(parameter_data,pm_name,pm_list)
@@ -270,12 +271,17 @@ def getPAR(param,par):
     #print(pm_find)
     info={}
     info["RecFormat"]= pm_find[2]
-    info["Offset"]=pm_find[11]
-    info["Resol"]=pm_find[12]
+    if len(pm_find[11])>0:
+        info["Offset"]=pm_find[11]
+    if len(pm_find[12])>0:
+        info["Resol"]=pm_find[12]
     info["Mode"]=pm_find[17]
     info["显示位数"]=pm_find[20]
-    info["unit"]=pm_find[21]
-    info["Type"]=pm_find[25]
+    if len(pm_find[21])>0:
+        info["Unit"]=pm_find[21]
+    if len(pm_find[25])>0:
+        info["Type"]=pm_find[25]
+    info["Rate"]=int(pm_find[24])
     if pm_find[29] is not None:
         info["Ares"]=pm_find[29]
     if pm_find[30] is not None:
@@ -290,6 +296,7 @@ def getPAR(param,par):
         info["Power"]=pm_find[35]
     if len(tmp_part)>0:
         info["Options"]= tmp_part
+    info["LongName"]= pm_find[1].strip()
     return info
 
 def showsize(size):

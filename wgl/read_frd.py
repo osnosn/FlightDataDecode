@@ -67,7 +67,8 @@ def main():
         param=PARAM.upper()
         tmp=FRD['4']
         tmp2=tmp[ tmp.iloc[:,1]==param ].copy() #dataframe
-        pm_tb4=tmp.iloc[[0,]].append( tmp2,  ignore_index=False )
+        #pm_tb4=tmp.iloc[[0,]].append( tmp2,  ignore_index=False )  #append被废弃
+        pm_tb4=pd.concat([tmp.iloc[[0,]] , tmp2],  ignore_index=False )
         if len(tmp2)<1:
             print(pm_tb4)
             print()
@@ -78,13 +79,15 @@ def main():
 
         tmp=FRD['3']
         tmp2=tmp[ tmp.iloc[:,2]==pm_longName ].copy() #dataframe
-        pm_tb3=tmp.iloc[[0,]].append( tmp2,  ignore_index=False )
+        #pm_tb3=tmp.iloc[[0,]].append( tmp2,  ignore_index=False )  #append被废弃
+        pm_tb3=pd.concat([tmp.iloc[[0,]] , tmp2],  ignore_index=False )
         frameID=tmp2.iat[0,0]
         frameOrder=tmp2.iat[0,1]
 
         tmp=FRD['2']
         tmp2=tmp[ tmp.iloc[:,0]==frameID ].copy() #dataframe
-        pm_tb2=tmp.iloc[[0,]].append( tmp2,  ignore_index=False )
+        #pm_tb2=tmp.iloc[[0,]].append( tmp2,  ignore_index=False )  #append被废弃
+        pm_tb2=pd.concat([tmp.iloc[[0,]] , tmp2],  ignore_index=False )
 
         print(pm_tb2)
         print()

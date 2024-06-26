@@ -13,7 +13,7 @@
 **如果你想直接使用，请使用整理后的代码。**   
 整理后的最终代码，放在了其他目录。【[ARINC717](https://github.com/osnosn/FlightDataDecode/tree/main/ARINC717)】,【[ARINC767](https://github.com/osnosn/FlightDataDecode/tree/main/ARINC767)】, 注释也被整理过。   
 
-### 更新  
+## 更新  
 * [wgl 目录](https://github.com/osnosn/FlightDataDecode/tree/main/wgl), 测试程序。详细更新看 [wgl 目录中的 README](https://github.com/osnosn/FlightDataDecode/blob/main/wgl/README.md)   
   **2023-04 最后更新**   
   - 对于 ARINC 573/717 的记录格式   
@@ -46,7 +46,8 @@
 
 ## 数据处理的流程   
 本项目, 没打算做成一个产品, 只是一个指引。   
-当然, 本项目也是可以用的。大部分的参数,解码都是正确的。   
+顺便, 我自己也要用一下。   
+所以, 本项目是可以用的。大部分的参数,解码都是正确的。   
 希望, 让有兴趣的公司或个人, 有信心自己做解码。因为解码并不是那么的难。   
 
 ### ARINC717   
@@ -58,7 +59,7 @@
    如果发现有帧损坏, 则用空白数据补齐这个损坏的帧。如果有缺帧, 则补空白帧。   
 4. 两种办法继续处理。   
    1. 用`read_prm717.py`把PRM配置,改写为json配置文件。   
-      或用`VEC717_to_json.py`(没写完)把VEC配置, 改写为json配置文件。   
+      或用`VEC717_to_json.py`把VEC配置, 改写为json配置文件。(202406)   
       跳去另一个项目[FlightDataDecode2](https://github.com/osnosn/FlightDataDecode2/), 用那边的程序继续处理。   
    1. 用ARINC717目录中的程序。直接使用VEC的配置。   
       - `TEST_myqar.py`一次解一个参数。   

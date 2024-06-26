@@ -86,7 +86,8 @@ def main(reg):
         #pd.set_option('display.width',256)
         #tmp=df_flt[ df_flt[columns[0]]==reg].copy()  #dataframe
         tmp2=df_flt[ df_flt.iloc[:,0]==reg].copy()  #dataframe
-        tmp=tmp2.append(tmp2, ignore_index=False )
+        #tmp=tmp2.append(tmp2, ignore_index=False ) #append被废弃
+        tmp=pd.concat([tmp2,tmp2], ignore_index=False )
         if len(tmp2)<1:
             print('Aircraft registration %s not found.' % reg)
             print()

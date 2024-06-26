@@ -51,7 +51,8 @@ def main():
         param=PARAM.upper()
         tmp=PAR
         tmp2=tmp[ tmp.iloc[:,0]==param ].copy() #dataframe
-        tmp=tmp.iloc[[0,]].append( tmp2,  ignore_index=False )
+        #tmp=tmp.iloc[[0,]].append( tmp2,  ignore_index=False )  #append被废弃
+        tmp=pd.concat([tmp.iloc[[0,]] , tmp2],  ignore_index=False )
         pd.set_option('display.max_columns',48)
         pd.set_option('display.width',156)
         print(len(tmp.columns))

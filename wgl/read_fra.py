@@ -54,7 +54,8 @@ def main():
         print()
         if len(TOCSV)>4:
             print('Write to CSV file:',TOCSV)
-            tmp=FRA['2'].iloc[:,0].append(FRA['4'].iloc[:,0], ignore_index=False)
+            #tmp=FRA['2'].iloc[:,0].append(FRA['4'].iloc[:,0], ignore_index=False)  #append被废弃
+            tmp=pd.concat([FRA['2'].iloc[:,0] , FRA['4'].iloc[:,0] ], ignore_index=False)
             tmp.to_csv(TOCSV,sep='\t')
         return
 
@@ -64,7 +65,8 @@ def main():
         #---regular parameter
         tmp=FRA['2']
         tmp2=tmp[ tmp.iloc[:,0]==param ].copy() #dataframe
-        tmp=tmp.iloc[[0,]].append( tmp2,  ignore_index=False )
+        #tmp=tmp.iloc[[0,]].append( tmp2,  ignore_index=False )  #append被废弃
+        tmp=pd.concat([tmp.iloc[[0,]] , tmp2],  ignore_index=False )
         if len(tmp2)>0:
             print(tmp)
         else:
@@ -73,7 +75,8 @@ def main():
         #---superframe parameter
         tmp=FRA['4']
         tmp2=tmp[ tmp.iloc[:,0]==param ].copy() #dataframe
-        tmp=tmp.iloc[[0,]].append( tmp2,  ignore_index=False )
+        #tmp=tmp.iloc[[0,]].append( tmp2,  ignore_index=False )  #append被废弃
+        tmp=pd.concat([tmp.iloc[[0,]] , tmp2],  ignore_index=False )
         if len(tmp2)>0:
             print(tmp)
         else:

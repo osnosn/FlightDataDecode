@@ -351,7 +351,7 @@ class ARINC717():
                     }
                 }
         regularlist,superlist=self.paramlist() #已经去重
-        print('------- regularlist 部分 ----------',file=sys.stderr)
+        print('------- regularlist 部分 ----------',file=sys.stderr,flush=True)
         regularlist.pop(0) #去除第一项 "Regular Parameter Name"
         fra_2=self.fra['2']
         for param in regularlist:
@@ -426,16 +426,17 @@ class ARINC717():
             elif len(par[11])>0:
                 print('offset:',par[11],file=sys.stderr)
                 offset=float(par[11])
+            ## 需要用 fra中的bitIn,对比 par中MSB,bitLen 重新计算target值，
+            resol_corr=self.correct_regular(param,pmset,par)
+            # 因为fra中同一组的多个部分,bit会有重叠, 放入arinc429后,按par取值,会有错位
+            # target值经过重新计算后,按需调整resol的值
             VecConf["param"][param]['res'].append([
                 float(par[13]),
                 float(par[14]),
                 offset,
-                resol,
+                resol * resol_corr,
                 0.0,
                 ]) #[WordMin,WordMax,Offset,Resol,0 ]
-            ## 需要用 fra中的bitIn,对比 par中MSB,bitLen 重新计算target值，
-            # 因为fra中同一组的多个部分,bit会有重叠, 放入arinc429后,按par取值,会有错位
-            # target值经过重新计算后,按需调整resol的值
             for group in pmset:
                 #group.reverse() #倒序
                 group.sort(key=lambda x:x['bin']) #按bin排序
@@ -483,7 +484,7 @@ class ARINC717():
             SuperFramePos[int(vv[0])]=[int(xx) for xx in vv]
         VecConf['SuperFramePos']=SuperFramePos
 
-        print('------- superlist 部分 ----------',file=sys.stderr)
+        print('------- superlist 部分 ----------',file=sys.stderr,flush=True)
         superlist.pop(0) #去除第一项 "Superframe Parameter Name"
         fra_4=self.fra['4']
         for param in superlist:
@@ -560,15 +561,16 @@ class ARINC717():
             elif len(par[11])>0:
                 print('offset:',par[11],file=sys.stderr)
                 offset=float(par[11])
+            pm_fra4=pm_fra['4']
+            resol_corr=self.correct_super(param,pm_fra4,par)
             VecConf["param"][param]['res'].append([
                 float(par[13]),
                 float(par[14]),
                 offset,
-                resol,
+                resol * resol_corr,
                 0,
                 ]) #[WordMin,WordMax,Offset,Resol,0 ]
             superframe_old=0
-            pm_fra4=pm_fra['4']
             #对于super参数,应该都放入同一组中, 通常super参数, 在一个循环中只记录一次
             '''
             #分组 words
@@ -658,6 +660,87 @@ class ARINC717():
         #print(regularlist)
         #print(superlist)
         return VecConf
+    def correct_regular(self,param,fra,par):
+        '''
+        可以对 fra,par 的内容直接修改，因为是引用参数
+        -------------
+        需要用 fra中的bitIn,对比 par中MSB,bitLen 重新计算target值，
+        因为fra中同一组的多个部分,bit会有重叠, 放入arinc429后,按par取值,会有错位
+        target值经过重新计算后,按需调整resol的值, 通常是2,4,8倍
+        '''
+        #print('----',param,'----')
+        #print(fra)
+        #fra[0][0]['bout']=99   #在这里修改,有效
+        resol_corr=1.0  #默认值
+        ii=0
+        for group in fra:
+            ii+=1
+            gMsb=0
+            gLsb=31
+            group.sort(key=lambda x:x['bin']) #按bin排序
+            for one in group:
+                #one['bout']=99   #在这里修改,也有效
+                oMsb=one['bin']
+                oLsb=one['bin']-one['blen']+1
+                #if (oMsb>=gLsb and oMsb<=gMsb):
+                #    print('==ERR1a=={},Msb重叠: 当前,{}-{}, 加入,{}-{}'.format(param,gMsb,gLsb,oMsb,oLsb),file=sys.stderr)
+                if(oLsb>=gLsb and oLsb<=gMsb):
+                    #按bin排序后，只会出现Lsb重叠
+                    print('==ERR1b=={},Lsb重叠: 当前,{}-{}, 加入,{}-{}'.format(param,gMsb,gLsb,oMsb,oLsb),file=sys.stderr)
+                    one['blen'] -= gMsb-oLsb+1
+                    print('==ERR1b=={},Lsb  改: 当前,{}-{}, 加入,{}-{}'.format(param,gMsb,gLsb,oMsb,one['bin']-one['blen']+1),file=sys.stderr)
+                if gMsb < oMsb:
+                    gMsb=oMsb
+                if gLsb > oLsb:
+                    gLsb=oLsb
+                #print(param,ii,'bout:',one['bout'],'blen:',one['blen'],'bin:',one['bin'])
+            pMsb=int(par[7])
+            pLsb=int(par[7])- int(par[8]) +1
+            #if int(par[8]) != gMsb-gLsb+1:
+            #    print('==ERR2=={},取值/输出 长度不一致. 取{}-{}({}),输出{}-{}({})'.format(param,gMsb,gLsb, gMsb-gLsb+1, pMsb,pLsb,par[8],),file=sys.stderr)
+            if pLsb != gLsb:  #这个不同,导致resol_corr不同
+                resol_corr= 2.0 ** (gLsb - pLsb)
+                print('==ERR3=={},取值/输出 Lsb不同. 取{}-{}({}),输出{}-{}({}), res:{}'.format(param,gMsb,gLsb, gMsb-gLsb+1, pMsb,pLsb,par[8],resol_corr,),file=sys.stderr)
+        #print(param,'SSM:',par[7],'signBit:',par[8], 'MSB:',par[7],'dataBits:',par[8])
+        # 这个是BCD,CHAR类型，分段取值的配置. 与本函数无关.
+        #print(param,'Power:',par[35],'Digit:',par[36],'MSB:',par[37],'dataBits:',par[38])
+        return resol_corr
+    def correct_super(self,param,fra,par):
+        '''
+        可以对 fra,par 的内容直接修改，因为是引用参数
+        -------------
+        需要用 fra中的bitIn,对比 par中MSB,bitLen 重新计算target值，
+        因为fra中同一组的多个部分,bit会有重叠, 放入arinc429后,按par取值,会有错位
+        super参数，通常不需要调置resol. target值经过重新计算后,按需调整resol的值, 通常是2,4,8倍
+        '''
+        #print('----',param,'----')
+        #print(fra)
+        resol_corr=1.0  #默认值
+        ii=0
+        if 1:
+            ii+=1
+            gMsb=0
+            gLsb=31
+            fra.sort(key=lambda x:int(x[6])) #按bin排序
+            for one in fra:
+                #one: [5]:blen, [6]:bin
+                oMsb=int(one[6])
+                oLsb=int(one[6])-int(one[5])+1
+                if(oLsb>=gLsb and oLsb<=gMsb):
+                    #按bin排序后，只会出现Lsb重叠
+                    print('==ERR1b=={},Lsb重叠: 当前,{}-{}, 加入,{}-{}'.format(param,gMsb,gLsb,oMsb,oLsb),file=sys.stderr)
+                    one[5] = int(one[5]) - (gMsb-oLsb+1)
+                    print('==ERR1b=={},Lsb  改: 当前,{}-{}, 加入,{}-{}'.format(param,gMsb,gLsb,oMsb,int(one[6])-int(one[5])+1),file=sys.stderr)
+                if gMsb < oMsb:
+                    gMsb=oMsb
+                if gLsb > oLsb:
+                    gLsb=oLsb
+            pMsb=int(par[7])
+            pLsb=int(par[7])- int(par[8]) +1
+            if pLsb != gLsb:  #这个不同,导致resol_corr不同
+                resol_corr= 2.0 ** (gLsb - pLsb)
+                print('==ERR3=={},取值/输出 Lsb不同. 取{}-{}({}),输出{}-{}({}), res:{}'.format(param,gMsb,gLsb, gMsb-gLsb+1, pMsb,pLsb,par[8],resol_corr,),file=sys.stderr)
+        return resol_corr
 
 def main():
     global WFNAME
