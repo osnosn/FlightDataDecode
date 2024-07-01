@@ -4,7 +4,7 @@
 * 整理完成。 2022-02   
 * 使用的例程是 `TEST_myqar.py`。一次解码一个参数。2022-02   
 * 解码所有参数, 以csv格式写入压缩文件 `ALL_myqar.py`。2024-04   
-* 解码所有参数写入单文件,自定义格式。`ALL_myqar2datafile.py`。2024-04   
+* ~~解码所有参数写入单文件,自定义格式。ALL_myqar2datafile.py 。2024-04~~   
   - json方式写。早期的测试程序。   
 * 解码所有参数写入单文件,自定义格式。`ALL_myqar2datafile_bin.py`。2024-04   
   - 二进制 (binary)方式写。文件更小。   
@@ -12,7 +12,7 @@
   - 支持 二进制格式，json格式。 
   - 选取一个或多个参数，导出到"自定义单文件"，或导出到 csv文件。   
 * `Custom_DataFile_Format_Description.txt` 自定义单文件的描述。2024-04   
-* `Custom_config-717.json` 自定义解码配置的格式 (未完成,放弃了)。2024-04   
+* ~~Custom_config-717.json 自定义解码配置的格式 (未完成,放弃了)。2024-04~~   
 * `VEC717_to_json.py` 把VEC的配置,转换为json格式, 给[FlightDataDecode2](https://github.com/osnosn/FlightDataDecode2)项目中rust程序用。   
   VEC 配置比较复杂, bit位有重叠的, 转换逻辑复杂。取值时bit位错位,导致原始值被放大2的N倍,需要调整系数(resol)值。(202406)   
 * `bitstream2aligned.py`, 把bitstream格式转换为aligned格式, 并把数据帧对齐。(补帧未实现)   
